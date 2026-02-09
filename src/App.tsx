@@ -1,11 +1,16 @@
+import { Routes, Route } from 'react-router-dom'
+
 import './App.css'
+
+import LandingPage from './components/LandingPage/LandingPage.tsx';
 
 function App() {
 
   return (
-    <>
-      <h1>Dramatis Personae</h1>
-    </>
+    <Routes>
+      <Route path="/" element={<LandingPage />} />           {/* Home feed */}
+      <Route path="/profile/:userId" element={<LandingPage />} /> {/* Profile page */}
+    </Routes>
   )
 }
 

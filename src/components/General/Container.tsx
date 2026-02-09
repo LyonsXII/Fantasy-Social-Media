@@ -1,14 +1,17 @@
 import React from 'react'
-import styled from 'styled-components';
 
-type MyComponentProps = {
-  // Add your props here
+import { StyledMainContainer } from './General.styles.ts';
+
+type ContainerProps = {
+  children?: React.ReactNode
 }
 
-export const MyComponent: React.FC<MyComponentProps> = (props) => {
+const Container: React.FC<ContainerProps> = ({ children }) => {
   return (
-    <div className={styles.container}>
-      {/* Add your content here */}
-    </div>
+    <StyledMainContainer height="100dvh" width="100dvw">
+      {children}
+    </StyledMainContainer>
   )
 }
+
+export default Container
