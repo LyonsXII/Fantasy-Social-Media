@@ -1,15 +1,16 @@
-import React from 'react'
-
-import Container from '../General/Container.tsx';
+import FlexboxContainer from '../General/FlexboxContainer.tsx';
+import PrimaryTitle from '../General/PrimaryTitle.tsx';
 
 type LandingPageProps = {
 }
 
 const LandingPage: React.FC<LandingPageProps> = (props) => {
   return (
-    <Container>
-      <h1>Dramatis Personae</h1>
-    </Container>
+    <FlexboxContainer height="100dvh" width="100dvw">
+      <PrimaryTitle fontSize="60px" shadow={8} primaryColour="white" secondaryColour="black">
+        Dramatis Personae
+      </PrimaryTitle>
+    </FlexboxContainer>
   )
 }
 
