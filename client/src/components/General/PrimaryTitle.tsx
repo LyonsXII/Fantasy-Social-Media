@@ -126,7 +126,6 @@ const PrimaryTitle = ({ children, $fontSize, $backgroundImage, $backgroundSize }
       spaces.push(i)
     }
   }
-  console.log(spaces);
 
   return (
     <StyledTitleWrapper>

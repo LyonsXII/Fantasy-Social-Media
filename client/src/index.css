@@ -9,6 +9,10 @@
   background-color: transparent;
 }
 
+body {
+  font-size: 1rem;
+}
+
 #root {
   min-height: 100%;
 }
