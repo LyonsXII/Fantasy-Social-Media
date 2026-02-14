@@ -2,10 +2,7 @@ import FlexboxContainer from '../General/FlexboxContainer.tsx';
 import PrimaryTitle from '../General/PrimaryTitle.tsx';
 import Login from './Login.tsx';
 
-type LandingPageProps = {
-}
-
-const LandingPage: React.FC<LandingPageProps> = (props) => {
+const LandingPage = () => {
   return (
     <FlexboxContainer height="100dvh" width="100dvw" $direction="column">
       <PrimaryTitle

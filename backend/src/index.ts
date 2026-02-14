@@ -14,6 +14,8 @@ dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.static("public"));
+
 
 app.use((req, res, next) => {
   console.log(`Incoming request: ${req.method} ${req.url}`);
@@ -55,22 +57,7 @@ const allowedOrigins = [
 
 const port = 5000;
 
-// app.use(cors({
-//   origin: function (origin, callback) {
-//     if (!origin || allowedOrigins.includes(origin)) {
-//       callback(null, true);
-//     } else {
-//       callback(new Error(`Origin ${origin} not allowed by CORS`));
-//     }
-//   },
-//   credentials: true,
-// }));
-app.use(cors({
-  origin: "*",          // allow any origin
-  methods: ["GET","POST","PUT","DELETE","OPTIONS"], // allowed HTTP methods
-  credentials: true     // allow cookies (won't work with "*" for origin)
-}));
-app.use(express.static("public"));
+app.use(cors({ origin: "*" }));
 
 app.get("/", (req, res) => {
   console.log("hey");
@@ -84,14 +71,47 @@ app.post("/register", async (req, res) => {
 
   try {
     const hashedPassword = await bcrypt.hash(password, salt_rounds);
-    const result = await db.query("INSERT INTO user_accounts (login, password) VALUES ($1, $2) RETURNING id, login", [login, hashedPassword]);
+    const result = await db.query(
+      "INSERT INTO user_accounts (login, password_hash) VALUES ($1, $2) RETURNING user_id, login", 
+      [login, hashedPassword]);
 
     res.status(201).json({ user: result.rows[0] });
   } catch(err: any) {
     // Unique violation for login
-    if (err.code == "23505") {
+    if (err.code === "23505") {
       return res.status(400).json({ error: "This username has already been taken." });
     }
+    console.log(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.post("/login", async(req, res) => {
+  const { login, password } = req.body;
+  if (!login || !password) return res.status(400).json({ error: "Please enter a username and password."})
+
+  try {
+    const result = await db.query(
+      "SELECT user_id, login, password_hash FROM user_accounts WHERE login = $1",
+      [login]
+    );
+
+    // No match for username in database
+    if (result.rows.length === 0) {
+      return res.status(400).json({ error: "Invalid login or password."})
+    };
+
+    const user = result.rows[0]
+    const passwordValid = await bcrypt.compare(password, user.password_hash);
+
+    // Password invalid, hashes don't match
+    if (!passwordValid) {
+      return res.status(400).json({ error: "Invalid password."})
+    }
+
+    const token = jwt.sign({ id: user.id, login: user.login }, process.env.JWT_SECRET!, { expiresIn: "1h" });
+    res.status(200).json({ id: user.id, login: user.login, token: token })
+  } catch(err) {
     console.log(err);
     res.status(500).json({ error: "Internal server error" });
   }

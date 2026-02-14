@@ -1,18 +1,23 @@
-import { useState } from 'react';
+import { useState, useRef, useLayoutEffect } from 'react';
 import type { ComponentType, SVGProps } from 'react';
 import styled, { keyframes, css } from 'styled-components';
+import axios from "axios";
 
 import LoginIcon from "../../assets/icons/login.svg?react";
 import PasswordIcon from "../../assets/icons/password.svg?react";
 import EyeIcon from "../../assets/icons/eye.svg?react";
 
-type StyledFieldProps = {
-  $visible: boolean
-}
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 type StyledButtonProps = {
   $expanded: boolean
+  $heightAdjust: number
 }
+
+type LoginProps = {
+  login: string;
+  password: string;
+};
 
 const StyledLoginWrapper = styled.div`
   display: flex;
@@ -36,13 +41,13 @@ const expandLogin = keyframes`
   }
 `;
 
-const StyledFieldsWrapper = styled.div<StyledFieldProps>`
+const StyledFieldsWrapper = styled.div<{$visible: boolean}>`
   transform-origin: top;
   transform: ${({ $visible }) => $visible ? "scaleY(1)" : "scaleY(0)"};
-  transition: transform 0.2s ease;
+  transition: transform 0.8s ease;
 `
 
-const StyledField = styled.div<StyledFieldProps>`
+const StyledField = styled.div<{$visible: boolean}>`
   display: ${({ $visible }) => $visible ? "flex" : "none"};
   flex-direction: row;
   background: hsla(0, 0%, 100%, 0.5);
@@ -88,15 +93,18 @@ const StyledPasswordIcon = createStyledIcon(PasswordIcon);
 const StyledEyeIcon = createStyledIcon(EyeIcon);
 
 // Avoiding relayouts by using wrapper preset to max button width
-const StyledButtonWrapper = styled.div`
+const StyledButtonWrapper = styled.div<StyledButtonProps>`
+  margin-top: ${({ $heightAdjust }) => $heightAdjust ? `-${$heightAdjust}px` : "0px"};
   display: flex;
   justify-content: center;
   height: fit-content;
   width: 200px;
+
+  transition: transform 0.8s ease;
+  transform: ${({ $expanded, $heightAdjust }) => $expanded ? `translateY(${$heightAdjust}px)` : "translateY(0px)"};
 `
 
 const StyledButton = styled.button<StyledButtonProps>`
-  margin-top: ${({ $expanded }) => $expanded ? "-100px" : "0px"};
   width: ${({ $expanded }) => $expanded ? "200px" : "100px"};
   padding: 1em;
   background: hsl(233deg 36% 38%);
@@ -106,13 +114,19 @@ const StyledButton = styled.button<StyledButtonProps>`
   font-weight: 600;
   cursor: pointer;
 
-
-  transition: width 0.4s ease, transform 0.4s ease;
-  transform: ${({ $expanded }) => $expanded ? "translateY(100px)" : "translateY(0px)"};
+  transition: width 0.8s ease;
 `
 
 const Login = () => {
   const [showLogin, setShowLogin] = useState<boolean>(false);
+  const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
+  const fieldsHeightRef = useRef<HTMLDivElement>(null);
+  const [fieldsHeight, setFieldsHeight] = useState<number>(0)
+
+  const [details, setDetails] = useState<{ login: string; password: string }>({ 
+    "login": "", 
+    "password": "" 
+  });
 
   function toggleLoginVisible() {
     if (showLogin) {
@@ -120,23 +134,70 @@ const Login = () => {
     } else {
       setShowLogin(prev => !prev);
     }
-  }
+  };
+
+  function updateField<K extends keyof LoginProps>(
+    field: K,
+    value: LoginProps[K]
+  ) {
+    setDetails(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  function togglePasswordVisible() {
+    setPasswordVisible(prev => !prev);
+  };
+
+  async function register() {
+    try {
+      // Post request to backend
+      const registerDetails = {
+        "login": details.login, 
+        "password": details.password
+      };
+      const response = await axios.post(`${backendUrl}/register`, registerDetails);
+
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  async function login() {
+    try {
+      const loginDetails = {
+        "login": details.login, 
+        "password": details.password
+      };
+      const response = await axios.post(`${backendUrl}/login`, loginDetails);
+
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  useLayoutEffect(() => {
+    if (fieldsHeightRef.current) {
+      setFieldsHeight(fieldsHeightRef.current.offsetHeight);
+    }
+  }, [showLogin]);
 
   return (
     <StyledLoginWrapper>
       <StyledFieldsWrapper $visible={showLogin}>
         <StyledField $visible={showLogin}>
           <StyledLoginIcon/>
-          <StyledInput type="text" name="login" placeholder="Login"/>
+          <StyledInput type="text" name="login" value={details.login} placeholder="Login" onChange={((e) => updateField("login", e.target.value))}/>
         </StyledField>
-        <StyledField $visible={showLogin}>
+        <StyledField ref={fieldsHeightRef} $visible={showLogin}>
           <StyledPasswordIcon/>
-          <StyledInput type="password" name="email" placeholder="Password"/>
-          <StyledEyeIcon/>
+          <StyledInput type={passwordVisible ? "text" : "password"} name="email" value={details.password} placeholder="Password" onChange={((e) => updateField("password", e.target.value))}/>
+          <StyledEyeIcon onClick={togglePasswordVisible}/>
         </StyledField>
       </StyledFieldsWrapper>
-      <StyledButtonWrapper>
-        <StyledButton onClick={toggleLoginVisible} $expanded={showLogin}>
+      <StyledButtonWrapper $expanded={showLogin} $heightAdjust={fieldsHeight}>
+        <StyledButton onClick={showLogin ? register : toggleLoginVisible} $expanded={showLogin} $heightAdjust={fieldsHeight}>
           Login
         </StyledButton>
       </StyledButtonWrapper>
