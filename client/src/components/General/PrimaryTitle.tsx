@@ -25,6 +25,7 @@ const StyledTitleWrapper = styled.div`
   justify-content: center;
   align-items: center;
   gap: 0px;
+  margin-bottom: 4rem;
 `;
 
 // const StyledTitle = styled.h1<PrimaryTitleProps>`

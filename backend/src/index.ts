@@ -79,7 +79,7 @@ app.post("/register", async (req, res) => {
   } catch(err: any) {
     // Unique violation for login
     if (err.code === "23505") {
-      return res.status(400).json({ error: "This username has already been taken." });
+      return res.status(400).json({ error: "This username has already been taken" });
     }
     console.log(err);
     res.status(500).json({ error: "Internal server error" });
@@ -98,7 +98,7 @@ app.post("/login", async(req, res) => {
 
     // No match for username in database
     if (result.rows.length === 0) {
-      return res.status(400).json({ error: "Invalid login or password."})
+      return res.status(400).json({ error: "No account found for this username"})
     };
 
     const user = result.rows[0]
@@ -106,7 +106,7 @@ app.post("/login", async(req, res) => {
 
     // Password invalid, hashes don't match
     if (!passwordValid) {
-      return res.status(400).json({ error: "Invalid password."})
+      return res.status(400).json({ error: "Invalid password"})
     }
 
     const token = jwt.sign({ id: user.id, login: user.login }, process.env.JWT_SECRET!, { expiresIn: "1h" });
