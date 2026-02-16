@@ -231,12 +231,12 @@ const Login = () => {
   const [showLogin, setShowLogin] = useState<boolean>(false);
   const [showLoginOutro, setShowLoginOutro] = useState<boolean>(false);
   const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
-  const [submitMode, setSubmitMode] = useState<string>("login");
+  const [submitMode, setSubmitMode] = useState<"login" | "register">("login");
   const [showSubmitModeTransition, setShowSubmitModeTransition] = useState<boolean>(false);
   const [messageText, setMessageText] = useState<string>("");
   const [showMessageText, setShowMessageText] = useState<boolean>(false);
 
-  const [details, setDetails] = useState<{ login: string; password: string }>({ 
+  const [details, setDetails] = useState<LoginProps>({ 
     "login": "", 
     "password": "" 
   });
@@ -333,7 +333,7 @@ const Login = () => {
   useEffect(() => {
     if (showSubmitModeTransition) {
       const timer = setTimeout(() => {
-        setShowSubmitModeTransition(prev => !prev);
+        setShowSubmitModeTransition(false);
         if (submitMode == "login") {
           setSubmitMode("register");
         } else {
@@ -372,7 +372,7 @@ const Login = () => {
           </StyledField>
           <StyledField $visible={showLogin}>
             <StyledPasswordIcon $shadow={false}/>
-            <StyledInput type={passwordVisible ? "text" : "password"} name="email" value={details.password} placeholder="Password" onChange={((e) => updateField("password", e.target.value))}/>
+            <StyledInput type={passwordVisible ? "text" : "password"} name="password" value={details.password} placeholder="Password" onChange={((e) => updateField("password", e.target.value))}/>
             <StyledEyeIcon $shadow={false} onClick={togglePasswordVisible}/>
           </StyledField>
         </StyledFieldsWrapper>

@@ -1,6 +1,7 @@
 import FlexboxContainer from '../General/FlexboxContainer.tsx';
 import PrimaryTitle from '../General/PrimaryTitle.tsx';
 import Login from './Login.tsx';
+import HorizontalMarquee from './HorizontalMarquee.tsx';
 
 const LandingPage = () => {
   return (
@@ -13,6 +14,7 @@ const LandingPage = () => {
         Dramatis Personae
       </PrimaryTitle> */}
       <Login/>
+      <HorizontalMarquee/>
     </FlexboxContainer>
   )
 }

@@ -88,7 +88,7 @@ app.post("/register", async (req, res) => {
 
 app.post("/login", async(req, res) => {
   const { login, password } = req.body;
-  if (!login || !password) return res.status(400).json({ error: "Please enter a username and password."})
+  if (!login || !password) return res.status(400).json({ error: "Please enter a username and password"})
 
   try {
     const result = await db.query(

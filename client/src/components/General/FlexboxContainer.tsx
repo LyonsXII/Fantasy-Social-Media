@@ -14,7 +14,6 @@ const StyledMainContainer = styled.div<FlexboxContainerProps>`
   justify-content: center;
   height: ${({ height }) => height || '100%'};
   width: ${({ width }) => width || '100%'};
-  border: 1px solid cyan;
 `;
 
 const FlexboxContainer = ({ children, height, width, $direction } : FlexboxContainerProps) => {
