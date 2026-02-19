@@ -12,30 +12,43 @@ const scroll = keyframes`
 const MarqueeWrapper = styled.div`
   position: absolute;
   bottom: 6dvh;
-  left: -100dvw;
+  left: -200dvw;
   height: 20dvh;
-  width: 200dvw;
+  width: 400dvw;
   border-top: 2px solid black;
   border-bottom: 2px solid black;
+  box-shadow: 0 0px 20px rgba(0, 0, 0, 1),
+    0 0px 20px rgba(0, 0, 0, 1),
+    0 0px 20px rgba(0, 0, 0, 1),
+    0 0px 10px rgba(0, 0, 0, 1),
+    0 0px 10px rgba(0, 0, 0, 1),
+    0 0px 10px rgba(0, 0, 0, 1),
+    0 0px 10px rgba(0, 0, 0, 1),
+    0 0px 10px rgba(0, 0, 0, 1);
 `;
 
 const MarqueePortraitsContainer = styled.div`
   display: flex;
   height: 100%;
   width: 100%;
-  animation: ${scroll} 10s linear infinite;
+  
+  will-change: transform;
+  animation: ${scroll} 20s linear infinite;
 `;
 
 const MarqueePortrait = styled.div<{ $value : number, $src : string}>`
   height: 100%;
-  width: calc(200dvw / 10);
+  width: calc(200dvw / 20);
   background-image: ${({ $src }) => `url(${$src})`};
-  background-size: cover;         /* make image cover the div */
-  background-position: top;    /* keep the focal point centered */
-  background-repeat: no-repeat;   /* prevent tiling */
+  background-size: cover;
+  background-position: top;
+  background-repeat: no-repeat;
   box-shadow: 
-    inset 0 0 50px rgba(0, 0, 0, 1),
-    inset 0 0 20px rgba(0, 0, 0, 0.8);
+    inset 0 0 50px rgba(0, 0, 0, 5),
+    inset 0 0 50px rgba(0, 0, 0, 7),
+    inset 0 0 40px rgba(0, 0, 0, 0.7),
+    inset 0 0 20px rgba(0, 0, 0, 0.6),
+    inset 0 0 20px rgba(0, 0, 0, 0.6);
   filter: brightness(0.95) contrast(1.2) saturate(1.5);
 `;
 
@@ -46,6 +59,9 @@ const HorizontalMarquee = () => {
       <MarqueePortraitsContainer>
           {Array.from({ length: 20 }, (_, i) => (
             <MarqueePortrait key={i} $value={i} $src={`/images/horizontal_marquee/${i}.jpg`}/>
+          ))}
+          {Array.from({ length: 20 }, (_, i) => (
+            <MarqueePortrait key={i + 20} $value={i} $src={`/images/horizontal_marquee/${i}.jpg`}/>
           ))}
       </MarqueePortraitsContainer>
     </MarqueeWrapper>

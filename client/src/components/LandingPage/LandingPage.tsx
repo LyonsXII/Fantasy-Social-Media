@@ -2,6 +2,7 @@ import FlexboxContainer from '../General/FlexboxContainer.tsx';
 import PrimaryTitle from '../General/PrimaryTitle.tsx';
 import Login from './Login.tsx';
 import HorizontalMarquee from './HorizontalMarquee.tsx';
+import VerticalMarquee from './VerticalMarquee.tsx';
 
 const LandingPage = () => {
   return (
@@ -15,6 +16,7 @@ const LandingPage = () => {
       </PrimaryTitle> */}
       <Login/>
       <HorizontalMarquee/>
+      <VerticalMarquee/>
     </FlexboxContainer>
   )
 }
