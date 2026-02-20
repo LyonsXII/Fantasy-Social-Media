@@ -1,8 +1,7 @@
 import FlexboxContainer from '../General/FlexboxContainer.tsx';
 import PrimaryTitle from '../General/PrimaryTitle.tsx';
 import Login from './Login.tsx';
-import HorizontalMarquee from './HorizontalMarquee.tsx';
-import VerticalMarquee from './VerticalMarquee.tsx';
+import Marquee from './Marquee.tsx';
 
 const LandingPage = () => {
   return (
@@ -15,8 +14,8 @@ const LandingPage = () => {
         Dramatis Personae
       </PrimaryTitle> */}
       <Login/>
-      <HorizontalMarquee/>
-      <VerticalMarquee/>
+      <Marquee $direction="horizontal" $length={20} />
+      <Marquee $direction="vertical" $length={5} />
     </FlexboxContainer>
   )
 }
