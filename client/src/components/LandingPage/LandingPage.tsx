@@ -1,9 +1,20 @@
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+
 import FlexboxContainer from '../General/FlexboxContainer.tsx';
-import PrimaryTitle from '../General/PrimaryTitle.tsx';
+// import PrimaryTitle from '../General/PrimaryTitle.tsx';
 import Login from './Login.tsx';
 import Marquee from './Marquee.tsx';
 
 const LandingPage = () => {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  async function handleLogin(token: string) {
+    login(token);
+    navigate('/feed');
+  }
+
   return (
     <FlexboxContainer height="100dvh" width="100dvw" $direction="column">
       {/* <PrimaryTitle
@@ -13,9 +24,9 @@ const LandingPage = () => {
       >
         Dramatis Personae
       </PrimaryTitle> */}
-      <Login/>
-      <Marquee $direction="horizontal" $length={20} />
-      <Marquee $direction="vertical" $length={5} />
+      <Login handleLogin={handleLogin}/>
+      <Marquee $direction="horizontal" $length={20} $offset="6dvh" $size="20dvh"/>
+      <Marquee $direction="vertical" $length={5} $offset="5.5dvw" $size="28dvw"/>
     </FlexboxContainer>
   )
 }

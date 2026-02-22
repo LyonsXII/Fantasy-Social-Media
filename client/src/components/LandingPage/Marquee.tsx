@@ -3,6 +3,8 @@ import styled, { keyframes } from 'styled-components';
 type MarqueeProps = {
   $direction: string
   $length: number
+  $offset: string
+  $size: string
 }
 
 const scrollHorizontal = keyframes`
@@ -15,20 +17,20 @@ const scrollVertical = keyframes`
   100% { transform: translateY(50%); }
 `;
 
-const MarqueeWrapper = styled.div<{ $direction? : string }>`
+const MarqueeWrapper = styled.div<{ $direction: string, $offset: string, $size: string}>`
   position: absolute;
 
-  ${({ $direction })  => $direction == "horizontal" &&
+  ${({ $direction, $offset })  => $direction == "horizontal" &&
     `left: -200dvw;
-    bottom: 6dvh;`
+    bottom: ${$offset};`
   };
-  ${({ $direction })  => $direction == "vertical" &&
+  ${({ $direction, $offset })  => $direction == "vertical" &&
     `top: -200dvh;
-     right: 5.5dvw;`
+     right: ${$offset};`
   };
 
-  height: ${({ $direction }) => $direction == "horizontal" ? "20dvh" : "400dvh"};
-  width: ${({ $direction }) => $direction == "horizontal" ? "400dvw" : "28dvw"};
+  height: ${({ $direction, $size }) => $direction == "horizontal" ? $size : "400dvh"};
+  width: ${({ $direction, $size }) => $direction == "horizontal" ? "400dvw" : $size};
   border-top: 2px solid black;
   border-bottom: 2px solid black;
   box-shadow: 0 0px 20px rgba(0, 0, 0, 1),
@@ -71,10 +73,10 @@ const MarqueePortrait = styled.div<{ $direction : string, $value : number, $src 
   filter: brightness(0.95) contrast(1.2) saturate(1.5);
 `;
 
-const Marquee = ({ $direction, $length } : MarqueeProps) => {
+const Marquee = ({ $direction, $length, $offset, $size } : MarqueeProps) => {
 
   return (
-    <MarqueeWrapper $direction={$direction}>
+    <MarqueeWrapper $direction={$direction} $offset={$offset} $size={$size}>
       <MarqueePortraitsContainer $direction={$direction}>
           {Array.from({ length: $length }, (_, i) => (
             <MarqueePortrait key={i} $value={i} $direction={$direction} $src={`/images/horizontal_marquee/${i}.jpg`}/>

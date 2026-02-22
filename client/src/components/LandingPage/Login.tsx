@@ -19,6 +19,10 @@ type LoginProps = {
   password: string;
 };
 
+export interface LoginRouteProps {
+  handleLogin: (token: string) => void;
+}
+
 const StyledContentWrapper = styled.div<{ $expanded : boolean, $showLoginOutro : boolean }>`
   position: relative;
   display: flex;
@@ -227,7 +231,7 @@ const StyledNewUserButton = styled.button<{ $expanded : boolean }>`
   }
 `;
 
-const Login = () => {
+const Login = ({ handleLogin } : LoginRouteProps) => {
   const [showLogin, setShowLogin] = useState<boolean>(false);
   const [showLoginOutro, setShowLoginOutro] = useState<boolean>(false);
   const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
@@ -305,6 +309,7 @@ const Login = () => {
         "password": details.password
       };
       const response = await axios.post(`${backendUrl}/login`, loginDetails);
+      handleLogin(response.data.token);
 
     } catch (error) {
       if (axios.isAxiosError(error)) {
