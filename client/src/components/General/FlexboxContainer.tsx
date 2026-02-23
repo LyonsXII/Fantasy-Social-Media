@@ -16,7 +16,16 @@ const StyledMainContainer = styled.div<FlexboxContainerProps>`
   width: ${({ width }) => width || '100%'};
   background: linear-gradient(to bottom, #d3fcff, #29709c);
 
-  &::before { content: ''; position: absolute; inset: 0; background: url('/images/Patina.jpg'); background-repeat: no-repeat, repeat; background-size: cover, 200px 200px; background-blend-mode: multiply; opacity: 0.2; }
+  &::before { 
+    content: ''; 
+    position: absolute; 
+    inset: 0; 
+    background: url('/images/Patina.jpg'); 
+    background-repeat: no-repeat, repeat; 
+    background-size: cover, 200px 200px; 
+    background-blend-mode: multiply; 
+    opacity: 0.2; 
+  }
 `;
 
 const FlexboxContainer = ({ children, height, width, $direction } : FlexboxContainerProps) => {

@@ -59,11 +59,6 @@ const port = 5000;
 
 app.use(cors({ origin: "*" }));
 
-app.get("/", (req, res) => {
-  console.log("hey");
-  res.send("Hello from Express backend!");
-});
-
 // Register a new account
 app.post("/register", async (req, res) => {
   const { login, password } = req.body;

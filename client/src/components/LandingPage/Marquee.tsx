@@ -79,10 +79,10 @@ const Marquee = ({ $direction, $length, $offset, $size } : MarqueeProps) => {
     <MarqueeWrapper $direction={$direction} $offset={$offset} $size={$size}>
       <MarqueePortraitsContainer $direction={$direction}>
           {Array.from({ length: $length }, (_, i) => (
-            <MarqueePortrait key={i} $value={i} $direction={$direction} $src={`/images/horizontal_marquee/${i}.jpg`}/>
+            <MarqueePortrait key={i} $value={i} $direction={$direction} $src={`/images/marquee/${i}.jpg`}/>
           ))}
           {Array.from({ length: $length }, (_, i) => (
-            <MarqueePortrait key={i + $length} $value={i} $direction={$direction} $src={`/images/horizontal_marquee/${i}.jpg`}/>
+            <MarqueePortrait key={i + $length} $value={i} $direction={$direction} $src={`/images/marquee/${i}.jpg`}/>
           ))}
       </MarqueePortraitsContainer>
     </MarqueeWrapper>
