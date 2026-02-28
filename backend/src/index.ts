@@ -67,7 +67,7 @@ app.post("/register", async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(password, salt_rounds);
     const result = await db.query(
-      "INSERT INTO user_accounts (login, password_hash) VALUES ($1, $2) RETURNING user_id, login", 
+      "INSERT INTO users (login, password_hash) VALUES ($1, $2) RETURNING user_id, login", 
       [login, hashedPassword]);
 
     res.status(201).json({ user: result.rows[0] });
@@ -87,7 +87,7 @@ app.post("/login", async(req, res) => {
 
   try {
     const result = await db.query(
-      "SELECT user_id, login, password_hash FROM user_accounts WHERE login = $1",
+      "SELECT user_id, login, password_hash FROM users WHERE login = $1",
       [login]
     );
 
@@ -107,6 +107,59 @@ app.post("/login", async(req, res) => {
     const token = jwt.sign({ id: user.id, login: user.login }, process.env.JWT_SECRET!, { expiresIn: "1h" });
     res.status(200).json({ id: user.id, login: user.login, token: token })
   } catch(err) {
+    console.log(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get("/feed", async (req, res) => {
+
+});
+
+app.get("/characters/search", async (req, res) => {
+  const { charName } = req.query;
+  console.log(typeof charName);
+
+  if (!charName || typeof charName !== "string") {
+    return res.status(400).json({ error: "No text provided" });
+  }
+
+  try {
+    const result = await db.query(
+      `SELECT char_id, name
+       FROM characters
+       WHERE name ILIKE $1
+       ORDER BY name
+       LIMIT 10`,
+      [`%${charName}%`]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.post("/createPost", async (req, res) => {
+  const { char_id, text } = req.body;
+  const owner_id = 1;
+
+  // Bad inputs
+  if (!char_id || !text || !text.trim()) return res.status(400).json({ error: "Missing character or text"});
+  if (text.length > 280) return res.status(400).json({ error: "Too many characters"});
+
+  try {
+    const result = await db.query(
+      "INSERT INTO posts (owner_id, character_id, text) VALUES ($1, $2, $3) RETURNING post_id", 
+      [owner_id, char_id, text]);
+
+    res.status(201).json({ user: result.rows[0] });
+  } catch(err: any) {
+    // Character id not in database
+    if (err.code === "23503") {
+      return res.status(400).json({ error: "Invalid character" });
+    }
     console.log(err);
     res.status(500).json({ error: "Internal server error" });
   }

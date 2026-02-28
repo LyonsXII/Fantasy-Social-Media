@@ -1,6 +1,11 @@
 import styled from 'styled-components';
 
+import CreatePostMenu from './CreatePostMenu';
 import Post from './Post';
+
+type StreamProps = {
+  $showCreatePostMenu: boolean;
+};
 
 const StyledMainContainer = styled.div`
   position: relative;
@@ -12,21 +17,13 @@ const StyledMainContainer = styled.div`
   width: 100%;
   padding: 0.6rem 0.6rem 0 0.6rem;
   gap: 0.6rem;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: url('/images/Patina.jpg') no-repeat center / cover;
-    opacity: 0.2;
-    z-index: -1;
-  }
 `;
 
-const Stream = () => {
+const Stream = ({ $showCreatePostMenu } : StreamProps) => {
 
   return (
     <StyledMainContainer>
+      {$showCreatePostMenu && <CreatePostMenu />}
       <Post/>
       <Post/>
     </StyledMainContainer>
