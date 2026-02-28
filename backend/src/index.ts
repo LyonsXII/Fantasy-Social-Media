@@ -118,7 +118,6 @@ app.get("/feed", async (req, res) => {
 
 app.get("/characters/search", async (req, res) => {
   const { charName } = req.query;
-  console.log(typeof charName);
 
   if (!charName || typeof charName !== "string") {
     return res.status(400).json({ error: "No text provided" });

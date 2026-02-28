@@ -76,7 +76,7 @@ const StyledSuggestionsContainer = styled.div`
   height: fit-content;
   max-height: 100%;
   width: 100%;
-  border: 1px solid cyan;
+  border: 1px solid black;
 `;
 
 const StyledSuggestion = styled.div`
@@ -84,6 +84,11 @@ const StyledSuggestion = styled.div`
   width: 100%;
   padding: 0.4rem;
   font-size: 1rem;
+  border: 1px solid hsla(0, 0%, 0%, 0.2);
+
+  &:hover {
+    background-color: grey;
+  }
 `;
 
 const CreatePostMenu = () => {
