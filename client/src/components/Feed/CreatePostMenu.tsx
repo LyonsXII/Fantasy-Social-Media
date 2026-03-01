@@ -5,10 +5,8 @@ import styled from 'styled-components';
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const StyledMainContainer = styled.div`
-  position: relative;
-  isolation: isolate;
   display: flex;
-  height: 30%;
+  height: 40%;
   width: 100%;
   padding: 1.6rem 1.6rem 1.6rem 1.6rem;
   gap: 0.6rem;
@@ -40,6 +38,7 @@ const StyledInput = styled.input`
   width: 100%;
   padding: 0.4rem;
   font-size: 1rem;
+  margin-top: calc(15px);
 `;
 
 const StyledSuggestionsContainer = styled.div`
@@ -63,23 +62,18 @@ const StyledSuggestion = styled.div`
 
 const StyledSuggestionImagesContainer = styled.div`
   display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
+  flex-direction: column;
   height: 100%;
-  width: 80%;
-  padding-left: 1rem;
+  width: fit-content;
   gap: 0.6rem;
+  margin: 0rem 1rem;
 `
 
 const StyledSuggestionImage = styled.div<{ $imageUrl: string }>`
-  height: 80px;
-  width: 80px;
+  height: 60px;
+  width: 60px;
   border-radius: 100%;
-  background-image: ${({ $imageUrl }) => {
-    const fullUrl = backendUrl + $imageUrl;
-    console.log("Image URL:", fullUrl);
-    return `url(${fullUrl})`;
-  }};
+  background-image: ${({ $imageUrl }) => `url(${backendUrl + $imageUrl})`};
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
@@ -87,9 +81,27 @@ const StyledSuggestionImage = styled.div<{ $imageUrl: string }>`
   cursor: pointer;
 `
 
+const StyledCreatePostContentContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  padding: 1.6rem 1.6rem 1.6rem 1.6rem;
+  gap: 0.6rem;
+`;
+
+type Character = {
+  id: number;
+  name: string;
+  image: string;
+};
+
 const CreatePostMenu = () => {
   const [charNameInput, setCharNameInput] = useState("");
-  const [suggestions, setSuggestions] = useState<{ id: number, name: string; image: string }[]>([]);
+  const [suggestions, setSuggestions] = useState<Character[]>([]);
+  const [selectedCharacter, setSelectedCharacter] = useState<number | null>(null);
+  const [denySuggestionsUpdate, setDenySuggestionsUpdate] = useState(false);
+  const [showSuggestionsList, setShowSuggestionsList] = useState(true);
 
   function updateField(text: string) {
   setCharNameInput(text);
@@ -108,7 +120,20 @@ const CreatePostMenu = () => {
     }
   };
 
+  function updateSelectedCharacter(char: Character) {
+    setSelectedCharacter(char.id);
+    setSuggestions([{ id: char.id, name: char.name, image: char.image}]);
+    setDenySuggestionsUpdate(true);
+    setCharNameInput(char.name);
+    setShowSuggestionsList(false);
+  }
+
+  // Update suggestions
   useEffect(() => {
+    if (denySuggestionsUpdate) return;
+
+    setShowSuggestionsList(true);
+
     const timeout = setTimeout(() => {
       if (charNameInput.trim()) {
         fetchCharacters(charNameInput);
@@ -120,19 +145,26 @@ const CreatePostMenu = () => {
     return () => clearTimeout(timeout);
   }, [charNameInput]);
 
-  // TEMPORARY - DELETE THIS MICHAEL IF YOU'RE DONE WITH IT
+  // Deny update of suggestions when character chosen
   useEffect(() => {
-    console.log(suggestions);
-  }, [suggestions]);
+    if (!denySuggestionsUpdate) return;
+
+    const timeout = setTimeout(() => {
+      setDenySuggestionsUpdate(false);
+    }, 100);
+  }, [denySuggestionsUpdate]);
 
   return (
     <StyledMainContainer>
       <StyledInputContainer>
-        <StyledInput type="text" name="char" value={charNameInput} placeholder="Character Name" onChange={(e) => updateField(e.target.value)}/>
-        {suggestions.length > 0 && (
+        <StyledInput type="text" name="char" value={charNameInput} placeholder="Character Name" onChange={(e) => updateField(e.target.value)} onFocus={() => {
+          fetchCharacters(charNameInput);
+          setShowSuggestionsList(true);
+        }}/>
+        {suggestions.length > 0 && showSuggestionsList && (
           <StyledSuggestionsContainer>
             {suggestions.map((char) => (
-              <StyledSuggestion key={char.name}>
+              <StyledSuggestion key={char.name} onClick={() => updateSelectedCharacter(char)}>
                 {char.name}
               </StyledSuggestion>
             ))}
@@ -144,12 +176,17 @@ const CreatePostMenu = () => {
         {suggestions.length > 0 && (
           suggestions.map((char) => (
             <StyledSuggestionImage 
-              key={char.name} 
+              key={char.name}
               $imageUrl={char.image}
+              onClick={() => updateSelectedCharacter(char)}
             />
           ))
         )}
       </StyledSuggestionImagesContainer>
+
+      <StyledCreatePostContentContainer>
+
+      </StyledCreatePostContentContainer>
     </StyledMainContainer>
   )
 }

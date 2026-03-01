@@ -125,11 +125,12 @@ app.get("/characters/search", async (req, res) => {
 
   try {
     const result = await db.query(
-      `SELECT char_id, name, image
+      `SELECT char_id, name, image,
+         similarity(name, $1) AS score
        FROM characters
        WHERE name ILIKE $1
-       ORDER BY name
-       LIMIT 10`,
+       ORDER BY score DESC
+       LIMIT 5;`,
       [`%${charName}%`]
     );
 
