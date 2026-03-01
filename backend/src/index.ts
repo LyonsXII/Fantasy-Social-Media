@@ -125,7 +125,7 @@ app.get("/characters/search", async (req, res) => {
 
   try {
     const result = await db.query(
-      `SELECT char_id, name
+      `SELECT char_id, name, image
        FROM characters
        WHERE name ILIKE $1
        ORDER BY name
