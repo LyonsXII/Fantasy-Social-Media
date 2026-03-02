@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import axios from "axios";
 import styled from 'styled-components';
 
+import TextEditor from './TextEditor';
+
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const StyledMainContainer = styled.div`
@@ -29,7 +31,7 @@ const StyledInputContainer = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
-  width: 20%;
+  min-width: 20%;
   gap: 0.6rem;
 `;
 
@@ -38,7 +40,7 @@ const StyledInput = styled.input`
   width: 100%;
   padding: 0.4rem;
   font-size: 1rem;
-  margin-top: calc(15px);
+  margin-top: 15px;
 `;
 
 const StyledSuggestionsContainer = styled.div`
@@ -86,8 +88,8 @@ const StyledCreatePostContentContainer = styled.div`
   flex-direction: column;
   height: 100%;
   width: 100%;
-  padding: 1.6rem 1.6rem 1.6rem 1.6rem;
   gap: 0.6rem;
+  border: 1px solid black;
 `;
 
 type Character = {
@@ -185,7 +187,7 @@ const CreatePostMenu = () => {
       </StyledSuggestionImagesContainer>
 
       <StyledCreatePostContentContainer>
-
+        <TextEditor/>
       </StyledCreatePostContentContainer>
     </StyledMainContainer>
   )
