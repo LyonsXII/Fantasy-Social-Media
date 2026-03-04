@@ -1,4 +1,3 @@
-import type { ComponentType, SVGProps } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 
 import LoginIcon from "../../assets/icons/login.svg?react";
@@ -114,7 +113,8 @@ export const StyledInput = styled.input`
   } 
 `
 
-const createStyledIcon = (IconComponent: ComponentType<SVGProps<SVGSVGElement>>) => styled(IconComponent)<{$shadow : boolean}>`
+const createStyledIcon = (IconComponent: React.ComponentType<any>) =>
+  styled(IconComponent)`
   height: 20px;
   width: 20px;
   cursor: pointer;

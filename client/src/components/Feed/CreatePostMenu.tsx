@@ -67,18 +67,16 @@ const StyledSuggestionImagesContainer = styled.div`
   flex-direction: column;
   height: 100%;
   width: fit-content;
+  min-width: 60px;
   gap: 0.6rem;
   margin: 0rem 1rem;
 `
 
-const StyledSuggestionImage = styled.div<{ $imageUrl: string }>`
+const StyledSuggestionImage = styled.img`
   height: 60px;
   width: 60px;
-  border-radius: 100%;
-  background-image: ${({ $imageUrl }) => `url(${backendUrl + $imageUrl})`};
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
+  border-radius: 50%;
+  object-fit: cover;
   box-shadow: 0 0.2em 0.2em rgba(0, 0, 0, 0.4);
   cursor: pointer;
 `
@@ -89,11 +87,18 @@ const StyledCreatePostContentContainer = styled.div`
   height: 100%;
   width: 100%;
   gap: 0.6rem;
-  border: 1px solid black;
+`;
+
+export const StyledMessageText = styled.div<{ $showMessageText : boolean }>`
+  height: 1rem;
+  width: 100%;
+  font-size: 1rem;
+  opacity: 0.8;
+  padding-left: 1rem;
 `;
 
 type Character = {
-  id: number;
+  charId: number;
   name: string;
   image: string;
 };
@@ -104,6 +109,8 @@ const CreatePostMenu = () => {
   const [selectedCharacter, setSelectedCharacter] = useState<number | null>(null);
   const [denySuggestionsUpdate, setDenySuggestionsUpdate] = useState(false);
   const [showSuggestionsList, setShowSuggestionsList] = useState(true);
+  const [messageText, setMessageText] = useState<string>("");
+  const [showMessageText, setShowMessageText] = useState<boolean>(false);
 
   function updateField(text: string) {
   setCharNameInput(text);
@@ -113,7 +120,7 @@ const CreatePostMenu = () => {
     try {
       const response = await axios.get(`${backendUrl}/characters/search`, 
         {
-          params: { charName: query }
+          params: { text: query }
         }
       );
       setSuggestions(response.data);
@@ -123,12 +130,30 @@ const CreatePostMenu = () => {
   };
 
   function updateSelectedCharacter(char: Character) {
-    setSelectedCharacter(char.id);
-    setSuggestions([{ id: char.id, name: char.name, image: char.image}]);
+    setSelectedCharacter(char.charId);
+    setSuggestions([{ charId: char.charId, name: char.name, image: char.image}]);
     setDenySuggestionsUpdate(true);
     setCharNameInput(char.name);
     setShowSuggestionsList(false);
   }
+
+  async function createPost(postData: any, lenRawText: number){
+    try {
+      const response = await axios.post(`${backendUrl}/createPost`, 
+        {
+          charId: selectedCharacter,
+          postData: postData,
+          lenRawText: lenRawText
+        }
+      );
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          setMessageText(error.response.data.error);
+        }
+      }
+    }
+  };
 
   // Update suggestions
   useEffect(() => {
@@ -141,6 +166,7 @@ const CreatePostMenu = () => {
         fetchCharacters(charNameInput);
       } else {
         setSuggestions([]);
+        setSelectedCharacter(null);
       }
     }, 300);
 
@@ -155,6 +181,19 @@ const CreatePostMenu = () => {
       setDenySuggestionsUpdate(false);
     }, 100);
   }, [denySuggestionsUpdate]);
+
+  // Show message text popup temporarily
+  useEffect(() => {
+    if (messageText != "") {
+      setShowMessageText(true)
+      const timer = setTimeout(() => {
+        setMessageText("");
+        setShowMessageText(false);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [messageText]);
 
   return (
     <StyledMainContainer>
@@ -175,11 +214,14 @@ const CreatePostMenu = () => {
       </StyledInputContainer>
 
       <StyledSuggestionImagesContainer>
+        {suggestions.length == 0 && (
+          <StyledSuggestionImage key="unknown" src="/images/unknown.jpg"/>
+        )}
         {suggestions.length > 0 && (
           suggestions.map((char) => (
             <StyledSuggestionImage 
               key={char.name}
-              $imageUrl={char.image}
+              src={backendUrl + char.image}
               onClick={() => updateSelectedCharacter(char)}
             />
           ))
@@ -187,7 +229,10 @@ const CreatePostMenu = () => {
       </StyledSuggestionImagesContainer>
 
       <StyledCreatePostContentContainer>
-        <TextEditor/>
+        <TextEditor createPost={createPost}/>
+          <StyledMessageText $showMessageText={showMessageText}>
+            {messageText}
+          </StyledMessageText>
       </StyledCreatePostContentContainer>
     </StyledMainContainer>
   )

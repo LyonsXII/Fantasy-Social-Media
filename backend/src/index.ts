@@ -117,24 +117,30 @@ app.get("/feed", async (req, res) => {
 });
 
 app.get("/characters/search", async (req, res) => {
-  const { charName } = req.query;
+  const { text } = req.query;
 
-  if (!charName || typeof charName !== "string") {
+  if (!text || typeof text !== "string") {
     return res.status(400).json({ error: "No text provided" });
   }
 
   try {
-    const result = await db.query(
+    const search = await db.query(
       `SELECT char_id, name, image,
          similarity(name, $1) AS score
        FROM characters
        WHERE name ILIKE $1
        ORDER BY score DESC
        LIMIT 5;`,
-      [`%${charName}%`]
+      [`%${text}%`]
     );
 
-    res.json(result.rows);
+    const result = search.rows.map(row => ({
+      charId: row.char_id,
+      name: row.name,
+      image: row.image
+    }));
+
+    res.json(result);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -142,24 +148,22 @@ app.get("/characters/search", async (req, res) => {
 });
 
 app.post("/createPost", async (req, res) => {
-  const { char_id, text } = req.body;
+  const { charId, postData, lenRawText } = req.body;
+  const convPostData = JSON.stringify(postData);
   const owner_id = 1;
 
   // Bad inputs
-  if (!char_id || !text || !text.trim()) return res.status(400).json({ error: "Missing character or text"});
-  if (text.length > 280) return res.status(400).json({ error: "Too many characters"});
+  if (charId === null || lenRawText === 0) return res.status(400).json({ error: "Missing character or text"});
+  if (lenRawText > 280) return res.status(400).json({ error: "Too many characters"});
+  if (convPostData.length > 5000) return res.status(400).json({ error: "Input too large"});
 
   try {
     const result = await db.query(
-      "INSERT INTO posts (owner_id, character_id, text) VALUES ($1, $2, $3) RETURNING post_id", 
-      [owner_id, char_id, text]);
+      "INSERT INTO posts (owner_id, character_id, content) VALUES ($1, $2, $3) RETURNING post_id", 
+      [owner_id, charId, convPostData]);
 
     res.status(201).json({ user: result.rows[0] });
   } catch(err: any) {
-    // Character id not in database
-    if (err.code === "23503") {
-      return res.status(400).json({ error: "Invalid character" });
-    }
     console.log(err);
     res.status(500).json({ error: "Internal server error" });
   }
