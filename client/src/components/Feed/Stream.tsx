@@ -24,8 +24,9 @@ const Stream = ({ $showCreatePostMenu } : StreamProps) => {
   return (
     <StyledMainContainer>
       {$showCreatePostMenu && <CreatePostMenu />}
-      <Post/>
-      <Post/>
+      <Post $postId={1}/>
+      <Post $postId={2}/>
+      <Post $postId={3}/>
     </StyledMainContainer>
   )
 }

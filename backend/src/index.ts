@@ -169,6 +169,37 @@ app.post("/createPost", async (req, res) => {
   }
 });
 
+app.get("/post", async (req, res) => {
+  const { postId } = req.query;
+
+  try {
+    const search = await db.query(
+      `SELECT name, image, content, replies, loves, likes, dislikes, p.created_at, updated_at
+       FROM posts p
+       INNER JOIN characters c ON p.character_id = c.char_id
+       WHERE post_id = $1;`,
+      [postId]
+    );
+
+    const result = search.rows.map(row => ({
+      name: row.name,
+      image: row.image,
+      content: row.content,
+      replies: row.replies,
+      loves: row.loves,
+      likes: row.likes,
+      dislikes: row.dislikes,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    }));
+
+    res.json(result[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });

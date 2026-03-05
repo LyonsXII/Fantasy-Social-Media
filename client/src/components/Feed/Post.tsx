@@ -1,6 +1,9 @@
 import styled from 'styled-components';
 import { useState, useEffect } from 'react';
 import type { ComponentType, SVGProps } from 'react';
+import axios from "axios";
+
+import CharacterImage from '../General/CharacterImage';
 
 import RepliesIcon from "../../assets/icons/replies.svg?react";
 import ShareIcon from "../../assets/icons/share.svg?react";
@@ -32,25 +35,11 @@ const StyledMainContainer = styled.div`
   }
 `;
 
-const StyledUserIcon = styled.div`
-  height: 6rem;
-  width: 6rem;
-  border-radius: 100%;
-  margin-right: 1.2rem;
-  background: url('/images/marquee/2.jpg') center / cover no-repeat;
-  box-shadow: 0 0.2em 0.2em rgba(0, 0, 0, 0.4);
-  cursor: pointer;
-
-  transition: transform 0.4s ease;
-  &:hover {
-    transform: scale(1.04);
-  }
-`;
-
 const StyledContentContainer = styled.div`
   display: flex;
   width: 100%;
   padding: 1.6rem 1.6rem 0rem 1.6rem;
+  gap: 1rem;
 `;
 
 const StyledTextContainer = styled.div`
@@ -144,12 +133,29 @@ const StyledEmojiIcon = createStyledIcon(EmojiIcon);
 const StyledLikeIcon = createStyledVoteIcon(LikeIcon);
 const StyledDislikeIcon = createStyledVoteIcon(DisikeIcon);
 
-const Post = () => {
+export interface PostProps {
+  $postId: number
+}
+
+const Post = ({ $postId } : PostProps) => {
+  const [postData, setPostData] = useState({
+    name: "",
+    image: "",
+    content: "",
+    replies: 0,
+    loves: 0,
+    likes: 0,
+    dislikes: 0,
+    createdAt: "",
+    updatedAt: ""
+  });
   const [repliesExpanded, setrepliesExpanded] = useState(false);
   const [shareExpanded, setShareExpanded] = useState(false);
   const [favourited, setfavourited] = useState(false);
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
+
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   function convertCounts(num: number): string {
     if (num < 1000) {
@@ -161,16 +167,31 @@ const Post = () => {
     }
   }
 
+  async function fetchPostDetails() {
+    try {
+      const response = await axios.get(`${backendUrl}/post`, 
+        {
+          params: { postId: $postId }
+        }
+      );
+      setPostData(response.data);
+    } catch (error) {
+      console.error("Post data lookup failed", error);
+    }
+  };
+
+  // Load post data
   useEffect(() => {
+    fetchPostDetails();
   }, []);
 
   return (
     <StyledMainContainer>
       <StyledContentContainer>
-        <StyledUserIcon/>
+        <CharacterImage imagePath={postData.image}/>
         <StyledTextContainer>
           <StyledCharacterName>
-            Rand Al'Thor
+            {postData.name}
           </StyledCharacterName>
           <StyledPostText>
             Sorry guys, that got a little bit out of hand!<br/>
@@ -182,7 +203,7 @@ const Post = () => {
         <StyledActionBarIconContainer>
           <StyledRepliesIcon/>
           <StyledActionBarText>
-            12
+            {postData.replies}
           </StyledActionBarText>
         </StyledActionBarIconContainer>
         <StyledActionBarIconContainer>
@@ -197,11 +218,11 @@ const Post = () => {
         <StyledActionBarIconContainer>
           <StyledLikeIcon $active={liked} $activeColour="green" onClick={() => setLiked(prev => !prev)}/>
             <StyledActionBarText>
-              12
+              {postData.likes}
             </StyledActionBarText>
           <StyledDislikeIcon $active={disliked} $activeColour="red" onClick={() => setDisliked(prev => !prev)}/>
             <StyledActionBarText>
-              12
+              {postData.dislikes}
             </StyledActionBarText>
         </StyledActionBarIconContainer>
       </StyledActionBar>

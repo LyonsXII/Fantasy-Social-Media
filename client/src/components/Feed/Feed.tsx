@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { useState } from 'react';
 
-import MainMenu from './MainMenu';
+import MainMenu from '../Menu/MainMenu';
 import Stream from './Stream';
 
 const StyledMainContainer = styled.div`
@@ -23,6 +23,7 @@ const StyledMainContainer = styled.div`
 
 const Feed = () => {
   const [showCreatePostMenu, setShowCreatePostMenu] = useState(false);
+  const [characterFilter, setCharacterFilter] = useState(null);
 
   const toggleShowCreatePostMenu = () => {
     console.log(showCreatePostMenu);

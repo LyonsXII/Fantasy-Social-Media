@@ -1,5 +1,7 @@
 import styled from 'styled-components';
 
+import Characters from './Characters';
+
 type MainMenuProps = {
   $toggleShowCreatePostMenu: () => void;
 };
@@ -54,6 +56,14 @@ const MainMenu = ({ $toggleShowCreatePostMenu } : MainMenuProps) => {
           Create Post
         </StyledOptionText>
       </StyledOption>
+
+      <StyledOption>
+        <StyledOptionText>
+          Search
+        </StyledOptionText>
+      </StyledOption>
+
+      <Characters/>
 
       <StyledOption>
         <StyledOptionText>
