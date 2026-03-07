@@ -89,13 +89,13 @@ type Character = {
 };
 
 export interface CharacterSearchProps {
-  $numSuggestions: number
+  $numSuggestions: number,
+  select: (charId: number) => void
 }
 
-const CharacterSearch = ({ $numSuggestions } : CharacterSearchProps) => {
+const CharacterSearch = ({ $numSuggestions, select } : CharacterSearchProps) => {
   const [charNameInput, setCharNameInput] = useState("");
   const [suggestions, setSuggestions] = useState<Character[]>([]);
-  const [selectedCharacter, setSelectedCharacter] = useState<number | null>(null);
   const [denySuggestionsUpdate, setDenySuggestionsUpdate] = useState(false);
   const [showSuggestionsList, setShowSuggestionsList] = useState(true);
 
@@ -103,11 +103,11 @@ const CharacterSearch = ({ $numSuggestions } : CharacterSearchProps) => {
     setCharNameInput(text);
   };
 
-  async function fetchCharacters(query: string) {
+  async function fetchCharacters(charNameInput: string) {
     try {
       const response = await axios.get(`${backendUrl}/characters/search`, 
         {
-          params: { text: query }
+          params: { text: charNameInput }
         }
       );
       setSuggestions(response.data);
@@ -116,8 +116,23 @@ const CharacterSearch = ({ $numSuggestions } : CharacterSearchProps) => {
     }
   };
 
+  function handleSuggestions(charNameInput: string) {
+    if (denySuggestionsUpdate) return;
+
+    setShowSuggestionsList(true);
+
+    const timeout = setTimeout(() => {
+      if (charNameInput.trim() != "") {
+        fetchCharacters(charNameInput);
+      } else {
+        setSuggestions([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  };
+
   function updateSelectedCharacter(char: Character) {
-    setSelectedCharacter(char.charId);
     setSuggestions([{ charId: char.charId, name: char.name, image: char.image}]);
     setDenySuggestionsUpdate(true);
     setCharNameInput(char.name);
@@ -126,20 +141,7 @@ const CharacterSearch = ({ $numSuggestions } : CharacterSearchProps) => {
 
   // Update suggestions
   useEffect(() => {
-    if (denySuggestionsUpdate) return;
-
-    setShowSuggestionsList(true);
-
-    const timeout = setTimeout(() => {
-      if (charNameInput.trim()) {
-        fetchCharacters(charNameInput);
-      } else {
-        setSuggestions([]);
-        setSelectedCharacter(null);
-      }
-    }, 300);
-
-    return () => clearTimeout(timeout);
+    handleSuggestions(charNameInput);
   }, [charNameInput]);
 
   // Deny update of suggestions when character chosen
@@ -155,13 +157,18 @@ const CharacterSearch = ({ $numSuggestions } : CharacterSearchProps) => {
     <StyledMainContainer>
       <StyledInputContainer>
         <StyledInput type="text" name="char" value={charNameInput} placeholder="Character Name" onChange={(e) => updateField(e.target.value)} onFocus={() => {
-          fetchCharacters(charNameInput);
+          handleSuggestions(charNameInput);
           setShowSuggestionsList(true);
         }}/>
         {suggestions.length > 0 && showSuggestionsList && (
           <StyledSuggestionsContainer>
             {suggestions.slice(0, $numSuggestions).map((char) => (
-              <StyledSuggestion key={char.name} onClick={() => updateSelectedCharacter(char)}>
+              <StyledSuggestion key={char.name} 
+                onClick={() => {
+                  updateSelectedCharacter(char);
+                  select(char.charId);
+                }
+              }>
                 {char.name}
               </StyledSuggestion>
             ))}
@@ -178,7 +185,10 @@ const CharacterSearch = ({ $numSuggestions } : CharacterSearchProps) => {
             <StyledSuggestionImage 
               key={char.name}
               src={backendUrl + char.image}
-              onClick={() => updateSelectedCharacter(char)}
+              onClick={() => {
+                updateSelectedCharacter(char)
+                select(char.charId);
+              }}
             />
           ))
         )}

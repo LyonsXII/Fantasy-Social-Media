@@ -68,10 +68,11 @@ const StyledAttachIcon = createStyledIcon(AttachIcon);
 const StyledConfirmIcon = createStyledIcon(ConfirmIcon);
 
 type LexicalCustomTextActionsProps = {
-  createPost: (postData: any, lenRawText: number) => Promise<void>;
+  onSubmit?: (postData: any, lenRawText: number) => Promise<void>;
 };
 
-export const LexicalCustomTextActions = ({createPost} : LexicalCustomTextActionsProps) => {
+
+export const LexicalCustomTextActions = ({onSubmit} : LexicalCustomTextActionsProps) => {
   const [editor] = useLexicalComposerContext();
   const [active, setActive] = useState({
     bold: false,
@@ -155,7 +156,7 @@ export const LexicalCustomTextActions = ({createPost} : LexicalCustomTextActions
               const text = $getRoot().getTextContent();
               return text.length
             });
-            createPost(json, lenRawText);
+            await onSubmit?.(json, lenRawText);
         }}>
           Post
           <StyledConfirmIcon/>

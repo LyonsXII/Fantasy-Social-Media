@@ -5,6 +5,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import cors from "cors";
 import pg from "pg";
+import type { QueryResult } from "pg";
 import path from "path";
 import * as dotenv from "dotenv";
 
@@ -112,10 +113,6 @@ app.post("/login", async(req, res) => {
   }
 });
 
-app.get("/feed", async (req, res) => {
-
-});
-
 app.get("/characters/search", async (req, res) => {
   const { text } = req.query;
 
@@ -194,6 +191,54 @@ app.get("/post", async (req, res) => {
     }));
 
     res.json(result[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get("/feed", async (req, res) => {
+  console.log("hye");
+  const { charId } = req.query;
+  console.log(charId);
+
+  let search: QueryResult<any>;
+  try {
+    if (charId) {
+      search = await db.query(
+        `SELECT post_id, name, image, content, replies, loves, likes, dislikes, p.created_at, updated_at
+        FROM posts p
+        INNER JOIN characters c ON p.character_id = c.char_id
+        WHERE p.character_id = $1
+        ORDER BY p.created_at DESC, p.post_id DESC
+        LIMIT 5;`,
+        [charId]
+      );
+    } else {
+      search = await db.query(
+        `SELECT post_id, name, image, content, replies, loves, likes, dislikes, p.created_at, updated_at
+        FROM posts p
+        INNER JOIN characters c ON p.character_id = c.char_id
+        ORDER BY p.created_at DESC, p.post_id DESC
+        LIMIT 5;`,
+        []
+      );
+    }
+
+    const result = search.rows.map(row => ({
+      postId: row.post_id,
+      name: row.name,
+      image: row.image,
+      content: row.content,
+      replies: row.replies,
+      loves: row.loves,
+      likes: row.likes,
+      dislikes: row.dislikes,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    }));
+
+    res.json(result);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal server error" });

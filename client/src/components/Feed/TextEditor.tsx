@@ -1,8 +1,5 @@
 import styled from 'styled-components';
 
-import {$getRoot, $getSelection} from 'lexical';
-import {useEffect, useMemo } from 'react';
-
 import {LexicalComposer} from '@lexical/react/LexicalComposer';
 import type {InitialConfigType} from '@lexical/react/LexicalComposer';
 import {RichTextPlugin} from "@lexical/react/LexicalRichTextPlugin";
@@ -22,20 +19,16 @@ const StyledMainContainer = styled.div`
   width: 100%;
 `;
 
-const StyledEditableContent = styled(ContentEditable)`
+const StyledEditableContent = styled(ContentEditable)<{ $showMenu: boolean }>`
   position: relative;
   height: 100%;
   width: 100%;
   padding: 0.6rem;
   font-size: 1rem;
-  border: 1px solid black;
-  border-radius: 0 0 1.2rem 1.2rem;
+  border: ${({ $showMenu }) => ($showMenu ? "1px solid black" : "none")};
+  border-radius: ${({ $showMenu }) => ($showMenu ? "0 0 1.2rem 1.2rem" : "none")};
   overflow-y: auto;
 `;
-
-const CustomContent = (
-  <StyledEditableContent/>
-);
 
 const StyledPlaceholder = styled.div`
   position: absolute;
@@ -53,12 +46,14 @@ const CustomPlaceholder = () => {
 };
 
 type TextEditorProps = {
-  createPost: (postData: any, lenRawText: number) => Promise<void>;
+  createPost?: (postData: any, lenRawText: number) => Promise<void>;
+  showMenu: boolean;
+  content?: string;
 };
 
-const TextEditor = ({createPost} : TextEditorProps) => {
+const TextEditor = ({createPost, showMenu, content} : TextEditorProps) => {
   const lexicalConfig: InitialConfigType = {
-      namespace: 'Create Post Text Editor',
+      namespace: showMenu ? "Create post text editor" : "Post viewer",
       theme: {
         text: {
         bold: "text-bold",
@@ -71,21 +66,27 @@ const TextEditor = ({createPost} : TextEditorProps) => {
         superscript: 'text-superscript',
         },
       },
+      editorState: content && content.trim() !== "" ? content : undefined,
+      editable: showMenu,
       onError: (e) => {
           console.log('ERROR:', e)
       }
   }
 
+  const CustomContent = (
+    <StyledEditableContent $showMenu={showMenu}/>
+  );
+
   return (
     <StyledMainContainer>
       <LexicalComposer initialConfig={lexicalConfig}>
-        <LexicalCustomTextActions createPost={createPost}/>
+        {showMenu && <LexicalCustomTextActions onSubmit={createPost}/>}
         <RichTextPlugin
             contentEditable={CustomContent}
-            placeholder={CustomPlaceholder}
+            placeholder={showMenu ? CustomPlaceholder : null}
             ErrorBoundary={LexicalErrorBoundary}
         />
-        <HistoryPlugin/>
+        {showMenu && <HistoryPlugin/>}
       </LexicalComposer>
     </StyledMainContainer>
   );

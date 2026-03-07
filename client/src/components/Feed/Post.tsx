@@ -4,13 +4,14 @@ import type { ComponentType, SVGProps } from 'react';
 import axios from "axios";
 
 import CharacterImage from '../General/CharacterImage';
+import TextEditor from './TextEditor';
 
 import RepliesIcon from "../../assets/icons/replies.svg?react";
 import ShareIcon from "../../assets/icons/share.svg?react";
 import FavouriteIcon from "../../assets/icons/favourite.svg?react";
 import EmojiIcon from "../../assets/icons/emoji.svg?react";
 import LikeIcon from "../../assets/icons/like.svg?react";
-import DisikeIcon from "../../assets/icons/dislike.svg?react";
+import DislikeIcon from "../../assets/icons/dislike.svg?react";
 
 const StyledMainContainer = styled.div`
   position: relative;
@@ -131,73 +132,32 @@ const StyledShareIcon = createStyledIcon(ShareIcon);
 const StyledFavouriteIcon = createStyledIcon(FavouriteIcon);
 const StyledEmojiIcon = createStyledIcon(EmojiIcon);
 const StyledLikeIcon = createStyledVoteIcon(LikeIcon);
-const StyledDislikeIcon = createStyledVoteIcon(DisikeIcon);
+const StyledDislikeIcon = createStyledVoteIcon(DislikeIcon);
 
-export interface PostProps {
-  $postId: number
+type PostProps = {
+  postData: any
 }
 
-const Post = ({ $postId } : PostProps) => {
-  const [postData, setPostData] = useState({
-    name: "",
-    image: "",
-    content: "",
-    replies: 0,
-    loves: 0,
-    likes: 0,
-    dislikes: 0,
-    createdAt: "",
-    updatedAt: ""
-  });
+const Post = ({ postData } : PostProps) => {
   const [repliesExpanded, setrepliesExpanded] = useState(false);
   const [shareExpanded, setShareExpanded] = useState(false);
   const [favourited, setfavourited] = useState(false);
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
 
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
-
-  function convertCounts(num: number): string {
-    if (num < 1000) {
-      return num.toString();
-    } else if (num < 10000) {
-      return Math.floor(num / 1000).toString() + "K";
-    } else {
-      return Math.floor(num / 1000000).toString() + "M";
-    }
-  }
-
-  async function fetchPostDetails() {
-    try {
-      const response = await axios.get(`${backendUrl}/post`, 
-        {
-          params: { postId: $postId }
-        }
-      );
-      setPostData(response.data);
-    } catch (error) {
-      console.error("Post data lookup failed", error);
-    }
-  };
-
-  // Load post data
-  useEffect(() => {
-    fetchPostDetails();
-  }, []);
-
   return (
     <StyledMainContainer>
       <StyledContentContainer>
         <CharacterImage imagePath={postData.image}/>
+
         <StyledTextContainer>
           <StyledCharacterName>
             {postData.name}
           </StyledCharacterName>
-          <StyledPostText>
-            Sorry guys, that got a little bit out of hand!<br/>
-            I'm feeling a lot better now.<br/>
-          </StyledPostText>
+
+          {postData.content != "" && <TextEditor showMenu={false} content={postData.content}/>}
         </StyledTextContainer>
+
       </StyledContentContainer>
       <StyledActionBar>
         <StyledActionBarIconContainer>

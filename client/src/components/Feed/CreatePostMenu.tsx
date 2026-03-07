@@ -146,6 +146,7 @@ const CreatePostMenu = () => {
           lenRawText: lenRawText
         }
       );
+      setMessageText("Post created!");
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response) {
@@ -229,7 +230,7 @@ const CreatePostMenu = () => {
       </StyledSuggestionImagesContainer>
 
       <StyledCreatePostContentContainer>
-        <TextEditor createPost={createPost}/>
+        <TextEditor createPost={createPost} showMenu={true}/>
           <StyledMessageText $showMessageText={showMessageText}>
             {messageText}
           </StyledMessageText>

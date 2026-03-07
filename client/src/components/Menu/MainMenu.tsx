@@ -1,10 +1,6 @@
 import styled from 'styled-components';
 
-import Characters from './Characters';
-
-type MainMenuProps = {
-  $toggleShowCreatePostMenu: () => void;
-};
+import Characters from './Filter';
 
 const StyledMainContainer = styled.div`
   position: relative;
@@ -48,7 +44,12 @@ const StyledOptionText = styled.p`
   user-select: none;
 `;
 
-const MainMenu = ({ $toggleShowCreatePostMenu } : MainMenuProps) => {
+type MainMenuProps = {
+  $toggleShowCreatePostMenu: () => void;
+  setCharacterFilter: (charId: number) => void;
+};
+
+const MainMenu = ({ $toggleShowCreatePostMenu, setCharacterFilter } : MainMenuProps) => {
   return (
     <StyledMainContainer>
       <StyledOption onClick={$toggleShowCreatePostMenu}>
@@ -63,7 +64,7 @@ const MainMenu = ({ $toggleShowCreatePostMenu } : MainMenuProps) => {
         </StyledOptionText>
       </StyledOption>
 
-      <Characters/>
+      <Characters setCharacterFilter={setCharacterFilter}/>
 
       <StyledOption>
         <StyledOptionText>

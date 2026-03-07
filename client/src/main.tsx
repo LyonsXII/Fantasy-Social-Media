@@ -8,11 +8,9 @@ import { AuthProvider } from './context/AuthContext';
 import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
     <AuthProvider>
       <BrowserRouter>
         <App />
       </BrowserRouter>
-    </AuthProvider>
-  </StrictMode>,
+    </AuthProvider>,
 )

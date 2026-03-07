@@ -3,10 +3,6 @@ import { useState } from 'react';
 
 import CharacterSearch from '../General/CharacterSearch';
 
-type MainMenuProps = {
-  $toggleShowCreatePostMenu: () => void;
-};
-
 const StyledMainContainer = styled.div<{$expanded: boolean}>`
   display: flex;
   flex-direction: column;
@@ -35,7 +31,11 @@ const StyledOptionText = styled.p`
   cursor: pointer;
 `;
 
-const Characters = () => {
+type FilterProps = {
+  setCharacterFilter: (charId: number) => void;
+};
+
+const Filter = ({ setCharacterFilter } : FilterProps) => {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -43,9 +43,9 @@ const Characters = () => {
         <StyledOptionText onClick={() => setExpanded(prev => !prev)}>
           Filter
         </StyledOptionText>
-        {expanded && <CharacterSearch $numSuggestions={1}/>}
+        {expanded && <CharacterSearch $numSuggestions={1} select={setCharacterFilter}/>}
     </StyledMainContainer>
   )
 }
 
-export default Characters
+export default Filter
