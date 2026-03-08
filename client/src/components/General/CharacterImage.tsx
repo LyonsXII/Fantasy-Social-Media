@@ -2,9 +2,9 @@ import styled from 'styled-components';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-const StyledSuggestionImage = styled.img`
-  height: 60px;
-  width: 60px;
+const StyledSuggestionImage = styled.img<{$size: string}>`
+  height: ${({ $size }) => $size};
+  width: ${({ $size }) => $size};
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid white;
@@ -13,14 +13,18 @@ const StyledSuggestionImage = styled.img`
 `
 
 export interface CharacterImageProps {
-  imagePath: string
+  alt: string
+  size: string
+  imagePath?: string
+  updateChar?: () => void;
 }
 
-const CharacterImage = ({ imagePath } : CharacterImageProps) => {
-  const src = imagePath ? backendUrl + imagePath: "/images/unknown.jpg";
+const CharacterImage = ({ alt, size, imagePath, updateChar } : CharacterImageProps) => {
+  const src = imagePath ? (backendUrl + imagePath) : "/images/unknown.jpg";
+  console.log(src);
 
   return (
-    <StyledSuggestionImage src={src} alt="Character portrait"/>
+    <StyledSuggestionImage src={src} alt={alt} $size={size} onClick={updateChar}/>
   )
 }
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from "axios";
 import styled from 'styled-components';
 
+import CharacterSearch from '../General/CharacterSearch';
 import TextEditor from './TextEditor';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -106,38 +107,9 @@ type Character = {
 };
 
 const CreatePostMenu = () => {
-  const [charNameInput, setCharNameInput] = useState("");
-  const [suggestions, setSuggestions] = useState<Character[]>([]);
   const [selectedCharacter, setSelectedCharacter] = useState<number | null>(null);
-  const [denySuggestionsUpdate, setDenySuggestionsUpdate] = useState(false);
-  const [showSuggestionsList, setShowSuggestionsList] = useState(true);
   const [messageText, setMessageText] = useState<string>("");
   const [showMessageText, setShowMessageText] = useState<boolean>(false);
-
-  function updateField(text: string) {
-  setCharNameInput(text);
-  };
-
-  async function fetchCharacters(query: string) {
-    try {
-      const response = await axios.get(`${backendUrl}/characters/search`, 
-        {
-          params: { text: query }
-        }
-      );
-      setSuggestions(response.data);
-    } catch (error) {
-      console.error("Character search failed", error);
-    }
-  };
-
-  function updateSelectedCharacter(char: Character) {
-    setSelectedCharacter(char.charId);
-    setSuggestions([{ charId: char.charId, name: char.name, image: char.image}]);
-    setDenySuggestionsUpdate(true);
-    setCharNameInput(char.name);
-    setShowSuggestionsList(false);
-  }
 
   async function createPost(postData: any, lenRawText: number){
     try {
@@ -158,33 +130,6 @@ const CreatePostMenu = () => {
     }
   };
 
-  // Update suggestions
-  useEffect(() => {
-    if (denySuggestionsUpdate) return;
-
-    setShowSuggestionsList(true);
-
-    const timeout = setTimeout(() => {
-      if (charNameInput.trim()) {
-        fetchCharacters(charNameInput);
-      } else {
-        setSuggestions([]);
-        setSelectedCharacter(null);
-      }
-    }, 300);
-
-    return () => clearTimeout(timeout);
-  }, [charNameInput]);
-
-  // Deny update of suggestions when character chosen
-  useEffect(() => {
-    if (!denySuggestionsUpdate) return;
-
-    const timeout = setTimeout(() => {
-      setDenySuggestionsUpdate(false);
-    }, 100);
-  }, [denySuggestionsUpdate]);
-
   // Show message text popup temporarily
   useEffect(() => {
     if (messageText != "") {
@@ -200,36 +145,7 @@ const CreatePostMenu = () => {
 
   return (
     <StyledMainContainer>
-      <StyledInputContainer>
-        <StyledInput type="text" name="char" value={charNameInput} placeholder="Character Name" onChange={(e) => updateField(e.target.value)} onFocus={() => {
-          fetchCharacters(charNameInput);
-          setShowSuggestionsList(true);
-        }}/>
-        {suggestions.length > 0 && showSuggestionsList && (
-          <StyledSuggestionsContainer>
-            {suggestions.map((char) => (
-              <StyledSuggestion key={char.name} onClick={() => updateSelectedCharacter(char)}>
-                {char.name}
-              </StyledSuggestion>
-            ))}
-          </StyledSuggestionsContainer>
-        )}
-      </StyledInputContainer>
-
-      <StyledSuggestionImagesContainer>
-        {suggestions.length == 0 && (
-          <StyledSuggestionImage key="unknown" src="/images/unknown.jpg"/>
-        )}
-        {suggestions.length > 0 && (
-          suggestions.map((char) => (
-            <StyledSuggestionImage 
-              key={char.name}
-              src={backendUrl + char.image}
-              onClick={() => updateSelectedCharacter(char)}
-            />
-          ))
-        )}
-      </StyledSuggestionImagesContainer>
+      <CharacterSearch width="40%" numSuggestions={5} select={setSelectedCharacter}/>
 
       <StyledCreatePostContentContainer>
         <TextEditor createPost={createPost} showMenu={true}/>

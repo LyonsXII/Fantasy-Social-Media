@@ -31,19 +31,20 @@ type StreamProps = {
   characterFilter: number | null;
 };
 
+type PostType = {
+  postId: number;
+  name: string;
+  image: string;
+  content: string;
+  replies: number;
+  loves: number;
+  likes: number;
+  dislikes: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 const Stream = ({ $showCreatePostMenu, characterFilter } : StreamProps) => {
-  type PostType = {
-    postId: number;
-    name: string;
-    image: string;
-    content: string;
-    replies: number;
-    loves: number;
-    likes: number;
-    dislikes: number;
-    createdAt: string;
-    updatedAt: string;
-  }
   const [posts, setPosts] = useState<PostType[]>();
 
   async function fetchPosts() {
@@ -60,6 +61,7 @@ const Stream = ({ $showCreatePostMenu, characterFilter } : StreamProps) => {
     }
   };
 
+  // Fetch posts for feed
   useEffect(() => {
     fetchPosts();
     }, [characterFilter]);

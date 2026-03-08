@@ -25,7 +25,7 @@ app.use((req, res, next) => {
 
 
 // Settings
-const salt_rounds = 10; // bcrypt number of salt rounds when hashing
+const salt_rounds = 10; // bcrypt number of salt rounds when hashing passwords
 
 let db;
 // Connect to database
@@ -52,7 +52,7 @@ db.connect()
   .catch((err) => console.error("Connection error", err));
 
 const allowedOrigins = [
-  'https://portfolio-lyonsxiis-projects.vercel.app', // Change to deployed URL when deployed online
+  'https://portfolio-lyonsxiis-projects.vercel.app', // Change to deployed URL when deployed online!!
   'http://localhost:5173',
 ];
 
@@ -82,6 +82,7 @@ app.post("/register", async (req, res) => {
   }
 });
 
+// Login to account
 app.post("/login", async(req, res) => {
   const { login, password } = req.body;
   if (!login || !password) return res.status(400).json({ error: "Please enter a username and password"})
@@ -113,8 +114,9 @@ app.post("/login", async(req, res) => {
   }
 });
 
+// Match closest five characters from database based on string
 app.get("/characters/search", async (req, res) => {
-  const { text } = req.query;
+  const { text, num } = req.query;
 
   if (!text || typeof text !== "string") {
     return res.status(400).json({ error: "No text provided" });
@@ -127,8 +129,8 @@ app.get("/characters/search", async (req, res) => {
        FROM characters
        WHERE name ILIKE $1
        ORDER BY score DESC
-       LIMIT 5;`,
-      [`%${text}%`]
+       LIMIT $2;`,
+      [`%${text}%`, num]
     );
 
     const result = search.rows.map(row => ({
@@ -144,6 +146,7 @@ app.get("/characters/search", async (req, res) => {
   }
 });
 
+// Create a post
 app.post("/createPost", async (req, res) => {
   const { charId, postData, lenRawText } = req.body;
   const convPostData = JSON.stringify(postData);
@@ -166,6 +169,7 @@ app.post("/createPost", async (req, res) => {
   }
 });
 
+// Retrieve a post
 app.get("/post", async (req, res) => {
   const { postId } = req.query;
 
@@ -197,10 +201,9 @@ app.get("/post", async (req, res) => {
   }
 });
 
+// Retrieve multiple posts for feed
 app.get("/feed", async (req, res) => {
-  console.log("hye");
   const { charId } = req.query;
-  console.log(charId);
 
   let search: QueryResult<any>;
   try {
@@ -211,7 +214,7 @@ app.get("/feed", async (req, res) => {
         INNER JOIN characters c ON p.character_id = c.char_id
         WHERE p.character_id = $1
         ORDER BY p.created_at DESC, p.post_id DESC
-        LIMIT 5;`,
+        LIMIT 10;`,
         [charId]
       );
     } else {
@@ -220,7 +223,7 @@ app.get("/feed", async (req, res) => {
         FROM posts p
         INNER JOIN characters c ON p.character_id = c.char_id
         ORDER BY p.created_at DESC, p.post_id DESC
-        LIMIT 5;`,
+        LIMIT 10;`,
         []
       );
     }

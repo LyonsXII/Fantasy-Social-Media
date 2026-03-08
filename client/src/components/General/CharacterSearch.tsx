@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react';
 import axios from "axios";
 import styled from 'styled-components';
 
+import CharacterImage from './CharacterImage';
+
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-const StyledMainContainer = styled.div`
+const StyledMainContainer = styled.div<{ $width?: string}>`
   display: flex;
   justify-content: center;
   height: 100%;
-  width: 100%;
+  width: ${({ $width }) => $width ? $width : "100%"};
   gap: 0.6rem;
 `;
 
@@ -89,17 +91,21 @@ type Character = {
 };
 
 export interface CharacterSearchProps {
-  $numSuggestions: number,
-  select: (charId: number) => void
+  width?: string
+  numSuggestions: number,
+  select: (charId: number | null) => void
 }
 
-const CharacterSearch = ({ $numSuggestions, select } : CharacterSearchProps) => {
+const CharacterSearch = ({ width, numSuggestions, select } : CharacterSearchProps) => {
   const [charNameInput, setCharNameInput] = useState("");
   const [suggestions, setSuggestions] = useState<Character[]>([]);
   const [denySuggestionsUpdate, setDenySuggestionsUpdate] = useState(false);
   const [showSuggestionsList, setShowSuggestionsList] = useState(true);
 
   function updateField(text: string) {
+    if (text.trim() == "") {
+      select(null);
+    }
     setCharNameInput(text);
   };
 
@@ -107,7 +113,7 @@ const CharacterSearch = ({ $numSuggestions, select } : CharacterSearchProps) => 
     try {
       const response = await axios.get(`${backendUrl}/characters/search`, 
         {
-          params: { text: charNameInput }
+          params: { text: charNameInput, num: numSuggestions }
         }
       );
       setSuggestions(response.data);
@@ -154,16 +160,16 @@ const CharacterSearch = ({ $numSuggestions, select } : CharacterSearchProps) => 
   }, [denySuggestionsUpdate]);
 
   return (
-    <StyledMainContainer>
+    <StyledMainContainer $width={width}>
       <StyledInputContainer>
         <StyledInput type="text" name="char" value={charNameInput} placeholder="Character Name" onChange={(e) => updateField(e.target.value)} onFocus={() => {
-          handleSuggestions(charNameInput);
+          fetchCharacters(charNameInput);
           setShowSuggestionsList(true);
         }}/>
         {suggestions.length > 0 && showSuggestionsList && (
           <StyledSuggestionsContainer>
-            {suggestions.slice(0, $numSuggestions).map((char) => (
-              <StyledSuggestion key={char.name} 
+            {suggestions.map((char) => (
+              <StyledSuggestion key={char.name}                 
                 onClick={() => {
                   updateSelectedCharacter(char);
                   select(char.charId);
@@ -177,21 +183,27 @@ const CharacterSearch = ({ $numSuggestions, select } : CharacterSearchProps) => 
       </StyledInputContainer>
 
       <StyledSuggestionImagesContainer>
-        {suggestions.length == 0 && (
-          <StyledSuggestionImage key="unknown" src="/images/unknown.jpg"/>
-        )}
-        {suggestions.length > 0 && (
-          suggestions.slice(0, $numSuggestions).map((char) => (
-            <StyledSuggestionImage 
-              key={char.name}
-              src={backendUrl + char.image}
-              onClick={() => {
-                updateSelectedCharacter(char)
-                select(char.charId);
-              }}
-            />
-          ))
-        )}
+        {suggestions.length > 0 
+          ? suggestions.map((char) => (
+              <CharacterImage 
+                key={char.name}
+                alt="Character image"
+                size="60px"
+                imagePath={char.image}
+                updateChar={() => {
+                  updateSelectedCharacter(char);
+                  select(char.charId);
+                }
+              }/>
+            ))
+          : (
+              <CharacterImage 
+                key="unknown"
+                alt="Placeholder character image"
+                size="60px"
+              />
+            )
+        }
       </StyledSuggestionImagesContainer>
     </StyledMainContainer>
   )

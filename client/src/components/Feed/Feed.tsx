@@ -23,15 +23,23 @@ const StyledMainContainer = styled.div`
 
 const Feed = () => {
   const [showCreatePostMenu, setShowCreatePostMenu] = useState(false);
-  const [characterFilter, setCharacterFilter] = useState<null | number>(null);
+  const [characterFilter, setCharacterFilter] = useState<number | null>(null);
 
   const toggleShowCreatePostMenu = () => {
     setShowCreatePostMenu(prev => !prev);
   };
 
+  const handleSetCharacterFilter = (charId: number | null) => {
+    if (charId) {
+      setCharacterFilter(charId)
+    } else {
+      setCharacterFilter(null);
+    }
+  };
+
   return (
     <StyledMainContainer>
-      <MainMenu $toggleShowCreatePostMenu={toggleShowCreatePostMenu} setCharacterFilter={setCharacterFilter}/>
+      <MainMenu $toggleShowCreatePostMenu={toggleShowCreatePostMenu} setCharacterFilter={handleSetCharacterFilter}/>
       <Stream $showCreatePostMenu={showCreatePostMenu} characterFilter={characterFilter}/>
       <div></div>
     </StyledMainContainer>

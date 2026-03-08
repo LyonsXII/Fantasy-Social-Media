@@ -32,7 +32,7 @@ const StyledOptionText = styled.p`
 `;
 
 type FilterProps = {
-  setCharacterFilter: (charId: number) => void;
+  setCharacterFilter: (charId: number | null) => void;
 };
 
 const Filter = ({ setCharacterFilter } : FilterProps) => {
@@ -43,7 +43,7 @@ const Filter = ({ setCharacterFilter } : FilterProps) => {
         <StyledOptionText onClick={() => setExpanded(prev => !prev)}>
           Filter
         </StyledOptionText>
-        {expanded && <CharacterSearch $numSuggestions={1} select={setCharacterFilter}/>}
+        {expanded && <CharacterSearch numSuggestions={1} select={setCharacterFilter}/>}
     </StyledMainContainer>
   )
 }

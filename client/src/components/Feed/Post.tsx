@@ -158,7 +158,11 @@ const Post = ({ postData } : PostProps) => {
   return (
     <StyledMainContainer>
       <StyledContentContainer>
-        <CharacterImage imagePath={postData.image}/>
+        <CharacterImage
+          alt="Character image"
+          size="100px"
+          imagePath={postData.image} 
+        />
 
         <StyledTextContainer>
           <StyledCharacterName>
