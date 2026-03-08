@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import axios from "axios";
 
 import CreatePostMenu from './CreatePostMenu';
+import CharactersMenu from './CharactersMenu';
 import Post from './Post';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -34,7 +35,8 @@ const StyledObserver = styled.div`
 `;
 
 type StreamProps = {
-  $showCreatePostMenu: boolean;
+  showCreatePostMenu: boolean;
+  showCharactersMenu: boolean;
   characterFilter: number | null;
 };
 
@@ -51,7 +53,7 @@ export type PostType = {
   updatedAt: string;
 }
 
-const Stream = ({ $showCreatePostMenu, characterFilter } : StreamProps) => {
+const Stream = ({ showCreatePostMenu, showCharactersMenu, characterFilter } : StreamProps) => {
   const [posts, setPosts] = useState<PostType[]>([]);
   const [lastId, setLastId] = useState<number | null>(null);
   const [furtherContentAvailable, setFurtherContentAvailable] = useState(true);
@@ -123,14 +125,14 @@ const Stream = ({ $showCreatePostMenu, characterFilter } : StreamProps) => {
 
   return (
     <StyledMainContainer>
-      {$showCreatePostMenu && <CreatePostMenu />}
+      {showCreatePostMenu && <CreatePostMenu />}
+      {showCharactersMenu && <CharactersMenu />}
       {posts && posts.map((post, i) => {
         if (i < posts.length - 1) {
           return <Post key={post.postId} postData={post}/>
         } else {
           return <Post key={post.postId} ref={observerRef} postData={post}/>
         }
-        
       })}
     </StyledMainContainer>
   )

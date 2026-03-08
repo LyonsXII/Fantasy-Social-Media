@@ -146,6 +146,47 @@ app.get("/characters/search", async (req, res) => {
   }
 });
 
+// Get character names and images
+app.get("/characters", async (req, res) => {
+  const { lastId } = req.query;
+
+  try {
+    let query = `SELECT char_id, name, image
+       FROM characters`
+
+    const conditions: string[] = [];
+    const params: any[] = [];
+
+    if (lastId != null) {
+      params.push(lastId);
+      conditions.push(`char_id > $${params.length}`);
+    }
+
+    if (conditions.length > 0) {
+      query += ` WHERE ` + conditions.join(" AND ");
+    }
+
+    query += `
+      ORDER BY char_id ASC
+      LIMIT 3;
+    `;
+
+    const search = await db.query(query, params);
+
+    const result = search.rows.map(row => ({
+      charId: row.char_id,
+      name: row.name,
+      image: row.image,
+    }));
+
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
 // Create a post
 app.post("/createPost", async (req, res) => {
   const { charId, postData, lenRawText } = req.body;
@@ -204,7 +245,6 @@ app.get("/post", async (req, res) => {
 // Retrieve multiple posts for feed
 app.get("/feed", async (req, res) => {
   const { charId, lastId } = req.query;
-  console.log(charId, lastId);
 
   let search: QueryResult<any>;
   try {

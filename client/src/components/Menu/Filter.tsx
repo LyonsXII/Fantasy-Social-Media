@@ -40,10 +40,10 @@ const Filter = ({ setCharacterFilter } : FilterProps) => {
 
   return (
     <StyledMainContainer $expanded={expanded}>
-        <StyledOptionText onClick={() => setExpanded(prev => !prev)}>
-          Filter
-        </StyledOptionText>
-        {expanded && <CharacterSearch numSuggestions={1} select={setCharacterFilter}/>}
+      <StyledOptionText onClick={() => setExpanded(prev => !prev)}>
+        Filter
+      </StyledOptionText>
+      {expanded && <CharacterSearch numSuggestions={1} select={setCharacterFilter}/>}
     </StyledMainContainer>
   )
 }

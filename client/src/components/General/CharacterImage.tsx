@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { forwardRef } from 'react';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -19,13 +20,20 @@ export interface CharacterImageProps {
   updateChar?: () => void;
 }
 
-const CharacterImage = ({ alt, size, imagePath, updateChar } : CharacterImageProps) => {
-  const src = imagePath ? (backendUrl + imagePath) : "/images/unknown.jpg";
-  console.log(src);
+const CharacterImage = forwardRef<HTMLImageElement, CharacterImageProps>(
+  ({ alt, size, imagePath, updateChar }, ref) => {
+    const src = imagePath ? backendUrl + imagePath : "/images/unknown.jpg";
 
-  return (
-    <StyledSuggestionImage src={src} alt={alt} $size={size} onClick={updateChar}/>
-  )
-}
+    return (
+      <StyledSuggestionImage
+        src={src}
+        alt={alt}
+        ref={ref}
+        $size={size}
+        onClick={updateChar}
+      />
+    );
+  }
+);
 
-export default CharacterImage
+export default CharacterImage;
