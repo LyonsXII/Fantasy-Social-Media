@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import axios from "axios";
 
 import CreatePostMenu from './CreatePostMenu';
@@ -26,12 +26,19 @@ const StyledMainContainer = styled.div`
   }
 `;
 
+const StyledObserver = styled.div`
+  height: 1px;
+  width: 100%;
+  border: 1px solid black;
+  opacity: 0;
+`;
+
 type StreamProps = {
   $showCreatePostMenu: boolean;
   characterFilter: number | null;
 };
 
-type PostType = {
+export type PostType = {
   postId: number;
   name: string;
   image: string;
@@ -45,32 +52,85 @@ type PostType = {
 }
 
 const Stream = ({ $showCreatePostMenu, characterFilter } : StreamProps) => {
-  const [posts, setPosts] = useState<PostType[]>();
+  const [posts, setPosts] = useState<PostType[]>([]);
+  const [lastId, setLastId] = useState<number | null>(null);
+  const [furtherContentAvailable, setFurtherContentAvailable] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const observerRef = useRef<HTMLDivElement | null>(null);
 
-  async function fetchPosts() {
+  const fetchPosts = useCallback(async () => {
+    if (loading || !furtherContentAvailable) return;
+
+    setLoading(true);
     try {
       const { data } = await axios.get<PostType[]>(`${backendUrl}/feed`, 
         {
-          params: { charId: characterFilter }
+          params: { charId: characterFilter, lastId: lastId }
         }
       );
 
-      setPosts(data);
+      const postsArray = data ?? [];
+      setPosts(prev => [...prev, ...postsArray]);
+
+      if (postsArray.length > 0) {
+        setLastId(data[data.length-1].postId);
+      } else {
+        setFurtherContentAvailable(false);
+      }
     } catch (error) {
       console.error("Character search failed", error);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [loading, furtherContentAvailable, characterFilter, lastId]);
+
+  // Reset on filter change
+  useEffect(() => {
+    setPosts([]);
+    setLastId(null);
+    setFurtherContentAvailable(true);
+    }, [characterFilter]);
 
   // Fetch posts for feed
   useEffect(() => {
+    if (lastId != null) return
     fetchPosts();
-    }, [characterFilter]);
+  }, [lastId]);
+
+  // Create observer to load more posts as needed
+  useEffect(() => {
+    if (!observerRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+
+        if (entry.isIntersecting) {
+          fetchPosts();
+        }
+      },
+      {
+        root: null,
+        rootMargin: "100px",
+        threshold: 0,
+      }
+    );
+
+    observer.observe(observerRef.current);
+
+    return () => observer.disconnect();
+  }, [fetchPosts]);
 
   return (
     <StyledMainContainer>
       {$showCreatePostMenu && <CreatePostMenu />}
-      {posts && posts.map((post) => {
-        return <Post key={post.postId} postData={post}/>
+      {posts && posts.map((post, i) => {
+        if (i < posts.length - 1) {
+          return <Post key={post.postId} postData={post}/>
+        } else {
+          return <Post key={post.postId} ref={observerRef} postData={post}/>
+        }
+        
       })}
     </StyledMainContainer>
   )

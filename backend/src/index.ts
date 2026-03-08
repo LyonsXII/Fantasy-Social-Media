@@ -203,30 +203,38 @@ app.get("/post", async (req, res) => {
 
 // Retrieve multiple posts for feed
 app.get("/feed", async (req, res) => {
-  const { charId } = req.query;
+  const { charId, lastId } = req.query;
+  console.log(charId, lastId);
 
   let search: QueryResult<any>;
   try {
-    if (charId) {
-      search = await db.query(
-        `SELECT post_id, name, image, content, replies, loves, likes, dislikes, p.created_at, updated_at
-        FROM posts p
-        INNER JOIN characters c ON p.character_id = c.char_id
-        WHERE p.character_id = $1
-        ORDER BY p.created_at DESC, p.post_id DESC
-        LIMIT 10;`,
-        [charId]
-      );
-    } else {
-      search = await db.query(
-        `SELECT post_id, name, image, content, replies, loves, likes, dislikes, p.created_at, updated_at
-        FROM posts p
-        INNER JOIN characters c ON p.character_id = c.char_id
-        ORDER BY p.created_at DESC, p.post_id DESC
-        LIMIT 10;`,
-        []
-      );
+    let query = `SELECT post_id, name, image, content, replies, loves, likes, dislikes, p.created_at, updated_at
+      FROM posts p
+      INNER JOIN characters c ON p.character_id = c.char_id`
+
+    const conditions: string[] = [];
+    const params: any[] = [];
+
+    if (charId != null) {
+      params.push(charId);
+      conditions.push(`p.character_id = $${params.length}`);
     }
+
+    if (lastId != null) {
+      params.push(lastId);
+      conditions.push(`p.post_id < $${params.length}`);
+    }
+
+    if (conditions.length > 0) {
+      query += ` WHERE ` + conditions.join(" AND ");
+    }
+
+    query += `
+      ORDER BY p.created_at DESC, p.post_id DESC
+      LIMIT 10;
+    `;
+
+    search = await db.query(query, params);
 
     const result = search.rows.map(row => ({
       postId: row.post_id,

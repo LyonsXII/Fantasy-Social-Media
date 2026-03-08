@@ -29,61 +29,6 @@ const StyledMainContainer = styled.div`
   }
 `;
 
-const StyledInputContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 200px;
-  min-width: 20%;
-  gap: 0.6rem;
-`;
-
-const StyledInput = styled.input`
-  height: fit-content;
-  width: 100%;
-  padding: 0.4rem;
-  font-size: 1rem;
-  margin-top: 15px;
-`;
-
-const StyledSuggestionsContainer = styled.div`
-  height: fit-content;
-  max-height: 100%;
-  width: 100%;
-  border: 1px solid black;
-`;
-
-const StyledSuggestion = styled.div`
-  height: fit-content;
-  width: 100%;
-  padding: 0.4rem;
-  font-size: 1rem;
-  border: 1px solid hsla(0, 0%, 0%, 0.2);
-
-  &:hover {
-    background-color: grey;
-  }
-`;
-
-const StyledSuggestionImagesContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  max-height: calc((60px * 5) + (0.6rem * 4));
-  width: fit-content;
-  min-width: 60px;
-  gap: 0.6rem;
-  margin: 0rem 1rem;
-`
-
-const StyledSuggestionImage = styled.img`
-  height: 60px;
-  width: 60px;
-  border-radius: 50%;
-  object-fit: cover;
-  box-shadow: 0 0.2em 0.2em rgba(0, 0, 0, 0.4);
-  cursor: pointer;
-`
-
 const StyledCreatePostContentContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -100,12 +45,6 @@ export const StyledMessageText = styled.div<{ $showMessageText : boolean }>`
   padding-left: 1rem;
 `;
 
-type Character = {
-  charId: number;
-  name: string;
-  image: string;
-};
-
 const CreatePostMenu = () => {
   const [selectedCharacter, setSelectedCharacter] = useState<number | null>(null);
   const [messageText, setMessageText] = useState<string>("");
@@ -113,7 +52,7 @@ const CreatePostMenu = () => {
 
   async function createPost(postData: any, lenRawText: number){
     try {
-      const response = await axios.post(`${backendUrl}/createPost`, 
+      await axios.post(`${backendUrl}/createPost`, 
         {
           charId: selectedCharacter,
           postData: postData,

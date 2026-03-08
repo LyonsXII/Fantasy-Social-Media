@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { useState, useEffect } from 'react';
+import { useState, forwardRef } from 'react';
 import type { ComponentType, SVGProps } from 'react';
 
 import CharacterImage from '../General/CharacterImage';
@@ -11,6 +11,8 @@ import FavouriteIcon from "../../assets/icons/favourite.svg?react";
 import HeartIcon from "../../assets/icons/heart.svg?react";
 import LikeIcon from "../../assets/icons/like.svg?react";
 import DislikeIcon from "../../assets/icons/dislike.svg?react";
+
+import type { PostType } from './Stream';
 
 const StyledMainContainer = styled.div`
   position: relative;
@@ -54,11 +56,6 @@ const StyledCharacterName = styled.h3`
   font-size: 1.4rem;
   font-weight: 600;
   margin: 0;
-`;
-
-const StyledPostText = styled.p`
-  font-size: 1rem;
-  color: rgba(0,0,0,0.8);
 `;
 
 const StyledActionBar = styled.div`
@@ -127,6 +124,12 @@ const createStyledVoteIcon = (IconComponent: ComponentType<SVGProps<SVGSVGElemen
   }
 `
 
+const StyledDataText = styled.p`
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+`;
+
 const StyledRepliesIcon = createStyledIcon(RepliesIcon);
 const StyledShareIcon = createStyledIcon(ShareIcon);
 const StyledFavouriteIcon = createStyledIcon(FavouriteIcon);
@@ -135,10 +138,10 @@ const StyledLikeIcon = createStyledVoteIcon(LikeIcon);
 const StyledDislikeIcon = createStyledVoteIcon(DislikeIcon);
 
 type PostProps = {
-  postData: any
+  postData: PostType
 }
 
-const Post = ({ postData } : PostProps) => {
+const Post = forwardRef<HTMLDivElement, { postData: any }>(({ postData }, ref) => {
   const [repliesExpanded, setrepliesExpanded] = useState(false);
   const [shareExpanded, setShareExpanded] = useState(false);
   const [favourited, setfavourited] = useState(false);
@@ -156,7 +159,7 @@ const Post = ({ postData } : PostProps) => {
   }
 
   return (
-    <StyledMainContainer>
+    <StyledMainContainer ref={ref}>
       <StyledContentContainer>
         <CharacterImage
           alt="Character image"
@@ -208,8 +211,18 @@ const Post = ({ postData } : PostProps) => {
         </StyledActionBarIconContainer>
 
       </StyledActionBar>
+
+      <StyledDataText>
+        {new Intl.DateTimeFormat("en-GB", {
+          day: "numeric",
+          month: "short",
+          hour: "2-digit",
+          minute: "2-digit",
+        }).format(new Date(postData.createdAt))
+        }
+      </StyledDataText>
     </StyledMainContainer>
   )
-}
+});
 
 export default Post
