@@ -17,6 +17,13 @@ const StyledMainContainer = styled.div`
   width: 100%;
   padding: 0.6rem 0.6rem 0 0.6rem;
   gap: 0.6rem;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `;
 
 type StreamProps = {
@@ -39,16 +46,6 @@ const Stream = ({ $showCreatePostMenu, characterFilter } : StreamProps) => {
   }
   const [posts, setPosts] = useState<PostType[]>();
 
-  function convertCounts(num: number): string {
-    if (num < 1000) {
-      return num.toString();
-    } else if (num < 10000) {
-      return Math.floor(num / 1000).toString() + "K";
-    } else {
-      return Math.floor(num / 1000000).toString() + "M";
-    }
-  }
-
   async function fetchPosts() {
     try {
       const { data } = await axios.get<PostType[]>(`${backendUrl}/feed`, 
@@ -57,15 +54,7 @@ const Stream = ({ $showCreatePostMenu, characterFilter } : StreamProps) => {
         }
       );
 
-      const formattedPosts = data.map(post => ({
-        ...post,
-        replies: convertCounts(post.replies),
-        loves: convertCounts(post.loves),
-        likes: convertCounts(post.likes),
-        dislikes: convertCounts(post.dislikes)
-      }));
-
-      setPosts(formattedPosts);
+      setPosts(data);
     } catch (error) {
       console.error("Character search failed", error);
     }

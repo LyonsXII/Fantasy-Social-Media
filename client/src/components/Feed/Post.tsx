@@ -1,7 +1,6 @@
 import styled from 'styled-components';
 import { useState, useEffect } from 'react';
 import type { ComponentType, SVGProps } from 'react';
-import axios from "axios";
 
 import CharacterImage from '../General/CharacterImage';
 import TextEditor from './TextEditor';
@@ -9,7 +8,7 @@ import TextEditor from './TextEditor';
 import RepliesIcon from "../../assets/icons/replies.svg?react";
 import ShareIcon from "../../assets/icons/share.svg?react";
 import FavouriteIcon from "../../assets/icons/favourite.svg?react";
-import EmojiIcon from "../../assets/icons/emoji.svg?react";
+import HeartIcon from "../../assets/icons/heart.svg?react";
 import LikeIcon from "../../assets/icons/like.svg?react";
 import DislikeIcon from "../../assets/icons/dislike.svg?react";
 
@@ -19,6 +18,7 @@ const StyledMainContainer = styled.div`
   display: flex;
   flex-direction: column;
   height: fit-content;
+  flex-shrink: 0;
   width: 100%;
   gap: 0.6rem;
   background: white;
@@ -130,7 +130,7 @@ const createStyledVoteIcon = (IconComponent: ComponentType<SVGProps<SVGSVGElemen
 const StyledRepliesIcon = createStyledIcon(RepliesIcon);
 const StyledShareIcon = createStyledIcon(ShareIcon);
 const StyledFavouriteIcon = createStyledIcon(FavouriteIcon);
-const StyledEmojiIcon = createStyledIcon(EmojiIcon);
+const StyledHeartIcon = createStyledIcon(HeartIcon);
 const StyledLikeIcon = createStyledVoteIcon(LikeIcon);
 const StyledDislikeIcon = createStyledVoteIcon(DislikeIcon);
 
@@ -144,6 +144,16 @@ const Post = ({ postData } : PostProps) => {
   const [favourited, setfavourited] = useState(false);
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
+
+  function convertCounts(num: number): string {
+    if (num < 1000) {
+      return num.toString();
+    } else if (num < 10000) {
+      return Math.floor(num / 1000).toString() + "K";
+    } else {
+      return Math.floor(num / 1000000).toString() + "M";
+    }
+  }
 
   return (
     <StyledMainContainer>
@@ -163,28 +173,36 @@ const Post = ({ postData } : PostProps) => {
         <StyledActionBarIconContainer>
           <StyledRepliesIcon/>
           <StyledActionBarText>
-            {postData.replies}
+            {convertCounts(postData.replies)}
           </StyledActionBarText>
         </StyledActionBarIconContainer>
+
         <StyledActionBarIconContainer>
           <StyledShareIcon/>
         </StyledActionBarIconContainer>
+
         <StyledActionBarIconContainer>
           <StyledFavouriteIcon/>
         </StyledActionBarIconContainer>
+
         <StyledActionBarIconContainer>
-          <StyledEmojiIcon/>
+          <StyledHeartIcon/>
+            <StyledActionBarText>
+              {convertCounts(postData.loves)}
+            </StyledActionBarText>
         </StyledActionBarIconContainer>
+
         <StyledActionBarIconContainer>
           <StyledLikeIcon $active={liked} $activeColour="green" onClick={() => setLiked(prev => !prev)}/>
             <StyledActionBarText>
-              {postData.likes}
+              {convertCounts(postData.likes)}
             </StyledActionBarText>
           <StyledDislikeIcon $active={disliked} $activeColour="red" onClick={() => setDisliked(prev => !prev)}/>
             <StyledActionBarText>
-              {postData.dislikes}
+              {convertCounts(postData.dislikes)}
             </StyledActionBarText>
         </StyledActionBarIconContainer>
+
       </StyledActionBar>
     </StyledMainContainer>
   )

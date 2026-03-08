@@ -8,7 +8,8 @@ const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const StyledMainContainer = styled.div`
   display: flex;
-  height: 40%;
+  min-height: calc((60px * 5) + (0.6rem * 4) + 3.2rem + 2px);
+  flex-shrink: 0;
   width: 100%;
   padding: 1.6rem 1.6rem 1.6rem 1.6rem;
   gap: 0.6rem;
@@ -31,6 +32,7 @@ const StyledInputContainer = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 200px;
   min-width: 20%;
   gap: 0.6rem;
 `;
@@ -65,7 +67,7 @@ const StyledSuggestion = styled.div`
 const StyledSuggestionImagesContainer = styled.div`
   display: flex;
   flex-direction: column;
-  height: 100%;
+  max-height: calc((60px * 5) + (0.6rem * 4));
   width: fit-content;
   min-width: 60px;
   gap: 0.6rem;
