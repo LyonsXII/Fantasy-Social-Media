@@ -120,7 +120,11 @@ const CharactersMenu = () => {
   return (
     <StyledMainContainer>
       <StyledOptionText>
-        Characters
+        Name Search
+      </StyledOptionText>
+
+      <StyledOptionText>
+        Property e.g. Wheel of Time
       </StyledOptionText>
 
       <StyledCharactersContainer>
@@ -133,6 +137,9 @@ const CharactersMenu = () => {
         })}
       </StyledCharactersContainer>
 
+      <StyledOptionText>
+        Genre buttons
+      </StyledOptionText>
     </StyledMainContainer>
   )
 }
