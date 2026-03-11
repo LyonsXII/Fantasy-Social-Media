@@ -49,9 +49,10 @@ type MainMenuProps = {
   toggleShowCreatePostMenu: () => void;
   toggleShowCharactersMenu: () => void;
   setCharacterFilter: (charId: number | null) => void;
+  setPropertyFilter: (propertyId: number | null) => void;
 };
 
-const MainMenu = ({ toggleShowCreatePostMenu, toggleShowCharactersMenu, setCharacterFilter } : MainMenuProps) => {
+const MainMenu = ({ toggleShowCreatePostMenu, toggleShowCharactersMenu, setCharacterFilter, setPropertyFilter } : MainMenuProps) => {
   return (
     <StyledMainContainer>
       <StyledOption onClick={toggleShowCreatePostMenu}>
@@ -72,7 +73,7 @@ const MainMenu = ({ toggleShowCreatePostMenu, toggleShowCharactersMenu, setChara
         </StyledOptionText>
       </StyledOption>
 
-      <Filter setCharacterFilter={setCharacterFilter}/>
+      <Filter setCharacterFilter={setCharacterFilter} setPropertyFilter={setPropertyFilter}/>
 
       <StyledOption>
         <StyledOptionText>

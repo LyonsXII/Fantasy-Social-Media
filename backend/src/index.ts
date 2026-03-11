@@ -114,7 +114,7 @@ app.post("/login", async(req, res) => {
   }
 });
 
-// Match closest five characters from database based on string
+// Match closest x characters from database based on string
 app.get("/characters/search", async (req, res) => {
   const { text, num } = req.query;
 
@@ -124,7 +124,7 @@ app.get("/characters/search", async (req, res) => {
 
   try {
     const search = await db.query(
-      `SELECT char_id, name, image,
+      `SELECT char_id, name, description, image,
          similarity(name, $1) AS score
        FROM characters
        WHERE name ILIKE $1
@@ -136,6 +136,7 @@ app.get("/characters/search", async (req, res) => {
     const result = search.rows.map(row => ({
       charId: row.char_id,
       name: row.name,
+      description: row.description,
       image: row.image
     }));
 
@@ -146,37 +147,55 @@ app.get("/characters/search", async (req, res) => {
   }
 });
 
-// Get character names and images
-app.get("/characters", async (req, res) => {
-  const { lastId } = req.query;
+// Match closest x properties from database based on string
+app.get("/properties/search", async (req, res) => {
+  const { text, num } = req.query;
+  console.log(text);
+
+  if (!text || typeof text !== "string") {
+    return res.status(400).json({ error: "No text provided" });
+  }
 
   try {
-    let query = `SELECT char_id, name, image
-       FROM characters`
-
-    const conditions: string[] = [];
-    const params: any[] = [];
-
-    if (lastId != null) {
-      params.push(lastId);
-      conditions.push(`char_id > $${params.length}`);
-    }
-
-    if (conditions.length > 0) {
-      query += ` WHERE ` + conditions.join(" AND ");
-    }
-
-    query += `
-      ORDER BY char_id ASC
-      LIMIT 3;
-    `;
-
-    const search = await db.query(query, params);
+    const search = await db.query(
+      `SELECT property_id, name,
+         similarity(name, $1) AS score
+       FROM properties
+       WHERE name ILIKE $1
+       ORDER BY score DESC
+       LIMIT $2;`,
+      [`%${text}%`, num]
+    );
 
     const result = search.rows.map(row => ({
-      charId: row.char_id,
-      name: row.name,
-      image: row.image,
+      propertyId: row.property_id,
+      name: row.name
+    }));
+
+    console.log(result);
+
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Fetch all tag names (and matching tag categories)
+app.get("/tags", async (req, res) => {
+  try {
+    const search = await db.query(
+      `SELECT t.tag_id AS tag_id, t.tag AS tag, c.name AS category
+       FROM tags t
+       INNER JOIN categories c ON t.category_id = c.category_id
+       ORDER BY category, tag ASC;`,
+      []
+    );
+
+    const result = search.rows.map(row => ({
+      tagId: row.tag_id,
+      tag: row.tag,
+      category: row.category
     }));
 
     res.json(result);
@@ -186,6 +205,81 @@ app.get("/characters", async (req, res) => {
   }
 });
 
+// Get character names and images (10 at a time)
+app.get("/characters", async (req, res) => {
+  const { charId, propertyId, tagFilters, lastId } = req.query;
+  console.log(charId, propertyId, tagFilters);
+
+  try {
+    let query = `SELECT DISTINCT c.char_id, c.name, c.image
+       FROM characters c
+       INNER JOIN property_tags pt ON c.property_id = pt.property_id`
+
+    const conditions: string[] = [];
+    const params: any[] = [];
+
+    if (charId != undefined) {
+      params.push(charId);
+      conditions.push(`char_id = $${params.length}`);
+    }
+
+    if (propertyId != undefined) {
+      params.push(propertyId);
+      conditions.push(`c.property_id = $${params.length}`);
+    }
+
+    // Convert string back into array
+    if (tagFilters != undefined) {
+      const tagArray = Array.isArray(tagFilters)
+        ? tagFilters.map(Number)
+        : String(tagFilters).split(",").map(Number);
+
+        params.push(tagArray);
+        conditions.push(`tag_id = ANY($${params.length})`);
+      }
+
+    if (lastId != undefined) {
+      params.push(lastId);
+      conditions.push(`char_id > $${params.length}`);
+    }
+
+    if (conditions.length > 0) {
+      query += ` WHERE ` + conditions.join(" AND ");
+    }
+
+    if (tagFilters != null) {
+      const tagArray = Array.isArray(tagFilters)
+        ? tagFilters.map(Number)
+        : String(tagFilters).split(",").map(Number);
+
+      query += ` GROUP BY c.char_id, c.name, c.image
+        HAVING COUNT(DISTINCT tag_id) = ${tagArray.length}`
+      }
+
+    query += `
+      ORDER BY char_id ASC
+      LIMIT 10;
+    `;
+
+    console.log(query);
+
+    const search = await db.query(query, params);
+
+    const result = search.rows.map(row => ({
+      charId: row.char_id,
+      name: row.name,
+      image: row.image,
+    }));
+
+    console.log("hye");
+    console.log(search);
+
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 // Create a post
 app.post("/createPost", async (req, res) => {
@@ -242,9 +336,9 @@ app.get("/post", async (req, res) => {
   }
 });
 
-// Retrieve multiple posts for feed
+// Retrieve multiple posts for feed (filtering based on character and property)
 app.get("/feed", async (req, res) => {
-  const { charId, lastId } = req.query;
+  const { charId, propertyId, lastId } = req.query;
 
   let search: QueryResult<any>;
   try {
@@ -258,6 +352,11 @@ app.get("/feed", async (req, res) => {
     if (charId != null) {
       params.push(charId);
       conditions.push(`p.character_id = $${params.length}`);
+    }
+
+    if (propertyId != null) {
+      params.push(propertyId);
+      conditions.push(`c.property_id = $${params.length}`);
     }
 
     if (lastId != null) {

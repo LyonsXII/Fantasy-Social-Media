@@ -25,6 +25,7 @@ const Feed = () => {
   const [showCreatePostMenu, setShowCreatePostMenu] = useState(false);
   const [showCharactersMenu, setShowCharactersMenu] = useState(false);
   const [characterFilter, setCharacterFilter] = useState<number | null>(null);
+  const [propertyFilter, setPropertyFilter] = useState<number | null>(null);
 
   const toggleShowCreatePostMenu = () => {
     setShowCreatePostMenu(prev => !prev);
@@ -42,10 +43,18 @@ const Feed = () => {
     }
   };
 
+  const handleSetPropertyFilter = (propertyId: number | null) => {
+    if (propertyId) {
+      setPropertyFilter(propertyId)
+    } else {
+      setPropertyFilter(null);
+    }
+  };
+
   return (
     <StyledMainContainer>
-      <MainMenu toggleShowCreatePostMenu={toggleShowCreatePostMenu} toggleShowCharactersMenu={toggleShowCharactersMenu} setCharacterFilter={handleSetCharacterFilter}/>
-      <Stream showCreatePostMenu={showCreatePostMenu} showCharactersMenu={showCharactersMenu} characterFilter={characterFilter}/>
+      <MainMenu toggleShowCreatePostMenu={toggleShowCreatePostMenu} toggleShowCharactersMenu={toggleShowCharactersMenu} setCharacterFilter={handleSetCharacterFilter} setPropertyFilter={handleSetPropertyFilter}/>
+      <Stream showCreatePostMenu={showCreatePostMenu} showCharactersMenu={showCharactersMenu} characterFilter={characterFilter} propertyFilter={propertyFilter}/>
       <div></div>
     </StyledMainContainer>
   )

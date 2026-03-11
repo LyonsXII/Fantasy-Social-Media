@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { useState } from 'react';
 
-import CharacterSearch from '../General/CharacterSearch';
+import Search from '../General/Search';
 
 const StyledMainContainer = styled.div<{$expanded: boolean}>`
   display: flex;
@@ -33,9 +33,10 @@ const StyledOptionText = styled.p`
 
 type FilterProps = {
   setCharacterFilter: (charId: number | null) => void;
+  setPropertyFilter: (propertyId: number | null) => void;
 };
 
-const Filter = ({ setCharacterFilter } : FilterProps) => {
+const Filter = ({ setCharacterFilter, setPropertyFilter } : FilterProps) => {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -43,7 +44,7 @@ const Filter = ({ setCharacterFilter } : FilterProps) => {
       <StyledOptionText onClick={() => setExpanded(prev => !prev)}>
         Filter
       </StyledOptionText>
-      {expanded && <CharacterSearch numSuggestions={1} select={setCharacterFilter}/>}
+      {expanded && <Search direction="column" numSuggestions={1} showPropFilter={true} selectChar={setCharacterFilter} selectProperty={setPropertyFilter}/>}
     </StyledMainContainer>
   )
 }

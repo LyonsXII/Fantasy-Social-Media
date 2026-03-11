@@ -27,17 +27,11 @@ const StyledMainContainer = styled.div`
   }
 `;
 
-const StyledObserver = styled.div`
-  height: 1px;
-  width: 100%;
-  border: 1px solid black;
-  opacity: 0;
-`;
-
 type StreamProps = {
   showCreatePostMenu: boolean;
   showCharactersMenu: boolean;
   characterFilter: number | null;
+  propertyFilter: number | null;
 };
 
 export type PostType = {
@@ -53,7 +47,7 @@ export type PostType = {
   updatedAt: string;
 }
 
-const Stream = ({ showCreatePostMenu, showCharactersMenu, characterFilter } : StreamProps) => {
+const Stream = ({ showCreatePostMenu, showCharactersMenu, characterFilter, propertyFilter } : StreamProps) => {
   const [posts, setPosts] = useState<PostType[]>([]);
   const [lastId, setLastId] = useState<number | null>(null);
   const [furtherContentAvailable, setFurtherContentAvailable] = useState(true);
@@ -67,7 +61,7 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, characterFilter } : St
     try {
       const { data } = await axios.get<PostType[]>(`${backendUrl}/feed`, 
         {
-          params: { charId: characterFilter, lastId: lastId }
+          params: { charId: characterFilter, propertyId: propertyFilter, lastId: lastId }
         }
       );
 
@@ -91,7 +85,7 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, characterFilter } : St
     setPosts([]);
     setLastId(null);
     setFurtherContentAvailable(true);
-    }, [characterFilter]);
+  }, [characterFilter, propertyFilter]);
 
   // Fetch posts for feed
   useEffect(() => {
@@ -123,7 +117,7 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, characterFilter } : St
     return () => observer.disconnect();
   }, [fetchPosts]);
 
-  return (
+  return ( 
     <StyledMainContainer>
       {showCreatePostMenu && <CreatePostMenu />}
       {showCharactersMenu && <CharactersMenu />}

@@ -6,7 +6,7 @@ import {RichTextPlugin} from "@lexical/react/LexicalRichTextPlugin";
 import {ContentEditable} from '@lexical/react/LexicalContentEditable';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import {HistoryPlugin} from '@lexical/react/LexicalHistoryPlugin';
-import {LexicalCustomTextActions} from './LexicalCustomTextActions.tsx'
+import {LexicalCustomTextActions} from './TextEditorCustomTextActions.tsx'
 
 import './Lexical.css';
 

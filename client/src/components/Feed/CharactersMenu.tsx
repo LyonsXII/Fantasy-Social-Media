@@ -3,13 +3,16 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import axios from "axios";
 
 import CharacterImage from '../General/CharacterImage';
+import Search from '../General/Search';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const StyledMainContainer = styled.div`
   display: flex;
   flex-direction: column;
-  height: 60%;
+  justify-content: flex-start;
+  align-items: flex-start;
+  height: calc(100% - 0.6rem);
   width: 100%;
   padding: 1.6rem 1.6rem 1.6rem 1.6rem;
   gap: 0.6rem;
@@ -26,17 +29,17 @@ const StyledMainContainer = styled.div`
 `;
 
 const StyledOptionText = styled.p`
-  font-size: 1.6rem;
-  font-weight: 600;
+  font-size: 1rem;
   user-select: none;
   cursor: pointer;
+  color: rgba(0, 0, 0, 0.8);
 `;
 
 const StyledCharactersContainer = styled.div`
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  height: 100%;
+  min-height: calc(320px + 2rem);
   width: 100%;
   gap: 0.6rem;
   overflow-y: auto;
@@ -46,6 +49,26 @@ const StyledCharactersContainer = styled.div`
   &::-webkit-scrollbar {
     display: none;
   }
+`;
+
+const StyledGenreButtonsContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  height: fit-content;
+  gap: 0.6rem;
+  width: 100%;
+`;
+
+const StyledButton = styled.button<{$active : boolean}>`
+  height: 40px;
+  width: fit-content;
+  padding: 0.4rem 0.8rem;
+  gap: 2rem;
+  background: white;
+  border: 1px solid rgba(0,0,0,0.2);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  background-color: ${({ $active }) => $active ? "green" : "red"};
 `;
 
 type CharType = {
@@ -60,15 +83,26 @@ const CharactersMenu = () => {
   const [furtherContentAvailable, setFurtherContentAvailable] = useState(true);
   const [loading, setLoading] = useState(false);
   const observerRef = useRef<HTMLImageElement | null>(null);
+  const [tags, setTags] = useState<{tagId: number, tag: string, category: string}[]>([]);
+  const [charNameInput, setCharNameInput] = useState<number | null>(null);
+  const [propertyNameInput, setPropertyNameInput] = useState<number | null>(null);
+  type TagFilterState = Record<string, boolean>;
+  const [tagFilters, setTagFilters] = useState<TagFilterState>({});
 
   const fetchChars = useCallback(async () => {
     if (loading || !furtherContentAvailable) return;
 
     setLoading(true);
     try {
+      // Convert genre tags into array or null ready for backend request
+      const activeTags = Object.entries(tagFilters)
+        .filter(([_, active]) => active)
+        .map(([tag]) => tag);
+      const tagParam = activeTags.length > 0 ? activeTags.join(",") : null;
+
       const { data } = await axios.get<CharType[]>(`${backendUrl}/characters`, 
         {
-          params: { lastId: lastId }
+          params: { charId: charNameInput, propertyId: propertyNameInput, tagFilters: tagParam, lastId: lastId }
         }
       );
 
@@ -85,15 +119,47 @@ const CharactersMenu = () => {
     } finally {
       setLoading(false);
     }
-  }, [loading, furtherContentAvailable, lastId]);
+  }, [loading, furtherContentAvailable, lastId, charNameInput, propertyNameInput, tagFilters]);
 
-  // Fetch posts for feed
+  async function fetchTags() {
+    try {
+      const response = await axios.get(`${backendUrl}/tags`, {
+        params: {}
+      });
+      setTags(response.data);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          if (error.response.status === 400) {
+            console.log(error.response.data.error);
+          }
+        }
+      }
+    }
+  };
+
+  const toggleTag = (tag: number) => {
+    setTagFilters(prev => ({
+      ...prev,
+      [tag]: !prev[tag]
+    }));
+  };
+
+  // Fetch characters
   useEffect(() => {
     if (lastId != null) return
     fetchChars();
   }, [lastId]);
 
-  // Create observer to load more posts as needed
+  // Reset on filter change
+  useEffect(() => {
+    setChars([]);
+    setLastId(null);
+    setFurtherContentAvailable(true);
+    fetchChars();
+  }, [charNameInput, propertyNameInput, tagFilters]);
+
+  // Create observer to load more characters as user scrolls
   useEffect(() => {
     if (!observerRef.current) return;
 
@@ -117,15 +183,20 @@ const CharactersMenu = () => {
     return () => observer.disconnect();
   }, [fetchChars]);
 
+  // Fetch all possible tags
+  useEffect(() => {
+    fetchTags();
+  }, []);
+
+  // Create tag filters
+  useEffect(() => {
+    const initialFilters = Object.fromEntries(tags.map(t => [t.tagId.toString(), false]));
+    setTagFilters(initialFilters);
+  }, [tags]);
+
   return (
     <StyledMainContainer>
-      <StyledOptionText>
-        Name Search
-      </StyledOptionText>
-
-      <StyledOptionText>
-        Property e.g. Wheel of Time
-      </StyledOptionText>
+      <Search width="100%" numSuggestions={1} showPropFilter={true} selectChar={setCharNameInput} selectProperty={setPropertyNameInput}/>
 
       <StyledCharactersContainer>
         {chars && chars.map((char, i) => {
@@ -137,9 +208,16 @@ const CharactersMenu = () => {
         })}
       </StyledCharactersContainer>
 
-      <StyledOptionText>
-        Genre buttons
-      </StyledOptionText>
+      <StyledGenreButtonsContainer>
+        {tags && tags.map((tag) => {
+          return (
+            <StyledButton key={tag.tag} onClick={() => toggleTag(tag.tagId)} $active={tagFilters[tag.tagId]}>
+              <StyledOptionText>
+                {tag.tag}
+              </StyledOptionText>
+            </StyledButton>
+          )})}
+      </StyledGenreButtonsContainer>
     </StyledMainContainer>
   )
 }

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from "axios";
 import styled from 'styled-components';
 
-import CharacterSearch from '../General/CharacterSearch';
+import Search from '../General/Search';
 import TextEditor from './TextEditor';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -29,12 +29,24 @@ const StyledMainContainer = styled.div`
   }
 `;
 
+const StyledSearchContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 40%;
+  gap: 0.6rem;
+`;
+
 const StyledCreatePostContentContainer = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
   width: 100%;
   gap: 0.6rem;
+`;
+
+const StyledCharacterDescription = styled.div`
+  
 `;
 
 export const StyledMessageText = styled.div<{ $showMessageText : boolean }>`
@@ -84,7 +96,9 @@ const CreatePostMenu = () => {
 
   return (
     <StyledMainContainer>
-      <CharacterSearch width="40%" numSuggestions={5} select={setSelectedCharacter}/>
+        <StyledSearchContainer>
+        <Search direction="column" numSuggestions={5} showPropFilter={false} showCharDescription={true} selectChar={setSelectedCharacter}/>
+      </StyledSearchContainer>
 
       <StyledCreatePostContentContainer>
         <TextEditor createPost={createPost} showMenu={true}/>
