@@ -42,6 +42,7 @@ const StyledCharactersContainer = styled.div`
   min-height: calc(320px + 2rem);
   width: 100%;
   gap: 0.6rem;
+  padding-bottom: 2rem;
   overflow-y: auto;
   scroll-behavior: smooth;
 
@@ -68,7 +69,7 @@ const StyledButton = styled.button<{$active : boolean}>`
   background: white;
   border: 1px solid rgba(0,0,0,0.2);
   box-shadow: 0 6px 20px rgba(0,0,0,0.06);
-  background-color: ${({ $active }) => $active ? "red" : "none"};
+  background-color: ${({ $active }) => $active ? "green" : "none"};
 `;
 
 type CharType = {

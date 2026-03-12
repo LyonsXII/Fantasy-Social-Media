@@ -261,8 +261,6 @@ app.get("/characters", async (req, res) => {
       LIMIT 10;
     `;
 
-    console.log(query);
-
     const search = await db.query(query, params);
 
     const result = search.rows.map(row => ({
