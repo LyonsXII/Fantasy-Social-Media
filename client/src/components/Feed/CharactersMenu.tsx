@@ -14,8 +14,8 @@ const StyledMainContainer = styled.div`
   align-items: flex-start;
   height: calc(100% - 0.6rem);
   width: 100%;
+  gap: 1rem;
   padding: 1.6rem 1.6rem 1.6rem 1.6rem;
-  gap: 0.6rem;
   background: white;
   box-shadow: 0 6px 20px rgba(0,0,0,0.06);
 
@@ -68,7 +68,7 @@ const StyledButton = styled.button<{$active : boolean}>`
   background: white;
   border: 1px solid rgba(0,0,0,0.2);
   box-shadow: 0 6px 20px rgba(0,0,0,0.06);
-  background-color: ${({ $active }) => $active ? "green" : "red"};
+  background-color: ${({ $active }) => $active ? "red" : "none"};
 `;
 
 type CharType = {
@@ -90,7 +90,9 @@ const CharactersMenu = () => {
   const [tagFilters, setTagFilters] = useState<TagFilterState>({});
 
   const fetchChars = useCallback(async () => {
+    console.log("fired");
     if (loading || !furtherContentAvailable) return;
+    console.log("past loading / further content available");
 
     setLoading(true);
     try {
@@ -145,18 +147,11 @@ const CharactersMenu = () => {
     }));
   };
 
-  // Fetch characters
-  useEffect(() => {
-    if (lastId != null) return
-    fetchChars();
-  }, [lastId]);
-
   // Reset on filter change
   useEffect(() => {
     setChars([]);
     setLastId(null);
     setFurtherContentAvailable(true);
-    fetchChars();
   }, [charNameInput, propertyNameInput, tagFilters]);
 
   // Create observer to load more characters as user scrolls
@@ -196,16 +191,17 @@ const CharactersMenu = () => {
 
   return (
     <StyledMainContainer>
-      <Search width="100%" numSuggestions={1} showPropFilter={true} selectChar={setCharNameInput} selectProperty={setPropertyNameInput}/>
+      <Search direction="row" height="94px" width="100%" numSuggestions={1} showPropFilter={true} selectChar={setCharNameInput} selectProperty={setPropertyNameInput}/>
 
       <StyledCharactersContainer>
         {chars && chars.map((char, i) => {
           if (i < chars.length - 1) {
             return <CharacterImage key={char.charId} alt="Character image" size="160px" imagePath={char.image}/>
           } else {
-            return <CharacterImage key={char.charId} alt="Character image" ref={observerRef} size="160px" imagePath={char.image}/>
+            return <CharacterImage key={char.charId} alt="Character image" size="160px" imagePath={char.image}/>
           }
         })}
+        <div ref={observerRef} style={{"height": "1px", "width": "1px", "border": "1px solid black", "opacity": "0.01"}}/>
       </StyledCharactersContainer>
 
       <StyledGenreButtonsContainer>

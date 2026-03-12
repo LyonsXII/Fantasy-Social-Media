@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { useState, forwardRef } from 'react';
+import { useState } from 'react';
 import type { ComponentType, SVGProps } from 'react';
 
 import CharacterImage from '../General/CharacterImage';
@@ -141,7 +141,7 @@ type PostProps = {
   postData: PostType
 }
 
-const Post = forwardRef<HTMLDivElement, { postData: any }>(({ postData }, ref) => {
+const Post = ({ postData } : PostProps) => {
   const [repliesExpanded, setrepliesExpanded] = useState(false);
   const [shareExpanded, setShareExpanded] = useState(false);
   const [favourited, setfavourited] = useState(false);
@@ -159,7 +159,7 @@ const Post = forwardRef<HTMLDivElement, { postData: any }>(({ postData }, ref) =
   }
 
   return (
-    <StyledMainContainer ref={ref}>
+    <StyledMainContainer>
       <StyledContentContainer>
         <CharacterImage
           alt="Character image"
@@ -223,6 +223,6 @@ const Post = forwardRef<HTMLDivElement, { postData: any }>(({ postData }, ref) =
       </StyledDataText>
     </StyledMainContainer>
   )
-});
+};
 
 export default Post

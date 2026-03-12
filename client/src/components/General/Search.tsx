@@ -6,11 +6,11 @@ import CharacterImage from './CharacterImage';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-const StyledMainContainer = styled.div<{ $direction?: string, $width?: string}>`
+const StyledMainContainer = styled.div<{ $direction?: string, $width?: string, $height?: string}>`
   display: flex;
   flex-direction: ${({ $direction }) => $direction ? $direction : "row"};
-  align-items: center;
-  height: fit-content;
+  align-items: ${({ $direction }) => $direction ? "flex-start" : "center"};
+  height: ${({ $direction, $height }) => $direction == "row" ? $height : "fit-content"};
   width: ${({ $width }) => $width ? $width : "100%"};
   gap: 1rem;
 `;
@@ -21,7 +21,6 @@ const StyledFilterSectionContainer = styled.div`
   align-items: center;
   height: fit-content;
   width: 100%;
-  border: 1px solid red;
 `;
 
 const StyledInputContainer = styled.div`
@@ -109,6 +108,7 @@ type Property = {
 
 export interface SearchProps {
   direction?: string,
+  height?: string,
   width?: string,
   numSuggestions: number,
   showPropFilter?: boolean,
@@ -117,7 +117,7 @@ export interface SearchProps {
   selectProperty?: (propertyId: number | null) => void
 }
 
-const Search = ({ direction, width, numSuggestions, showPropFilter, showCharDescription, selectChar, selectProperty } : SearchProps) => {
+const Search = ({ direction, height, width, numSuggestions, showPropFilter, showCharDescription, selectChar, selectProperty } : SearchProps) => {
   const [charNameInput, setCharNameInput] = useState("");
   const [propertyNameInput, setPropertyNameInput] = useState("");
   const [charSuggestions, setCharSuggestions] = useState<Character[]>([]);
@@ -242,7 +242,7 @@ const Search = ({ direction, width, numSuggestions, showPropFilter, showCharDesc
   }, [denyPropertySuggestionsUpdate]);
 
   return (
-    <StyledMainContainer $direction={direction} $width={width}>
+    <StyledMainContainer $direction={direction} $width={width} $height={height}>
       <StyledFilterSectionContainer>
         <StyledInputContainer>
           <StyledInput 

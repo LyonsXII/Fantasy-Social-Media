@@ -87,13 +87,7 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, characterFilter, prope
     setFurtherContentAvailable(true);
   }, [characterFilter, propertyFilter]);
 
-  // Fetch posts for feed
-  useEffect(() => {
-    if (lastId != null) return
-    fetchPosts();
-  }, [lastId]);
-
-  // Create observer to load more posts as needed
+  // Create observer on new last post to load more posts when reached
   useEffect(() => {
     if (!observerRef.current) return;
 
@@ -125,9 +119,10 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, characterFilter, prope
         if (i < posts.length - 1) {
           return <Post key={post.postId} postData={post}/>
         } else {
-          return <Post key={post.postId} ref={observerRef} postData={post}/>
+          return <Post key={post.postId} postData={post}/>
         }
       })}
+      <div ref={observerRef} style={{"height": "1px", "width": "1px", "border": "1px solid black", "opacity": "0.01"}}/>
     </StyledMainContainer>
   )
 }
