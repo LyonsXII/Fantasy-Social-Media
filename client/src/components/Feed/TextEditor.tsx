@@ -49,9 +49,12 @@ type TextEditorProps = {
   createPost?: (postData: any, lenRawText: number) => Promise<void>;
   showMenu: boolean;
   content?: string;
+  openPicker: () => void;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
 };
 
-const TextEditor = ({createPost, showMenu, content} : TextEditorProps) => {
+const TextEditor = ({createPost, showMenu, content, openPicker, handleChange, fileInputRef} : TextEditorProps) => {
   const lexicalConfig: InitialConfigType = {
       namespace: showMenu ? "Create post text editor" : "Post viewer",
       theme: {
@@ -80,7 +83,13 @@ const TextEditor = ({createPost, showMenu, content} : TextEditorProps) => {
   return (
     <StyledMainContainer>
       <LexicalComposer initialConfig={lexicalConfig}>
-        {showMenu && <LexicalCustomTextActions onSubmit={createPost}/>}
+        {showMenu && 
+          <LexicalCustomTextActions 
+            onSubmit={createPost}
+            openPicker={openPicker}
+            handleChange={handleChange}
+            fileInputRef={fileInputRef} 
+          />}
         <RichTextPlugin
             contentEditable={CustomContent}
             placeholder={showMenu ? CustomPlaceholder : null}

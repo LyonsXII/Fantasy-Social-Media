@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from "axios";
 import styled from 'styled-components';
 
@@ -45,10 +45,6 @@ const StyledCreatePostContentContainer = styled.div`
   gap: 0.6rem;
 `;
 
-const StyledCharacterDescription = styled.div`
-  
-`;
-
 export const StyledMessageText = styled.div<{ $showMessageText : boolean }>`
   height: 1rem;
   width: 100%;
@@ -61,6 +57,10 @@ const CreatePostMenu = () => {
   const [selectedCharacter, setSelectedCharacter] = useState<number | null>(null);
   const [messageText, setMessageText] = useState<string>("");
   const [showMessageText, setShowMessageText] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const maxSize = 5 * 1024 * 1024;
+  const allowedTypes = ["image/png", "image/jpg", "image/webp"];
 
   async function createPost(postData: any, lenRawText: number){
     try {
@@ -79,6 +79,28 @@ const CreatePostMenu = () => {
         }
       }
     }
+  };
+
+  const openPicker = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    if (!allowedTypes.includes(file.type)) {
+      alert("Invalid file type");
+      return;
+    }
+
+    if (file.size > maxSize) {
+      alert("File too large");
+      return;
+    }
+
+    setAttachment(file);
   };
 
   // Show message text popup temporarily
@@ -101,7 +123,13 @@ const CreatePostMenu = () => {
       </StyledSearchContainer>
 
       <StyledCreatePostContentContainer>
-        <TextEditor createPost={createPost} showMenu={true}/>
+        <TextEditor 
+          createPost={createPost} 
+          showMenu={true}
+          openPicker={openPicker}
+          handleChange={handleChange}
+          fileInputRef={fileInputRef} 
+        />
           <StyledMessageText $showMessageText={showMessageText}>
             {messageText}
           </StyledMessageText>

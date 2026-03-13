@@ -69,10 +69,13 @@ const StyledConfirmIcon = createStyledIcon(ConfirmIcon);
 
 type LexicalCustomTextActionsProps = {
   onSubmit?: (postData: any, lenRawText: number) => Promise<void>;
+  openPicker: () => void;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
 };
 
 
-export const LexicalCustomTextActions = ({onSubmit} : LexicalCustomTextActionsProps) => {
+export const LexicalCustomTextActions = ({onSubmit, openPicker, handleChange, fileInputRef} : LexicalCustomTextActionsProps) => {
   const [editor] = useLexicalComposerContext();
   const [active, setActive] = useState({
     bold: false,
@@ -89,6 +92,7 @@ export const LexicalCustomTextActions = ({onSubmit} : LexicalCustomTextActionsPr
     editor.dispatchCommand(FORMAT_TEXT_COMMAND, formatType);
   }
 
+  // Register text formatting effects
   useEffect(() => {
     return editor.registerUpdateListener(({ editorState }) => {
       editorState.read(() => {
@@ -146,7 +150,7 @@ export const LexicalCustomTextActions = ({onSubmit} : LexicalCustomTextActionsPr
 
         <div style={{"flexGrow":"1"}}/>
 
-        <StyledButton>
+        <StyledButton onClick={openPicker}>
           <StyledAttachIcon/>
         </StyledButton>
         <StyledButton   
@@ -161,6 +165,14 @@ export const LexicalCustomTextActions = ({onSubmit} : LexicalCustomTextActionsPr
           Post
           <StyledConfirmIcon/>
         </StyledButton>
+
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: "none" }}
+          onChange={handleChange}
+          accept="image/png,image/jpeg,image/webp"
+        />
       </StyledButtonContainer>
   );
 }
