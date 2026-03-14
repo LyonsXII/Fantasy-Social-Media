@@ -73,9 +73,8 @@ const StyledSuggestionImagesContainer = styled.div`
 const StyledCharacterDescription = styled.div`
   height: 100%;
   width: 100%;
-  padding: 0rem 0.6rem;
+  padding: 0.6rem 1rem 0rem 0.6rem;
   font-size: 1rem;
-  border: 1px solid red;
 
   overflow-y: auto;
   scroll-behavior: smooth;

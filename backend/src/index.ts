@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import cors from "cors";
 import pg from "pg";
 import type { QueryResult } from "pg";
+import multer from "multer";
 import path from "path";
 import * as dotenv from "dotenv";
 
@@ -55,6 +56,20 @@ const allowedOrigins = [
   'https://portfolio-lyonsxiis-projects.vercel.app', // Change to deployed URL when deployed online!!
   'http://localhost:5173',
 ];
+
+// Multer, user uploading file storage config
+const storage = multer.diskStorage({
+  destination: "public/uploads/",
+  filename: (req, file, cb) => {
+    const name = Date.now() + "-" + file.originalname;
+    cb(null, name);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024}
+});
 
 const port = 5000;
 
@@ -208,7 +223,6 @@ app.get("/tags", async (req, res) => {
 // Get character names and images (10 at a time)
 app.get("/characters", async (req, res) => {
   const { charId, propertyId, tagFilters, lastId } = req.query;
-  console.log(charId, propertyId, tagFilters);
 
   try {
     let query = `SELECT DISTINCT c.char_id, c.name, c.image
@@ -280,22 +294,22 @@ app.get("/characters", async (req, res) => {
 });
 
 // Create a post
-app.post("/createPost", async (req, res) => {
+app.post("/createPost", upload.single("attachment"), async (req, res) => {
   const { charId, postData, lenRawText } = req.body;
-  const convPostData = JSON.stringify(postData);
+  const attachmentName = req.file?.filename ?? null;
   const owner_id = 1;
 
   // Bad inputs
   if (charId === null || lenRawText === 0) return res.status(400).json({ error: "Missing character or text"});
   if (lenRawText > 280) return res.status(400).json({ error: "Too many characters"});
-  if (convPostData.length > 5000) return res.status(400).json({ error: "Input too large"});
+  if (postData.length > 5000) return res.status(400).json({ error: "Input too large"});
 
   try {
     const result = await db.query(
-      "INSERT INTO posts (owner_id, character_id, content) VALUES ($1, $2, $3) RETURNING post_id", 
-      [owner_id, charId, convPostData]);
+      "INSERT INTO posts (owner_id, character_id, content, attachment) VALUES ($1, $2, $3, $4) RETURNING post_id", 
+      [owner_id, charId, postData, attachmentName]);
 
-    res.status(201).json({ user: result.rows[0] });
+    res.status(201).json({ user: result.rows[0].post_id });
   } catch(err: any) {
     console.log(err);
     res.status(500).json({ error: "Internal server error" });
@@ -334,13 +348,33 @@ app.get("/post", async (req, res) => {
   }
 });
 
+// React to a post
+app.post("/react", async (req, res) => {
+  const { postId, reactionType, reactionValue } = req.query;
+  const userId = 1;
+
+  try {
+    const check = await db.query(
+      `SELECT reaction, reaction_value
+       FROM post_reactions
+       WHERE post_id = $1 AND user_id = $2;`,
+      [postId, userId]
+    );
+
+    // res.json(result[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Retrieve multiple posts for feed (filtering based on character and property)
 app.get("/feed", async (req, res) => {
   const { charId, propertyId, lastId } = req.query;
 
   let search: QueryResult<any>;
   try {
-    let query = `SELECT post_id, name, image, content, replies, loves, likes, dislikes, p.created_at, updated_at
+    let query = `SELECT post_id, name, image, content, replies, loves, likes, dislikes, p.created_at, updated_at, attachment
       FROM posts p
       INNER JOIN characters c ON p.character_id = c.char_id`
 
@@ -383,7 +417,8 @@ app.get("/feed", async (req, res) => {
       likes: row.likes,
       dislikes: row.dislikes,
       createdAt: row.created_at,
-      updatedAt: row.updated_at
+      updatedAt: row.updated_at,
+      attachment: row.attachment ? "uploads/" + row.attachment : undefined
     }));
 
     res.json(result);

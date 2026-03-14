@@ -56,6 +56,18 @@ const createStyledIcon = (IconComponent: React.ComponentType<any>) =>
     color: white;
 `;
 
+const StyledTextContainer = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  font-size: 1rem;
+  font-weight: 600;
+  opacity: 0.8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`
+
 const StyledBoldIcon = createStyledIcon(BoldIcon);
 const StyledItalicIcon = createStyledIcon(ItalicIcon);
 const StyledUnderlineIcon = createStyledIcon(UnderlineIcon);
@@ -72,10 +84,10 @@ type LexicalCustomTextActionsProps = {
   openPicker: () => void | undefined;
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void | undefined;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
+  attachmentName?: string;
 };
 
-
-export const LexicalCustomTextActions = ({onSubmit, openPicker, handleChange, fileInputRef} : LexicalCustomTextActionsProps) => {
+export const LexicalCustomTextActions = ({onSubmit, openPicker, handleChange, fileInputRef, attachmentName} : LexicalCustomTextActionsProps) => {
   const [editor] = useLexicalComposerContext();
   const [active, setActive] = useState({
     bold: false,
@@ -150,6 +162,7 @@ export const LexicalCustomTextActions = ({onSubmit, openPicker, handleChange, fi
 
         <div style={{"flexGrow":"1"}}/>
 
+        <StyledTextContainer>{attachmentName || "Attach Image"}</StyledTextContainer>
         <StyledButton onClick={openPicker}>
           <StyledAttachIcon/>
         </StyledButton>

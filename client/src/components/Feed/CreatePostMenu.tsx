@@ -137,7 +137,8 @@ const CreatePostMenu = () => {
           showMenu={true}
           openPicker={openPicker}
           handleChange={handleChange}
-          fileInputRef={fileInputRef} 
+          fileInputRef={fileInputRef}
+          attachmentName={attachment ? attachment.name : undefined}
         />
           <StyledMessageText $showMessageText={showMessageText}>
             {messageText}

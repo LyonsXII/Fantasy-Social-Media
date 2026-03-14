@@ -53,6 +53,7 @@ type TextEditorProps =
       handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
       fileInputRef: React.RefObject<HTMLInputElement | null>;
       content?: string;
+      attachmentName?: string;
     }
   | {
       showMenu: false;
@@ -97,6 +98,7 @@ const TextEditor = (props : TextEditorProps) => {
             openPicker={props.openPicker}
             handleChange={props.handleChange}
             fileInputRef={props.fileInputRef}
+            attachmentName={props.attachmentName}
           />}
         <RichTextPlugin
             contentEditable={CustomContent}

@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 import { useState } from 'react';
 import type { ComponentType, SVGProps } from 'react';
+import axios from "axios";
 
 import CharacterImage from '../General/CharacterImage';
 import TextEditor from './TextEditor';
@@ -136,7 +137,7 @@ const StyledPostImage = styled.img`
   height: fit-content;
   max-height: 300px;
   width: fit-content;
-  margin: 20px 0px 0px 20px;
+  margin: 20px 0px 20px 20px;
   border: 1px solid rgba(0,0,0,0.06);
   box-shadow: 0 6px 20px rgba(0,0,0,0.06);
 `;
@@ -155,7 +156,7 @@ type PostProps = {
 const Post = ({ postData } : PostProps) => {
   const [repliesExpanded, setrepliesExpanded] = useState(false);
   const [shareExpanded, setShareExpanded] = useState(false);
-  const [favourited, setfavourited] = useState(false);
+  const [favourited, setFavourited] = useState(false);
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
 
@@ -168,6 +169,46 @@ const Post = ({ postData } : PostProps) => {
       return Math.floor(num / 1000000).toString() + "M";
     }
   }
+
+  type ReactionType = 'like' | 'dislike' | 'love' | 'favourite' | 'emoji';
+  async function reactToPost(reactionType: ReactionType, reactionValue?: string) {
+    switch(reactionType) {
+      case 'like':
+        setLiked(prev => !prev);
+        break;
+      case 'dislike':
+        setDisliked(prev => !prev);
+        break;
+      case 'love':
+        setFavourited(prev => !prev);
+        break;
+    }
+    
+    try {
+      await axios.post(`${backendUrl}/react`, {
+        "postId": postData.postId,
+        "reactionType": reactionType,
+        "reactionValue": reactionValue
+      });
+    } catch (error) {
+      switch(reactionType) {
+        case 'like':
+          setLiked(prev => !prev);
+          break;
+        case 'dislike':
+          setDisliked(prev => !prev);
+          break;
+        case 'love':
+          setFavourited(prev => !prev);
+          break;
+      }
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          console.log(error.response.data.error);
+        }
+      }
+    }
+  };
 
   return (
     <StyledMainContainer>
@@ -212,7 +253,7 @@ const Post = ({ postData } : PostProps) => {
         </StyledActionBarIconContainer>
 
         <StyledActionBarIconContainer>
-          <StyledLikeIcon $active={liked} $activeColour="green" onClick={() => setLiked(prev => !prev)}/>
+          <StyledLikeIcon $active={liked} $activeColour="green" onClick={() => reactToPost("like")}/>
             <StyledActionBarText>
               {convertCounts(postData.likes)}
             </StyledActionBarText>
