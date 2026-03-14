@@ -69,8 +69,8 @@ const StyledConfirmIcon = createStyledIcon(ConfirmIcon);
 
 type LexicalCustomTextActionsProps = {
   onSubmit?: (postData: any, lenRawText: number) => Promise<void>;
-  openPicker: () => void;
-  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  openPicker: () => void | undefined;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void | undefined;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
 };
 

@@ -60,17 +60,25 @@ const CreatePostMenu = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [attachment, setAttachment] = useState<File | null>(null);
   const maxSize = 5 * 1024 * 1024;
-  const allowedTypes = ["image/png", "image/jpg", "image/webp"];
+  const allowedTypes = ["image/png", "image/jpg", "image/jpeg", "image/webp"];
 
   async function createPost(postData: any, lenRawText: number){
     try {
-      await axios.post(`${backendUrl}/createPost`, 
-        {
-          charId: selectedCharacter,
-          postData: postData,
-          lenRawText: lenRawText
+      const formData = new FormData();
+      formData.append("charId", String(selectedCharacter));
+      formData.append("postData", JSON.stringify(postData));
+      formData.append("lenRawText", String(lenRawText));
+
+      if (attachment) {
+        formData.append("attachment", attachment);
+      }
+
+      await axios.post(`${backendUrl}/createPost`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data"
         }
-      );
+      });
+
       setMessageText("Post created!");
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -89,6 +97,7 @@ const CreatePostMenu = () => {
     const file = e.target.files?.[0];
 
     if (!file) return;
+    console.log(file.type);
 
     if (!allowedTypes.includes(file.type)) {
       alert("Invalid file type");

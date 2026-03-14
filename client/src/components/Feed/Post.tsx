@@ -14,6 +14,8 @@ import DislikeIcon from "../../assets/icons/dislike.svg?react";
 
 import type { PostType } from './Stream';
 
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
 const StyledMainContainer = styled.div`
   position: relative;
   isolation: isolate;
@@ -130,6 +132,15 @@ const StyledDataText = styled.p`
   right: 1rem;
 `;
 
+const StyledPostImage = styled.img`
+  height: fit-content;
+  max-height: 300px;
+  width: fit-content;
+  margin: 20px 0px 0px 20px;
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+`;
+
 const StyledRepliesIcon = createStyledIcon(RepliesIcon);
 const StyledShareIcon = createStyledIcon(ShareIcon);
 const StyledFavouriteIcon = createStyledIcon(FavouriteIcon);
@@ -173,6 +184,7 @@ const Post = ({ postData } : PostProps) => {
           </StyledCharacterName>
 
           {postData.content != "" && <TextEditor showMenu={false} content={postData.content}/>}
+          {postData.attachment && <StyledPostImage src={backendUrl + "/" + postData.attachment}/>}
         </StyledTextContainer>
 
       </StyledContentContainer>

@@ -45,6 +45,7 @@ export type PostType = {
   dislikes: number;
   createdAt: string;
   updatedAt: string;
+  attachment: string;
 }
 
 const Stream = ({ showCreatePostMenu, showCharactersMenu, characterFilter, propertyFilter } : StreamProps) => {

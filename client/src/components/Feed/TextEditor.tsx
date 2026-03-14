@@ -45,16 +45,24 @@ const CustomPlaceholder = () => {
     )
 };
 
-type TextEditorProps = {
-  createPost?: (postData: any, lenRawText: number) => Promise<void>;
-  showMenu: boolean;
-  content?: string;
-  openPicker: () => void;
-  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
-};
+type TextEditorProps =
+  | {
+      showMenu: true;
+      createPost: (postData: any, lenRawText: number) => Promise<void>;
+      openPicker: () => void;
+      handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+      fileInputRef: React.RefObject<HTMLInputElement | null>;
+      content?: string;
+    }
+  | {
+      showMenu: false;
+      content?: string;
+    };
 
-const TextEditor = ({createPost, showMenu, content, openPicker, handleChange, fileInputRef} : TextEditorProps) => {
+
+const TextEditor = (props : TextEditorProps) => {
+  const { showMenu, content } = props;
+
   const lexicalConfig: InitialConfigType = {
       namespace: showMenu ? "Create post text editor" : "Post viewer",
       theme: {
@@ -85,10 +93,10 @@ const TextEditor = ({createPost, showMenu, content, openPicker, handleChange, fi
       <LexicalComposer initialConfig={lexicalConfig}>
         {showMenu && 
           <LexicalCustomTextActions 
-            onSubmit={createPost}
-            openPicker={openPicker}
-            handleChange={handleChange}
-            fileInputRef={fileInputRef} 
+            onSubmit={props.createPost}
+            openPicker={props.openPicker}
+            handleChange={props.handleChange}
+            fileInputRef={props.fileInputRef}
           />}
         <RichTextPlugin
             contentEditable={CustomContent}
