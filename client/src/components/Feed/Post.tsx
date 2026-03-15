@@ -5,6 +5,7 @@ import axios from "axios";
 
 import CharacterImage from '../General/CharacterImage';
 import TextEditor from './TextEditor';
+import Reply from './Reply.tsx';
 
 import RepliesIcon from "../../assets/icons/replies.svg?react";
 import ShareIcon from "../../assets/icons/share.svg?react";
@@ -18,6 +19,15 @@ import type { PostType } from './Stream';
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const StyledMainContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: fit-content;
+  flex-shrink: 0;
+  width: 100%;
+  gap: 0.2rem;
+`;
+
+const StyledMainPostContainer = styled.div`
   position: relative;
   isolation: isolate;
   display: flex;
@@ -39,7 +49,7 @@ const StyledMainContainer = styled.div`
     0 6px 20px rgba(0,0,0,0.06),
     0px 4px 4px rgba(0,0,0,0.1);
   }
-`;
+`
 
 const StyledContentContainer = styled.div`
   display: flex;
@@ -82,12 +92,14 @@ const StyledActionBarText = styled.p`
   user-select: none;
 `;
 
-const createStyledIcon = (IconComponent: ComponentType<SVGProps<SVGSVGElement>>) => styled(IconComponent)<{ $active?: boolean}>`
+const createStyledIcon = (IconComponent: ComponentType<SVGProps<SVGSVGElement>>) => styled(IconComponent)<{ $active?: boolean, $activeColour? : string}>`
   height: 1.6rem;
   width: 1.6rem;
   cursor: pointer;
   vertical-align: bottom;
-  color: ${({ $active }) => ($active ? "#3b82f6" : "black")};
+  path:first-of-type {
+    fill: ${({ $active, $activeColour }) => ($active ? $activeColour : "none")};
+  }
 
   transition: transform 0.4s ease, color 0.25s ease;
 
@@ -151,14 +163,16 @@ const StyledDislikeIcon = createStyledVoteIcon(DislikeIcon);
 
 type PostProps = {
   postData: PostType
+  onReact: (postId: number) => void;
 }
 
-const Post = ({ postData } : PostProps) => {
-  const [repliesExpanded, setrepliesExpanded] = useState(false);
+const Post = ({ postData, onReact } : PostProps) => {
+  const [repliesExpanded, setRepliesExpanded] = useState(false);
   const [shareExpanded, setShareExpanded] = useState(false);
-  const [favourited, setFavourited] = useState(false);
-  const [liked, setLiked] = useState(false);
-  const [disliked, setDisliked] = useState(false);
+  const [liked, setLiked] = useState(postData.isLiked);
+  const [disliked, setDisliked] = useState(postData.isDisliked);
+  const [favourited, setFavourited] = useState(postData.isFavourited);
+  const [emojied, setEmojied] = useState(postData.isEmojied);
 
   function convertCounts(num: number): string {
     if (num < 1000) {
@@ -179,17 +193,19 @@ const Post = ({ postData } : PostProps) => {
       case 'dislike':
         setDisliked(prev => !prev);
         break;
-      case 'love':
+      case 'favourite':
         setFavourited(prev => !prev);
         break;
     }
-    
+
     try {
+      // Update post details in database then refetch latest counts
       await axios.post(`${backendUrl}/react`, {
         "postId": postData.postId,
         "reactionType": reactionType,
         "reactionValue": reactionValue
       });
+      onReact(postData.postId)
     } catch (error) {
       switch(reactionType) {
         case 'like':
@@ -212,68 +228,90 @@ const Post = ({ postData } : PostProps) => {
 
   return (
     <StyledMainContainer>
-      <StyledContentContainer>
-        <CharacterImage
-          alt="Character image"
-          size="100px"
-          imagePath={postData.image} 
-        />
+      <StyledMainPostContainer>
+        <StyledContentContainer>
+          <CharacterImage
+            alt="Character image"
+            size="100px"
+            imagePath={postData.image} 
+          />
 
-        <StyledTextContainer>
-          <StyledCharacterName>
-            {postData.name}
-          </StyledCharacterName>
+          <StyledTextContainer>
+            <StyledCharacterName>
+              {postData.name}
+            </StyledCharacterName>
 
-          {postData.content != "" && <TextEditor showMenu={false} content={postData.content}/>}
-          {postData.attachment && <StyledPostImage src={backendUrl + "/" + postData.attachment}/>}
-        </StyledTextContainer>
+            {postData.content != "" && <TextEditor showMenu={false} content={postData.content}/>}
+            {postData.attachment && <StyledPostImage src={backendUrl + "/" + postData.attachment}/>}
+          </StyledTextContainer>
 
-      </StyledContentContainer>
-      <StyledActionBar>
-        <StyledActionBarIconContainer>
-          <StyledRepliesIcon/>
-          <StyledActionBarText>
-            {convertCounts(postData.replies)}
-          </StyledActionBarText>
-        </StyledActionBarIconContainer>
-
-        <StyledActionBarIconContainer>
-          <StyledShareIcon/>
-        </StyledActionBarIconContainer>
-
-        <StyledActionBarIconContainer>
-          <StyledFavouriteIcon/>
-        </StyledActionBarIconContainer>
-
-        <StyledActionBarIconContainer>
-          <StyledHeartIcon/>
+        </StyledContentContainer>
+        <StyledActionBar>
+          <StyledActionBarIconContainer onClick={() => setRepliesExpanded(prev => !prev)}>
+            <StyledRepliesIcon/>
             <StyledActionBarText>
-              {convertCounts(postData.loves)}
+              {convertCounts(postData.replies)}
             </StyledActionBarText>
-        </StyledActionBarIconContainer>
+          </StyledActionBarIconContainer>
 
-        <StyledActionBarIconContainer>
-          <StyledLikeIcon $active={liked} $activeColour="green" onClick={() => reactToPost("like")}/>
-            <StyledActionBarText>
-              {convertCounts(postData.likes)}
-            </StyledActionBarText>
-          <StyledDislikeIcon $active={disliked} $activeColour="red" onClick={() => setDisliked(prev => !prev)}/>
-            <StyledActionBarText>
-              {convertCounts(postData.dislikes)}
-            </StyledActionBarText>
-        </StyledActionBarIconContainer>
+          <StyledActionBarIconContainer>
+            <StyledShareIcon/>
+          </StyledActionBarIconContainer>
 
-      </StyledActionBar>
+          <StyledActionBarIconContainer 
+            onClick={() => {
+            reactToPost("favourite");
+          }}>
+            <StyledFavouriteIcon $active={favourited} $activeColour="yellow"/>
+          </StyledActionBarIconContainer>
 
-      <StyledDataText>
-        {new Intl.DateTimeFormat("en-GB", {
-          day: "numeric",
-          month: "short",
-          hour: "2-digit",
-          minute: "2-digit",
-        }).format(new Date(postData.createdAt))
-        }
-      </StyledDataText>
+          <StyledActionBarIconContainer>
+            <StyledHeartIcon $active={emojied} $activeColour="red"/>
+              <StyledActionBarText>
+                {convertCounts(postData.emojis)}
+              </StyledActionBarText>
+          </StyledActionBarIconContainer>
+
+          <StyledActionBarIconContainer>
+            <StyledLikeIcon 
+              $active={liked} 
+              $activeColour="green" 
+              onClick={() => {
+                reactToPost("like");
+                if (disliked) {
+                  setDisliked(false);
+                }
+              }}/>
+              <StyledActionBarText>
+                {convertCounts(postData.likes)}
+              </StyledActionBarText>
+            <StyledDislikeIcon 
+              $active={disliked} 
+              $activeColour="red" 
+              onClick={() => {
+                reactToPost("dislike");
+                if (liked) {
+                  setLiked(false);
+                }
+              }}/>
+              <StyledActionBarText>
+                {convertCounts(postData.dislikes)}
+              </StyledActionBarText>
+          </StyledActionBarIconContainer>
+        </StyledActionBar>
+
+        <StyledDataText>
+          {new Intl.DateTimeFormat("en-GB", {
+            day: "numeric",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+          }).format(new Date(postData.createdAt))
+          }
+        </StyledDataText>
+      </StyledMainPostContainer>
+
+      {repliesExpanded && <Reply/>}
     </StyledMainContainer>
   )
 };

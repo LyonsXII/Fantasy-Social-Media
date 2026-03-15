@@ -40,12 +40,16 @@ export type PostType = {
   image: string;
   content: string;
   replies: number;
-  loves: number;
+  emojis: number;
   likes: number;
   dislikes: number;
   createdAt: string;
   updatedAt: string;
   attachment: string;
+  isLiked: boolean;
+  isDisliked: boolean;
+  isFavourited: boolean;
+  isEmojied: boolean;
 }
 
 const Stream = ({ showCreatePostMenu, showCharactersMenu, characterFilter, propertyFilter } : StreamProps) => {
@@ -80,6 +84,25 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, characterFilter, prope
       setLoading(false);
     }
   }, [loading, furtherContentAvailable, characterFilter, lastId]);
+
+  async function updatePost(postId: number) {
+    try {
+      const { data } = await axios.get(`${backendUrl}/post`, { params: {postId: postId} });
+      console.log(data);
+      setPosts(prev =>
+        prev.map(item =>
+          item.postId === postId ? { ...item, ...data } : item
+        )
+      );
+
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          console.log(error.response.data.error);
+        }
+      }
+    }
+  };
 
   // Reset on filter change
   useEffect(() => {
@@ -117,11 +140,7 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, characterFilter, prope
       {showCreatePostMenu && <CreatePostMenu />}
       {showCharactersMenu && <CharactersMenu />}
       {posts && posts.map((post, i) => {
-        if (i < posts.length - 1) {
-          return <Post key={post.postId} postData={post}/>
-        } else {
-          return <Post key={post.postId} postData={post}/>
-        }
+        return <Post key={post.postId} postData={post} onReact={updatePost}/>
       })}
       <div ref={observerRef} style={{"height": "1px", "width": "1px", "border": "1px solid black", "opacity": "0.01"}}/>
     </StyledMainContainer>
