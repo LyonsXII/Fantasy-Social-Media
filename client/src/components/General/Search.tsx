@@ -10,7 +10,7 @@ const StyledMainContainer = styled.div<{ $direction?: string, $width?: string, $
   display: flex;
   flex-direction: ${({ $direction }) => $direction ? $direction : "row"};
   align-items: ${({ $direction }) => $direction ? "flex-start" : "center"};
-  height: ${({ $direction, $height }) => $direction == "row" ? $height : "fit-content"};
+  height: ${({ $direction, $height }) => $direction == "row" ? $height : "100%"};
   width: ${({ $width }) => $width ? $width : "100%"};
   gap: 1rem;
 `;
@@ -72,8 +72,10 @@ const StyledSuggestionImagesContainer = styled.div`
 
 const StyledCharacterDescription = styled.div`
   height: 100%;
+  min-height: 0;
   width: 100%;
-  padding: 0.6rem 1rem 0rem 0.6rem;
+  margin-top: 0.6rem;
+  padding: 0rem 0.6rem 1rem 0rem;
   font-size: 1rem;
 
   overflow-y: auto;

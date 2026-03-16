@@ -15,7 +15,7 @@ const StyledMainContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: calc(100% - 1rem);
+  height: 100%;
   width: 100%;
 `;
 

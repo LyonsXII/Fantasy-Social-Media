@@ -7,12 +7,12 @@ import TextEditor from './TextEditor';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-const StyledMainContainer = styled.div`
+const StyledMainContainer = styled.div<{$height?: string}>`
   display: flex;
-  min-height: calc((60px * 5) + (0.6rem * 4) + 3.2rem + 2px);
+  height: ${({ $height }) => $height ? $height : "calc((60px * 5) + (0.6rem * 4) + 3.2rem + 2px)"};
   flex-shrink: 0;
   width: 100%;
-  padding: 1.6rem 1.6rem 1.6rem 1.6rem;
+  padding: 1.6rem 1.6rem 2rem 1.6rem;
   gap: 0.6rem;
   background: white;
   border: 1px solid rgba(0,0,0,0.06);
@@ -38,22 +38,32 @@ const StyledSearchContainer = styled.div`
 `;
 
 const StyledCreatePostContentContainer = styled.div`
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
   width: 100%;
-  gap: 0.6rem;
 `;
 
 export const StyledMessageText = styled.div<{ $showMessageText : boolean }>`
+  position: absolute;
   height: 1rem;
+  bottom: -1.25rem;
+  left: 1rem;
   width: 100%;
   font-size: 1rem;
   opacity: 0.8;
-  padding-left: 1rem;
 `;
 
-const CreatePostMenu = () => {
+type CreatePostMenuProps = {
+  mode: string;
+  height?: string;
+  numSuggestions: number;
+  postId?: number;
+  parentReplyId?: string;
+}
+
+const CreatePostMenu = ({ mode, height, numSuggestions, postId, parentReplyId,  } : CreatePostMenuProps) => {
   const [selectedCharacter, setSelectedCharacter] = useState<number | null>(null);
   const [messageText, setMessageText] = useState<string>("");
   const [showMessageText, setShowMessageText] = useState<boolean>(false);
@@ -80,6 +90,37 @@ const CreatePostMenu = () => {
       });
 
       setMessageText("Post created!");
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          setMessageText(error.response.data.error);
+        }
+      }
+    }
+  };
+
+  async function createReply(postData: any, lenRawText: number){
+    try {
+      const formData = new FormData();
+      formData.append("postId", String(postId));
+      if (parentReplyId != undefined && parentReplyId != null) {
+        formData.append("parentReplyId", String(parentReplyId));
+      }
+      formData.append("charId", String(selectedCharacter));
+      formData.append("postData", JSON.stringify(postData));
+      formData.append("lenRawText", String(lenRawText));
+
+      if (attachment) {
+        formData.append("attachment", attachment);
+      }
+
+      await axios.post(`${backendUrl}/createReply`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data"
+        }
+      });
+
+      setMessageText("Reply created!");
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response) {
@@ -126,23 +167,23 @@ const CreatePostMenu = () => {
   }, [messageText]);
 
   return (
-    <StyledMainContainer>
+    <StyledMainContainer $height={height}>
         <StyledSearchContainer>
-        <Search direction="column" numSuggestions={5} showPropFilter={false} showCharDescription={true} selectChar={setSelectedCharacter}/>
+        <Search direction="column" height="100%" numSuggestions={numSuggestions} showPropFilter={false} showCharDescription={true} selectChar={setSelectedCharacter}/>
       </StyledSearchContainer>
 
       <StyledCreatePostContentContainer>
         <TextEditor 
-          createPost={createPost} 
+          createPost={mode === "post" ? createPost : createReply} 
           showMenu={true}
           openPicker={openPicker}
           handleChange={handleChange}
           fileInputRef={fileInputRef}
           attachmentName={attachment ? attachment.name : undefined}
         />
-          <StyledMessageText $showMessageText={showMessageText}>
-            {messageText}
-          </StyledMessageText>
+        <StyledMessageText $showMessageText={showMessageText}>
+          {messageText}
+        </StyledMessageText>
       </StyledCreatePostContentContainer>
     </StyledMainContainer>
   )

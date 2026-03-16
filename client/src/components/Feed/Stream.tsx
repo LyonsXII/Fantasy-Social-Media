@@ -88,7 +88,6 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, characterFilter, prope
   async function updatePost(postId: number) {
     try {
       const { data } = await axios.get(`${backendUrl}/post`, { params: {postId: postId} });
-      console.log(data);
       setPosts(prev =>
         prev.map(item =>
           item.postId === postId ? { ...item, ...data } : item
@@ -111,7 +110,7 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, characterFilter, prope
     setFurtherContentAvailable(true);
   }, [characterFilter, propertyFilter]);
 
-  // Create observer on new last post to load more posts when reached
+  // Create observer to load more posts when reached
   useEffect(() => {
     if (!observerRef.current) return;
 
@@ -137,9 +136,9 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, characterFilter, prope
 
   return ( 
     <StyledMainContainer>
-      {showCreatePostMenu && <CreatePostMenu />}
+      {showCreatePostMenu && <CreatePostMenu mode="post" numSuggestions={5}/>}
       {showCharactersMenu && <CharactersMenu />}
-      {posts && posts.map((post, i) => {
+      {posts && posts.map((post) => {
         return <Post key={post.postId} postData={post} onReact={updatePost}/>
       })}
       <div ref={observerRef} style={{"height": "1px", "width": "1px", "border": "1px solid black", "opacity": "0.01"}}/>

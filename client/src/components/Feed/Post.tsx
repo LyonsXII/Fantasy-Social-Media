@@ -5,7 +5,7 @@ import axios from "axios";
 
 import CharacterImage from '../General/CharacterImage';
 import TextEditor from './TextEditor';
-import Reply from './Reply.tsx';
+import ReplyFeed from './ReplyFeed.tsx';
 
 import RepliesIcon from "../../assets/icons/replies.svg?react";
 import ShareIcon from "../../assets/icons/share.svg?react";
@@ -311,7 +311,7 @@ const Post = ({ postData, onReact } : PostProps) => {
         </StyledDataText>
       </StyledMainPostContainer>
 
-      {repliesExpanded && <Reply/>}
+      {repliesExpanded && <ReplyFeed postId={postData.postId}/>}
     </StyledMainContainer>
   )
 };

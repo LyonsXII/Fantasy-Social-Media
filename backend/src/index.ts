@@ -297,16 +297,18 @@ app.post("/createPost", upload.single("attachment"), async (req, res) => {
   const owner_id = 1;
 
   // Bad inputs
+  if (!postData) return res.status(400).json({ error: "Missing content"});
   if (charId === null || lenRawText === 0) return res.status(400).json({ error: "Missing character or text"});
   if (lenRawText > 280) return res.status(400).json({ error: "Too many characters"});
   if (postData.length > 5000) return res.status(400).json({ error: "Input too large"});
 
   try {
     const result = await db.query(
-      "INSERT INTO posts (owner_id, character_id, content, attachment) VALUES ($1, $2, $3, $4) RETURNING post_id", 
+      `INSERT INTO posts (owner_id, character_id, content, attachment) 
+      VALUES ($1, $2, $3, $4) RETURNING post_id`, 
       [owner_id, charId, postData, attachmentName]);
 
-    res.status(201).json({ user: result.rows[0].post_id });
+    res.status(201).json({ postId: result.rows[0].post_id });
   } catch(err: any) {
     console.log(err);
     res.status(500).json({ error: "Internal server error" });
@@ -458,7 +460,6 @@ app.post("/react", async (req, res) => {
 });
 
 // Retrieve multiple posts for feed (filtering based on character and property)
-// Retrieve multiple posts for feed (filtering based on character and property)
 app.get("/feed", async (req, res) => {
   const { charId, propertyId, lastId } = req.query;
   const userId = 1;
@@ -467,7 +468,7 @@ app.get("/feed", async (req, res) => {
   try {
     let query = 
     `SELECT 
-      p.post_id, 
+      p.post_id,
       c.name, 
       c.image, 
       p.content, 
@@ -558,6 +559,107 @@ app.get("/feed", async (req, res) => {
       isEmojied: row.isEmojied
     }));
 
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Create a reply
+app.post("/createReply", upload.single("attachment"), async (req, res) => {
+  const { postId, parentReplyId, charId, postData, lenRawText } = req.body;
+  const convParentReplyId = parentReplyId != undefined ? parentReplyId : null;
+  const attachmentName = req.file?.filename ?? null;
+  const owner_id = 1;
+
+  // Bad inputs
+  if (!postId && !parentReplyId) return res.status(400).json({ error: "Missing parent to reply to"});
+  if (!postData) return res.status(400).json({ error: "Missing content"});
+  if (lenRawText > 280) return res.status(400).json({ error: "Too many characters"});
+  if (postData.length > 5000) return res.status(400).json({ error: "Input too large"});
+
+  try {
+    await db.query("BEGIN");
+
+    const result = await db.query(
+      `INSERT INTO replies (owner_id, post_id, parent_reply_id, character_id, content, attachment) 
+      VALUES ($1, $2, $3, $4, $5, $6) RETURNING post_id`, 
+      [owner_id, postId, convParentReplyId, charId, postData, attachmentName]);
+
+    // Increment total replies on post
+    await db.query(
+      `UPDATE posts
+      SET replies = replies + 1
+      WHERE post_id = $1`, [postId]);
+
+    // Increment parent reply total replies if relevant
+    // ToDo: Chain totals up a reply stack? Might be a bit complicated
+    if (convParentReplyId) {
+      await db.query(
+        `UPDATE replies
+        SET replies = replies + 1
+        WHERE post_id = $1`, [postId]); 
+    }
+
+    await db.query("COMMIT");
+
+    res.status(201).json({ replyId: result.rows[0].reply_id });
+  } catch(err: any) {
+    console.log(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Retrieve multiple replies for reply feed
+app.get("/replies", async (req, res) => {
+  const postId = Number(req.query.postId);
+  const lastId = req.query.lastId ? Number(req.query.lastId) : null;
+  const userId = 1;
+
+  let search: QueryResult<any>;
+  try {
+    let query = 
+      `SELECT 
+        r.reply_id,
+        r.owner_id,
+        c.name,
+        c.image,
+        r.content,
+        r.created_at,
+        r.updated_at,
+        r.attachment
+      FROM replies r
+      INNER JOIN characters c ON r.character_id = c.char_id`
+
+    const params: any[] = [postId];
+
+    if (lastId !== null) {
+      params.push(lastId);
+      query += ` WHERE r.post_id = $1 AND r.reply_id < $2`;
+    } else {
+      query += ` WHERE r.post_id = $1`;
+    }
+
+    query += `
+      ORDER BY r.created_at DESC, r.reply_id DESC
+      LIMIT 10;
+    `;
+
+    search = await db.query(query, params);
+
+    const result = search.rows.map(row => ({
+      replyId: row.reply_id,
+      owner_id: row.owner_id,
+      name: row.name,
+      image: row.image,
+      content: row.content,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      attachment: row.attachment ? "uploads/" + row.attachment : undefined,
+    }));
+
+    console.log(result);
     res.json(result);
   } catch (err) {
     console.error(err);
