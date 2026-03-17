@@ -26,9 +26,17 @@ export type ReplyType = {
   name: string;
   image: string;
   content: string;
+  replies: number;
+  emojis: number;
+  likes: number;
+  dislikes: number;
   createdAt: string;
   updatedAt: string;
   attachment: string;
+  isLiked: boolean;
+  isDisliked: boolean;
+  isFavourited: boolean;
+  isEmojied: boolean;
 }
 
 const ReplyFeed = ({ postId } : ReplyFeedProps) => {
@@ -64,6 +72,24 @@ const ReplyFeed = ({ postId } : ReplyFeedProps) => {
     }
   }, [loading, furtherContentAvailable, lastId]);
 
+  async function updateReply(replyId: number) {
+    try {
+      const { data } = await axios.get(`${backendUrl}/reply`, { params: {reply: replyId} });
+      setReplies(prev =>
+        prev.map(item =>
+          item.replyId === postId ? { ...item, ...data } : item
+        )
+      );
+
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          console.log(error.response.data.error);
+        }
+      }
+    }
+  };
+
   // Create observer to load more posts when reached
   useEffect(() => {
     if (!observerRef.current) return;
@@ -92,7 +118,7 @@ const ReplyFeed = ({ postId } : ReplyFeedProps) => {
     <StyledMainContainer>
       <CreatePostMenu mode="reply" postId={postId} height="250px" numSuggestions={3}/>
       {replies && replies.map((reply) => {
-        return <Reply key={reply.replyId} replyData={reply}/>
+        return <Reply key={reply.replyId} replyData={reply} updateReply={updateReply}/>
       })}
       <div ref={observerRef} style={{"height": "1px", "width": "1px", "border": "1px solid black", "opacity": "0.01"}}/>
     </StyledMainContainer>

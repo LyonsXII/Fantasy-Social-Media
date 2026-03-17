@@ -139,7 +139,7 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, characterFilter, prope
       {showCreatePostMenu && <CreatePostMenu mode="post" numSuggestions={5}/>}
       {showCharactersMenu && <CharactersMenu />}
       {posts && posts.map((post) => {
-        return <Post key={post.postId} postData={post} onReact={updatePost}/>
+        return <Post key={post.postId} postData={post} updatePost={updatePost}/>
       })}
       <div ref={observerRef} style={{"height": "1px", "width": "1px", "border": "1px solid black", "opacity": "0.01"}}/>
     </StyledMainContainer>

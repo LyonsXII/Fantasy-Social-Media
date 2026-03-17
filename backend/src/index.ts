@@ -611,6 +611,38 @@ app.post("/createReply", upload.single("attachment"), async (req, res) => {
   }
 });
 
+// Retrieve a reply
+app.get("/reply", async (req, res) => {
+  const { replyId } = req.query;
+
+  try {
+    const search = await db.query(
+      `SELECT name, image, content, replies, emojis, likes, dislikes, p.created_at, updated_at
+       FROM replies r
+       INNER JOIN characters c ON r.character_id = c.char_id
+       WHERE reply_id = $1;`,
+      [replyId]
+    );
+
+    const result = search.rows.map(row => ({
+      name: row.name,
+      image: row.image,
+      content: row.content,
+      replies: row.replies,
+      emojis: row.emojis,
+      likes: row.likes,
+      dislikes: row.dislikes,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    }));
+
+    res.json(result[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Retrieve multiple replies for reply feed
 app.get("/replies", async (req, res) => {
   const postId = Number(req.query.postId);
@@ -626,9 +658,43 @@ app.get("/replies", async (req, res) => {
         c.name,
         c.image,
         r.content,
+        r.replies,
+        r.emojis,
+        r.likes,
+        r.dislikes,
         r.created_at,
         r.updated_at,
-        r.attachment
+        r.attachment,
+
+      EXISTS (
+        SELECT 1
+        FROM post_reactions pr
+        WHERE pr.reply_id = r.reply_id
+          AND pr.user_id = $1
+          AND pr.reaction = 'like'
+      ) AS "isLiked",
+      EXISTS (
+        SELECT 1
+        FROM post_reactions pr
+        WHERE pr.reply_id = r.reply_id
+          AND pr.user_id = $1
+          AND pr.reaction = 'dislike'
+      ) AS "isDisliked",
+      EXISTS (
+          SELECT 1
+          FROM post_reactions pr
+          WHERE pr.reply_id = r.reply_id
+            AND pr.user_id = $1
+            AND pr.reaction = 'favourite'
+      ) AS "isFavourited",
+      EXISTS (
+          SELECT 1
+          FROM post_reactions pr
+          WHERE pr.reply_id = r.reply_id
+            AND pr.user_id = $1
+            AND pr.reaction = 'emoji'
+      ) AS "isEmojied"
+
       FROM replies r
       INNER JOIN characters c ON r.character_id = c.char_id`
 
@@ -654,12 +720,19 @@ app.get("/replies", async (req, res) => {
       name: row.name,
       image: row.image,
       content: row.content,
+      replies: row.replies,
+      emojis: row.emojis,
+      likes: row.likes,
+      dislikes: row.dislikes,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       attachment: row.attachment ? "uploads/" + row.attachment : undefined,
+      isLiked: row.isLiked,
+      isDisliked: row.isDisliked,
+      isFavourited: row.isFavourited,
+      isEmojied: row.isEmojied
     }));
 
-    console.log(result);
     res.json(result);
   } catch (err) {
     console.error(err);

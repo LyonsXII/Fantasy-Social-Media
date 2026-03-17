@@ -1,7 +1,9 @@
 import styled from 'styled-components';
+import { useState } from 'react';
 
 import CharacterImage from '../General/CharacterImage';
 import TextEditor from './TextEditor';
+import PostActions from './PostActions';
 
 import type { ReplyType } from './ReplyFeed';
 
@@ -71,9 +73,11 @@ const StyledTextContainer = styled.div`
 
 type ReplyProps = {
   replyData: ReplyType;
+  updateReply: (replyId: number) => void;
 }
 
-const Reply = ({ replyData } : ReplyProps) => {
+const Reply = ({ replyData, updateReply } : ReplyProps) => {
+  const [repliesExpanded, setRepliesExpanded] = useState(false);
 
   return (
     <StyledMainPostContainer>
@@ -93,6 +97,8 @@ const Reply = ({ replyData } : ReplyProps) => {
           {replyData.attachment && <StyledPostImage src={backendUrl + "/" + replyData.attachment}/>}
         </StyledTextContainer>
       </StyledContentContainer>
+
+      <PostActions postData={replyData} updatePost={updateReply} setRepliesExpanded={setRepliesExpanded}/>
     </StyledMainPostContainer>
   )
 };
