@@ -347,11 +347,18 @@ app.get("/post", async (req, res) => {
   }
 });
 
-// React to a post
+// React to a post (or reply)
   // Either add reaction, update reaction from opposite, or undo previous reaction
 app.post("/react", async (req, res) => {
-  const { postId, reactionType, reactionValue } = req.body;
+  const { postId, replyId, reactionType, reactionValue } = req.body;
   const userId = 1;
+
+  // Defining whether a post or reply reaction, for use in queries
+  const isReply = replyId != null;
+  const targetId = replyId ?? postId;
+  if (!targetId) {return res.status(400).json({ error: "Missing target" });}
+  const idColumn = isReply ? "reply_id" : "post_id";
+  const table = isReply ? "replies" : "posts";
 
   type ReactionType = "like" | "dislike" | "favourite" | "emoji";
   // Mapping reactionType to oppose (e.g. like -> dislike)
@@ -370,6 +377,11 @@ app.post("/react", async (req, res) => {
   };
   const column = reactionColumns[reactionType];
 
+  // Reaction type isn't allowed (not 'like', 'dislike', 'love', 'favourite' or 'emoji')
+  if (!(reactionType in oppositeReaction)) {
+    return res.status(400).json({ error: "Invalid reactionType" });
+  }
+
   try {
     await db.query("BEGIN");
 
@@ -377,15 +389,10 @@ app.post("/react", async (req, res) => {
     const check = await db.query(
       `SELECT reaction, reaction_value
        FROM post_reactions
-       WHERE post_id = $1 AND user_id = $2;`,
-      [postId, userId]
+       WHERE ${idColumn} = $1 AND user_id = $2;`,
+      [targetId, userId]
     );
     const reactions = new Set(check.rows.map(r => r.reaction));
-
-    // Reaction type isn't allowed (not 'like', 'dislike', 'love', 'favourite' or 'emoji')
-    if (!(reactionType in oppositeReaction)) {
-      return res.status(400).json({ error: "Invalid reactionType" });
-    }
 
     let result = null;
 
@@ -395,17 +402,17 @@ app.post("/react", async (req, res) => {
       // Delete reaction
       result = await db.query(
         `DELETE FROM post_reactions
-        WHERE post_id = $1 AND user_id = $2 AND reaction = $3`,
-        [postId, userId, reactionType]
-      )
+        WHERE ${idColumn} = $1 AND user_id = $2 AND reaction = $3`,
+        [targetId, userId, reactionType]
+      );
 
       // Decrement count for like, dislike, and emoji
       if (column) {
         await db.query(
-          `UPDATE posts
+          `UPDATE ${table}
           SET ${column} = ${column} - 1
-          WHERE post_id = $1`,
-          [postId]
+          WHERE ${idColumn} = $1`,
+          [targetId]
         );
       }
           
@@ -415,8 +422,8 @@ app.post("/react", async (req, res) => {
       result = await db.query(
         `UPDATE post_reactions
         SET reaction = $1
-        WHERE post_id = $2 AND user_id = $3 AND reaction = $4`,
-        [reactionType, postId, userId, oppositeReaction[reactionType as ReactionType]]
+        WHERE ${idColumn} = $2 AND user_id = $3 AND reaction = $4`,
+        [reactionType, targetId, userId, oppositeReaction[reactionType as ReactionType]]
       )
 
       const negReaction = oppositeReaction[reactionType as ReactionType];
@@ -425,27 +432,27 @@ app.post("/react", async (req, res) => {
           ? reactionColumns[negReaction as keyof typeof reactionColumns]
           : null;
       await db.query(
-        `UPDATE posts
+        `UPDATE ${table}
         SET ${column} = ${column} + 1,
             ${oppositeColumn} = ${oppositeColumn} - 1
-        WHERE post_id = $1`,
-        [postId]
+        WHERE ${idColumn} = $1`,
+        [targetId]
       );
 
     } else {
       // No relevant previous reaction, add into table and increment count
       result = await db.query(
-        `INSERT INTO post_reactions (post_id, user_id, reaction, reaction_value)
+        `INSERT INTO post_reactions (${idColumn}, user_id, reaction, reaction_value)
         VALUES ($1, $2, $3, $4)`,
-        [postId, userId, reactionType, reactionValue]
+        [targetId, userId, reactionType, reactionValue]
       );
 
       if (column) {
         await db.query(
-          `UPDATE posts
+          `UPDATE ${table}
           SET ${column} = ${column} + 1
-          WHERE post_id = $1`,
-          [postId]
+          WHERE ${idColumn} = $1`,
+          [targetId]
         );
       }
     }
@@ -454,7 +461,8 @@ app.post("/react", async (req, res) => {
 
     res.json(result);
   } catch (err) {
-    console.error(err);
+    console.log(err);
+    await db.query("ROLLBACK");
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -599,7 +607,7 @@ app.post("/createReply", upload.single("attachment"), async (req, res) => {
       await db.query(
         `UPDATE replies
         SET replies = replies + 1
-        WHERE post_id = $1`, [postId]); 
+        WHERE reply_id = $1`, [convParentReplyId]); 
     }
 
     await db.query("COMMIT");
@@ -607,6 +615,7 @@ app.post("/createReply", upload.single("attachment"), async (req, res) => {
     res.status(201).json({ replyId: result.rows[0].reply_id });
   } catch(err: any) {
     console.log(err);
+    await db.query("ROLLBACK");
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -617,7 +626,16 @@ app.get("/reply", async (req, res) => {
 
   try {
     const search = await db.query(
-      `SELECT name, image, content, replies, emojis, likes, dislikes, p.created_at, updated_at
+      `SELECT 
+        c.name, 
+        c.image, 
+        r.content, 
+        r.replies, 
+        r.emojis, 
+        r.likes, 
+        r.dislikes, 
+        r.created_at, 
+        r.updated_at
        FROM replies r
        INNER JOIN characters c ON r.character_id = c.char_id
        WHERE reply_id = $1;`,
@@ -635,6 +653,7 @@ app.get("/reply", async (req, res) => {
       createdAt: row.created_at,
       updatedAt: row.updated_at
     }));
+    console.log(result[0]);
 
     res.json(result[0]);
   } catch (err) {
@@ -646,6 +665,7 @@ app.get("/reply", async (req, res) => {
 // Retrieve multiple replies for reply feed
 app.get("/replies", async (req, res) => {
   const postId = Number(req.query.postId);
+  const parentReplyId = req.query.parentReplyId ? Number(req.query.parentReplyId) : null;
   const lastId = req.query.lastId ? Number(req.query.lastId) : null;
   const userId = 1;
 
@@ -654,6 +674,7 @@ app.get("/replies", async (req, res) => {
     let query = 
       `SELECT 
         r.reply_id,
+        r.post_id,
         r.owner_id,
         c.name,
         c.image,
@@ -696,15 +717,21 @@ app.get("/replies", async (req, res) => {
       ) AS "isEmojied"
 
       FROM replies r
-      INNER JOIN characters c ON r.character_id = c.char_id`
+      INNER JOIN characters c ON r.character_id = c.char_id
+      WHERE r.post_id = $2`
 
-    const params: any[] = [postId];
+    const params: any[] = [userId, postId];
+
+    if (parentReplyId != null) {
+      params.push(parentReplyId)
+      query += ` AND r.parent_reply_id = $${params.length}`;
+    } else {
+      query += ' AND r.parent_reply_id IS NULL'
+    }
 
     if (lastId !== null) {
       params.push(lastId);
-      query += ` WHERE r.post_id = $1 AND r.reply_id < $2`;
-    } else {
-      query += ` WHERE r.post_id = $1`;
+      query += ` AND r.reply_id < $${params.length}`;
     }
 
     query += `
@@ -716,6 +743,7 @@ app.get("/replies", async (req, res) => {
 
     const result = search.rows.map(row => ({
       replyId: row.reply_id,
+      postId: row.post_id,
       owner_id: row.owner_id,
       name: row.name,
       image: row.image,

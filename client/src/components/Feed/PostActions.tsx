@@ -145,7 +145,8 @@ type PostProps = {
 }
 
 const PostActions = ({ postData, updatePost, setRepliesExpanded } : PostProps) => {
-  const id = "postId" in postData ? postData.postId : postData.replyId;
+  const convPostId = "postId" in postData ? postData.postId : null;
+  const convReplyId = "replyId" in postData ? postData.replyId : null;
   const [liked, setLiked] = useState(postData.isLiked);
   const [disliked, setDisliked] = useState(postData.isDisliked);
   const [favourited, setFavourited] = useState(postData.isFavourited);
@@ -178,11 +179,16 @@ const PostActions = ({ postData, updatePost, setRepliesExpanded } : PostProps) =
     try {
       // Update post details in database then refetch latest counts
       await axios.post(`${backendUrl}/react`, {
-        "postId": id,
+        "postId": convPostId,
+        "replyId": convReplyId,
         "reactionType": reactionType,
         "reactionValue": reactionValue
       });
-      updatePost(id)
+      if (convReplyId != null) {
+        updatePost(convReplyId);
+      } else if (convPostId != null) {
+        updatePost(convPostId);
+      }
     } catch (error) {
       switch(reactionType) {
         case 'like':

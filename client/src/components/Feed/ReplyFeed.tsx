@@ -17,11 +17,13 @@ const StyledMainContainer = styled.div`
 `;
 
 type ReplyFeedProps = {
-  postId: number;
+  postId?: number;
+  parentReplyId?: number;
 }
 
 export type ReplyType = {
   replyId: number;
+  postId: number;
   owner_id: number;
   name: string;
   image: string;
@@ -39,7 +41,7 @@ export type ReplyType = {
   isEmojied: boolean;
 }
 
-const ReplyFeed = ({ postId } : ReplyFeedProps) => {
+const ReplyFeed = ({ postId, parentReplyId } : ReplyFeedProps) => {
   const [replies, setReplies] = useState<ReplyType[]>([]);
   const [lastId, setLastId] = useState<number | null>(null);
   const [furtherContentAvailable, setFurtherContentAvailable] = useState(true);
@@ -53,7 +55,7 @@ const ReplyFeed = ({ postId } : ReplyFeedProps) => {
     try {
       const { data } = await axios.get<ReplyType[]>(`${backendUrl}/replies`, 
         {
-          params: { postId: postId, lastId: lastId }
+          params: { postId: postId, parentReplyId: parentReplyId, lastId: lastId }
         }
       );
 
@@ -74,13 +76,12 @@ const ReplyFeed = ({ postId } : ReplyFeedProps) => {
 
   async function updateReply(replyId: number) {
     try {
-      const { data } = await axios.get(`${backendUrl}/reply`, { params: {reply: replyId} });
+      const { data } = await axios.get(`${backendUrl}/reply`, { params: {replyId: replyId} });
       setReplies(prev =>
         prev.map(item =>
-          item.replyId === postId ? { ...item, ...data } : item
+          item.replyId === replyId ? { ...item, ...data } : item
         )
       );
-
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response) {
@@ -116,11 +117,13 @@ const ReplyFeed = ({ postId } : ReplyFeedProps) => {
 
   return (
     <StyledMainContainer>
-      <CreatePostMenu mode="reply" postId={postId} height="250px" numSuggestions={3}/>
+      <CreatePostMenu mode="reply" postId={postId} height="250px" numSuggestions={3} parentReplyId={parentReplyId}/>
       {replies && replies.map((reply) => {
         return <Reply key={reply.replyId} replyData={reply} updateReply={updateReply}/>
       })}
       <div ref={observerRef} style={{"height": "1px", "width": "1px", "border": "1px solid black", "opacity": "0.01"}}/>
+
+
     </StyledMainContainer>
   )
 };

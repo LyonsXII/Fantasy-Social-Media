@@ -60,10 +60,10 @@ type CreatePostMenuProps = {
   height?: string;
   numSuggestions: number;
   postId?: number;
-  parentReplyId?: string;
+  parentReplyId?: number;
 }
 
-const CreatePostMenu = ({ mode, height, numSuggestions, postId, parentReplyId,  } : CreatePostMenuProps) => {
+const CreatePostMenu = ({ mode, height, numSuggestions, postId, parentReplyId } : CreatePostMenuProps) => {
   const [selectedCharacter, setSelectedCharacter] = useState<number | null>(null);
   const [messageText, setMessageText] = useState<string>("");
   const [showMessageText, setShowMessageText] = useState<boolean>(false);
@@ -102,7 +102,9 @@ const CreatePostMenu = ({ mode, height, numSuggestions, postId, parentReplyId,  
   async function createReply(postData: any, lenRawText: number){
     try {
       const formData = new FormData();
-      formData.append("postId", String(postId));
+      if (postId) {
+        formData.append("postId", String(postId));
+      }
       if (parentReplyId != undefined && parentReplyId != null) {
         formData.append("parentReplyId", String(parentReplyId));
       }

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import CharacterImage from '../General/CharacterImage';
 import TextEditor from './TextEditor';
 import PostActions from './PostActions';
+import ReplyFeed from './ReplyFeed';
 
 import type { ReplyType } from './ReplyFeed';
 
@@ -80,26 +81,30 @@ const Reply = ({ replyData, updateReply } : ReplyProps) => {
   const [repliesExpanded, setRepliesExpanded] = useState(false);
 
   return (
-    <StyledMainPostContainer>
-      <StyledContentContainer>
-        <CharacterImage
-          alt="Character image"
-          size="70px"
-          imagePath={replyData.image} 
-        />
-        <StyledTextContainer>
-          <StyledCharacterName>
-            {replyData.name}
-            {replyData.replyId}
-          </StyledCharacterName>
+    <StyledMainContainer>
+      <StyledMainPostContainer>
+        <StyledContentContainer>
+          <CharacterImage
+            alt="Character image"
+            size="70px"
+            imagePath={replyData.image} 
+          />
+          <StyledTextContainer>
+            <StyledCharacterName>
+              {replyData.name}
+              {replyData.replyId}
+            </StyledCharacterName>
 
-          {replyData.content != "" && <TextEditor showMenu={false} content={replyData.content}/>}
-          {replyData.attachment && <StyledPostImage src={backendUrl + "/" + replyData.attachment}/>}
-        </StyledTextContainer>
-      </StyledContentContainer>
+            {replyData.content != "" && <TextEditor showMenu={false} content={replyData.content}/>}
+            {replyData.attachment && <StyledPostImage src={backendUrl + "/" + replyData.attachment}/>}
+          </StyledTextContainer>
+        </StyledContentContainer>
 
-      <PostActions postData={replyData} updatePost={updateReply} setRepliesExpanded={setRepliesExpanded}/>
-    </StyledMainPostContainer>
+        <PostActions postData={replyData} updatePost={updateReply} setRepliesExpanded={setRepliesExpanded}/>
+      </StyledMainPostContainer>
+
+      {repliesExpanded && <ReplyFeed postId={replyData.postId} parentReplyId={replyData.replyId}/>}
+    </StyledMainContainer>
   )
 };
 
