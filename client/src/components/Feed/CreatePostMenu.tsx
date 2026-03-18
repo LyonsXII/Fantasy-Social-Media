@@ -61,9 +61,11 @@ type CreatePostMenuProps = {
   numSuggestions: number;
   postId?: number;
   parentReplyId?: number;
+  refetchPosts?: () => void;
+  refetchReplies?: () => void;
 }
 
-const CreatePostMenu = ({ mode, height, numSuggestions, postId, parentReplyId } : CreatePostMenuProps) => {
+const CreatePostMenu = ({ mode, height, numSuggestions, postId, parentReplyId, refetchPosts, refetchReplies } : CreatePostMenuProps) => {
   const [selectedCharacter, setSelectedCharacter] = useState<number | null>(null);
   const [messageText, setMessageText] = useState<string>("");
   const [showMessageText, setShowMessageText] = useState<boolean>(false);
@@ -90,6 +92,7 @@ const CreatePostMenu = ({ mode, height, numSuggestions, postId, parentReplyId } 
       });
 
       setMessageText("Post created!");
+      refetchPosts?.();
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response) {
@@ -123,6 +126,7 @@ const CreatePostMenu = ({ mode, height, numSuggestions, postId, parentReplyId } 
       });
 
       setMessageText("Reply created!");
+      refetchReplies?.();
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response) {

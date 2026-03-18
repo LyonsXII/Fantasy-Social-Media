@@ -85,6 +85,12 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, characterFilter, prope
     }
   }, [loading, furtherContentAvailable, characterFilter, lastId]);
 
+  function refetchPosts() {
+    setPosts([]);
+    setLastId(null);
+    setFurtherContentAvailable(true);
+  }
+
   async function updatePost(postId: number) {
     try {
       const { data } = await axios.get(`${backendUrl}/post`, { params: {postId: postId} });
@@ -136,7 +142,7 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, characterFilter, prope
 
   return ( 
     <StyledMainContainer>
-      {showCreatePostMenu && <CreatePostMenu mode="post" numSuggestions={5}/>}
+      {showCreatePostMenu && <CreatePostMenu mode="post" numSuggestions={5} refetchPosts={refetchPosts}/>}
       {showCharactersMenu && <CharactersMenu />}
       {posts && posts.map((post) => {
         return <Post key={post.postId} postData={post} updatePost={updatePost}/>

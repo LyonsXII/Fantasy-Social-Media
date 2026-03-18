@@ -74,6 +74,12 @@ const ReplyFeed = ({ postId, parentReplyId } : ReplyFeedProps) => {
     }
   }, [loading, furtherContentAvailable, lastId]);
 
+  function refetchReplies() {
+    setReplies([]);
+    setLastId(null);
+    setFurtherContentAvailable(true);
+  }
+
   async function updateReply(replyId: number) {
     try {
       const { data } = await axios.get(`${backendUrl}/reply`, { params: {replyId: replyId} });
@@ -117,7 +123,7 @@ const ReplyFeed = ({ postId, parentReplyId } : ReplyFeedProps) => {
 
   return (
     <StyledMainContainer>
-      <CreatePostMenu mode="reply" postId={postId} height="250px" numSuggestions={3} parentReplyId={parentReplyId}/>
+      <CreatePostMenu mode="reply" postId={postId} height="250px" numSuggestions={3} parentReplyId={parentReplyId} refetchReplies={refetchReplies}/>
       {replies && replies.map((reply) => {
         return <Reply key={reply.replyId} replyData={reply} updateReply={updateReply}/>
       })}
