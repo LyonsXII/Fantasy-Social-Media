@@ -56,6 +56,12 @@ const StyledCharacterName = styled.h3`
   margin: 0;
 `;
 
+const StyledDataText = styled.p`
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+`;
+
 const StyledPostImage = styled.img`
   height: fit-content;
   max-height: 300px;
@@ -101,6 +107,16 @@ const Reply = ({ replyData, updateReply } : ReplyProps) => {
         </StyledContentContainer>
 
         <PostActions postData={replyData} updatePost={updateReply} setRepliesExpanded={setRepliesExpanded}/>
+
+        <StyledDataText>
+          {new Intl.DateTimeFormat("en-GB", {
+            day: "numeric",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+          }).format(new Date(replyData.createdAt))
+          }
+        </StyledDataText>
       </StyledMainPostContainer>
 
       {repliesExpanded && <ReplyFeed postId={replyData.postId} parentReplyId={replyData.replyId}/>}

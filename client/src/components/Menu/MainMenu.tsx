@@ -48,11 +48,12 @@ const StyledOptionText = styled.p`
 type MainMenuProps = {
   toggleShowCreatePostMenu: () => void;
   toggleShowCharactersMenu: () => void;
+  toggleShowFavouritesMenu: () => void;
   setCharacterFilter: (charId: number | null) => void;
   setPropertyFilter: (propertyId: number | null) => void;
 };
 
-const MainMenu = ({ toggleShowCreatePostMenu, toggleShowCharactersMenu, setCharacterFilter, setPropertyFilter } : MainMenuProps) => {
+const MainMenu = ({ toggleShowCreatePostMenu, toggleShowCharactersMenu, toggleShowFavouritesMenu, setCharacterFilter, setPropertyFilter } : MainMenuProps) => {
   return (
     <StyledMainContainer>
       <StyledOption onClick={toggleShowCreatePostMenu}>
@@ -74,6 +75,12 @@ const MainMenu = ({ toggleShowCreatePostMenu, toggleShowCharactersMenu, setChara
       </StyledOption>
 
       <Filter setCharacterFilter={setCharacterFilter} setPropertyFilter={setPropertyFilter}/>
+
+      <StyledOption onClick={toggleShowFavouritesMenu}>
+        <StyledOptionText>
+          Favourites
+        </StyledOptionText>
+      </StyledOption>
 
       <StyledOption>
         <StyledOptionText>

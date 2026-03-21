@@ -16,6 +16,13 @@ const StyledMainContainer = styled.div`
   gap: 0.2rem;
 `;
 
+const StyledObserver = styled.div`
+  height: 1px;
+  width: 1px;
+  opacity: 0.01;
+  border: 1px solid black;
+`;
+
 type ReplyFeedProps = {
   postId?: number;
   parentReplyId?: number;
@@ -127,9 +134,7 @@ const ReplyFeed = ({ postId, parentReplyId } : ReplyFeedProps) => {
       {replies && replies.map((reply) => {
         return <Reply key={reply.replyId} replyData={reply} updateReply={updateReply}/>
       })}
-      <div ref={observerRef} style={{"height": "1px", "width": "1px", "border": "1px solid black", "opacity": "0.01"}}/>
-
-
+      <StyledObserver ref={observerRef}/>
     </StyledMainContainer>
   )
 };
