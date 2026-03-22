@@ -5,6 +5,7 @@ import axios from "axios";
 import CreatePostMenu from './CreatePostMenu';
 import CharactersMenu from './CharactersMenu';
 import Post from './Post';
+import type { ReplyType } from './ReplyFeed';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -58,6 +59,7 @@ export type PostType = {
   isDisliked: boolean;
   isFavourited: boolean;
   isEmojied: boolean;
+  replyChain?: ReplyType[];
 }
 
 const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, characterFilter, propertyFilter } : StreamProps) => {
@@ -83,7 +85,6 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, charac
         params.propertyId = propertyFilter;
       }
 
-      console.log(params);
       const endpoint = showFavourites ? "/favourites" : "/feed";
 
       const { data } = await axios.get<PostType[]>(
@@ -108,7 +109,7 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, charac
     } finally {
       setLoading(false);
     }
-  }, [furtherContentAvailable, characterFilter, propertyFilter, showFavourites, lastId]);
+  }, [furtherContentAvailable, characterFilter, propertyFilter, showFavourites, lastId, lastCreated]);
 
   function refetchPosts() {
     setPosts([]);
@@ -134,9 +135,9 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, charac
     }
   };
 
-  // useEffect(() => {
-  //   console.log(posts.length, posts);
-  // }, [posts])
+  useEffect(() => {
+    console.log("lastCreated", lastCreated)
+  }, [lastCreated]);
 
   // Reset on filter change
   useEffect(() => {
@@ -170,11 +171,15 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, charac
     return () => observer.disconnect();
   }, [fetchPosts]);
 
+  useEffect(() => {
+    console.log(posts);
+  }, [posts]);
+
   return ( 
     <StyledMainContainer>
       {showCreatePostMenu && <CreatePostMenu mode="post" numSuggestions={5} refetchPosts={refetchPosts}/>}
       {showCharactersMenu && <CharactersMenu />}
-      {posts && posts.map((post) => {
+      {posts.length && posts.map((post) => {
         return <Post key={post.postId} postData={post} updatePost={updatePost}/>
       })}
       <StyledObserver ref={observerRef}/>

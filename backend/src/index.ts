@@ -616,9 +616,9 @@ app.get("/feed", async (req, res) => {
 app.get("/favourites", async (req, res) => {
   const userId = 1;
   const lastCreated =
-  typeof req.query.lastCreated === "string"
-    ? req.query.lastCreated
-    : null;
+    typeof req.query.lastCreated === "string"
+      ? req.query.lastCreated
+      : null;
 
   let search: QueryResult<any>;
   try {
@@ -628,7 +628,7 @@ app.get("/favourites", async (req, res) => {
     }
 
     // Find 10 most recent favourites
-    const search = await db.query(
+    const { rows: favourites } = await db.query(
       `SELECT
         pr.post_id,
         pr.reply_id,
@@ -643,10 +643,9 @@ app.get("/favourites", async (req, res) => {
       params
     );
 
-    const favourites = search.rows;
+    // Separate out posts and replies
     const postIds = [];
     const replyIds = [];
-
     for (const fav of favourites) {
       if (fav.reply_id) {
         replyIds.push(fav.reply_id);
@@ -654,20 +653,58 @@ app.get("/favourites", async (req, res) => {
       postIds.push(fav.post_id);
     }
 
-    console.log(favourites);
-    console.log(postIds);
-    console.log(replyIds);
-
+    console.log("replyIds", replyIds);
     // Fetch all replies needed to form chains (from favourited replies found up to source post)
-    const replyChains = await db.query(
+    const { rows: replyChains } = await db.query(
       `WITH RECURSIVE reply_chains AS (
       SELECT
         r.reply_id,
         r.parent_reply_id,
         r.post_id,
-        0 AS depth
+        c.name,
+        c.image,
+        r.content,
+        r.replies,
+        r.emojis,
+        r.likes,
+        r.dislikes,
+        r.created_at,
+        r.updated_at,
+        r.attachment,
+        0 AS depth,
+
+        EXISTS (
+          SELECT 1
+          FROM post_reactions pr
+          WHERE pr.reply_id = r.reply_id
+            AND pr.user_id = $1
+            AND pr.reaction = 'like'
+        ) AS "isLiked",
+        EXISTS (
+          SELECT 1
+          FROM post_reactions pr
+          WHERE pr.reply_id = r.reply_id
+            AND pr.user_id = $1
+            AND pr.reaction = 'dislike'
+        ) AS "isDisliked",
+        EXISTS (
+            SELECT 1
+            FROM post_reactions pr
+            WHERE pr.reply_id = r.reply_id
+              AND pr.user_id = $1
+              AND pr.reaction = 'favourite'
+        ) AS "isFavourited",
+        EXISTS (
+            SELECT 1
+            FROM post_reactions pr
+            WHERE pr.reply_id = r.reply_id
+              AND pr.user_id = $1
+              AND pr.reaction = 'emoji'
+        ) AS "isEmojied"
+
       FROM replies r
-      WHERE r.reply_id = ANY($1)
+      INNER JOIN characters c ON r.character_id = c.char_id
+      WHERE r.reply_id = ANY($2)
 
       UNION ALL
 
@@ -675,27 +712,260 @@ app.get("/favourites", async (req, res) => {
         parent.reply_id,
         parent.parent_reply_id,
         parent.post_id,
-        rc.depth + 1
+        c.name,
+        c.image,
+        parent.content,
+        parent.replies,
+        parent.emojis,
+        parent.likes,
+        parent.dislikes,
+        parent.created_at,
+        parent.updated_at,
+        parent.attachment,
+        rc.depth + 1,
+
+        EXISTS (
+          SELECT 1
+          FROM post_reactions pr
+          WHERE pr.reply_id = parent.reply_id
+            AND pr.user_id = $1
+            AND pr.reaction = 'like'
+        ) AS "isLiked",
+        EXISTS (
+          SELECT 1
+          FROM post_reactions pr
+          WHERE pr.reply_id = parent.reply_id
+            AND pr.user_id = $1
+            AND pr.reaction = 'dislike'
+        ) AS "isDisliked",
+        EXISTS (
+            SELECT 1
+            FROM post_reactions pr
+            WHERE pr.reply_id = parent.reply_id
+              AND pr.user_id = $1
+              AND pr.reaction = 'favourite'
+        ) AS "isFavourited",
+        EXISTS (
+            SELECT 1
+            FROM post_reactions pr
+            WHERE pr.reply_id = parent.reply_id
+              AND pr.user_id = $1
+              AND pr.reaction = 'emoji'
+        ) AS "isEmojied"
+
       FROM replies parent
       JOIN reply_chains rc
         ON rc.parent_reply_id = parent.reply_id
+      INNER JOIN characters c ON parent.character_id = c.char_id
       )
-      SELECT * FROM reply_chains;`,
-      [replyIds]);
+      SELECT *
+      FROM reply_chains;`,
+      [userId, replyIds]);
+    
+    // const replyChainIndexes = [];
+    // replyChains.forEach((reply, index) => {
+    //   replyChainIndexes.push(reply.reply_id);
+    // })
+    // console.log(replyChainIndexes);
 
-    const result = await db.query(
+    // Final output of posts 
+    const { rows: result } = await db.query(
       `SELECT
-        *
-      FROM posts
-      WHERE post_id = ANY($1)`,
-      [postIds]
+        p.post_id,
+        c.name, 
+        c.image, 
+        p.content, 
+        p.replies, 
+        p.emojis, 
+        p.likes, 
+        p.dislikes, 
+        p.created_at, 
+        p.updated_at, 
+        p.attachment,
+
+        EXISTS (
+          SELECT 1
+          FROM post_reactions pr
+          WHERE pr.post_id = p.post_id
+            AND pr.user_id = $1
+            AND pr.reply_id IS NULL
+            AND pr.reaction = 'like'
+        ) AS "isLiked",
+        EXISTS (
+          SELECT 1
+          FROM post_reactions pr
+          WHERE pr.post_id = p.post_id
+            AND pr.user_id = $1
+            AND pr.reply_id IS NULL
+            AND pr.reaction = 'dislike'
+        ) AS "isDisliked",
+        EXISTS (
+            SELECT 1
+            FROM post_reactions pr
+            WHERE pr.post_id = p.post_id
+              AND pr.user_id = $1
+              AND pr.reply_id IS NULL
+              AND pr.reaction = 'favourite'
+        ) AS "isFavourited",
+        EXISTS (
+            SELECT 1
+            FROM post_reactions pr
+            WHERE pr.post_id = p.post_id
+              AND pr.user_id = $1
+              AND pr.reply_id IS NULL
+              AND pr.reaction = 'emoji'
+        ) AS "isEmojied"
+
+      FROM posts p
+      INNER JOIN characters c ON p.character_id = c.char_id
+      WHERE post_id = ANY($2)`,
+      [userId, postIds]
     );
+    const resultIndexMap: Record<number, number> = {};
+    result.forEach((post, index) => {
+      resultIndexMap[post.post_id] = index;
+    })
 
-    const sortedReplyChains = replyChains.rows;
-    sortedReplyChains.sort((a, b) => a.depth - b.depth);
-    console.log(sortedReplyChains);
+    // Reply chains embedded as new array entry {..., replies: [..., replies: []]}
+    function buildChains(replies: any[]) {
+      const result: any[] = [];
+      const repliesIndexMap: Record<number, [number, number]> = {}; // [index in result, depth]
 
-    res.json(result);
+      for (const reply of replies) {
+        if (reply.parent_reply_id) {
+          const mapping = repliesIndexMap[reply.parent_reply_id];
+          if (!mapping) continue; // parent not found, skip
+
+          let parent: any = result[mapping[0]];
+
+          // Walk down nested replyChain if depth > 1
+          let depthDiff = reply.depth - mapping[1] - 1;
+          while (depthDiff > 0 && parent.replyChain && parent.replyChain.length > 0) {
+            parent = parent.replyChain[parent.replyChain.length - 1];
+            depthDiff--;
+          }
+
+          // Initialize and attach reply
+          parent.replyChain = parent.replyChain || [];
+          parent.replyChain.push(reply);
+
+          // Track this reply in map
+          repliesIndexMap[reply.reply_id] = [mapping[0], reply.depth];
+        } else {
+          // Top-level reply
+          result.push(reply);
+          repliesIndexMap[reply.reply_id] = [result.length - 1, reply.depth];
+        }
+      }
+
+      return result;
+    }
+    replyChains.sort((a, b) => a.depth - b.depth);
+    const chains = buildChains(replyChains);
+    
+    chains.forEach((chain) => {
+      const mapping = resultIndexMap[chain.post_id];
+
+      if (mapping === undefined || !result[mapping]) return; // guard
+
+      // Ensure replyChain is an array
+      result[mapping].replyChain = result[mapping].replyChain || [];
+      result[mapping].replyChain.push(chain);
+    });
+
+    type ReplyType = {
+      replyId: number;
+      parentReplyId?: number;
+      postId: number;
+      ownerId?: number;
+      name: string;
+      image: string;
+      content: string;
+      replies: number;
+      emojis: number;
+      likes: number;
+      dislikes: number;
+      createdAt: string;
+      updatedAt: string;
+      attachment?: string;
+      isLiked: boolean;
+      isDisliked: boolean;
+      isFavourited: boolean;
+      isEmojied: boolean;
+      replyChain?: ReplyType[];
+    }
+
+    type PostType = {
+      postId: number;
+      name: string;
+      image: string;
+      content: string;
+      replies: number;
+      emojis: number;
+      likes: number;
+      dislikes: number;
+      createdAt: string;
+      updatedAt: string;
+      attachment?: string;
+      isLiked: boolean;
+      isDisliked: boolean;
+      isFavourited: boolean;
+      isEmojied: boolean;
+      replyChain?: ReplyType[];
+    }
+
+    function mapReply(node: any): ReplyType {
+      return {
+        replyId: node.reply_id,
+        parentReplyId: node.parent_reply_id,
+        postId: node.post_id,
+        name: node.name,
+        image: node.image,
+        content: node.content,
+        replies: node.replies,
+        emojis: node.emojis,
+        likes: node.likes,
+        dislikes: node.dislikes,
+        createdAt: node.created_at,
+        updatedAt: node.updated_at,
+        attachment: node.attachment ? "uploads/" + node.attachment : undefined,
+        isLiked: node.isLiked,
+        isDisliked: node.isDisliked,
+        isFavourited: node.isFavourited,
+        isEmojied: node.isEmojied,
+        replyChain: node.replyChain?.length
+          ? node.replyChain.map(mapReply)
+          : undefined,
+      };
+    }
+
+    function mapPost(post: any): PostType {
+      return {
+        postId: post.post_id,
+        name: post.name,
+        image: post.image,
+        content: post.content,
+        replies: post.replies,
+        emojis: post.emojis,
+        likes: post.likes,
+        dislikes: post.dislikes,
+        createdAt: post.created_at,
+        updatedAt: post.updated_at,
+        attachment: post.attachment ? "uploads/" + post.attachment : undefined,
+        isLiked: post.isLiked,
+        isDisliked: post.isDisliked,
+        isFavourited: post.isFavourited,
+        isEmojied: post.isEmojied,
+        replyChain: post.replyChain?.length
+          ? post.replyChain.map(mapReply)
+          : undefined,
+      };
+    }
+
+    const finalResult: PostType[] = result.map(mapPost);
+
+    console.log(finalResult[0].replyChain);
+    res.json(finalResult);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal server error" });

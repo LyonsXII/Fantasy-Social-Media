@@ -193,6 +193,6 @@ const CreatePostMenu = ({ mode, height, numSuggestions, postId, parentReplyId, r
       </StyledCreatePostContentContainer>
     </StyledMainContainer>
   )
-}
+};
 
 export default CreatePostMenu

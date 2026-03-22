@@ -23,13 +23,9 @@ const StyledObserver = styled.div`
   border: 1px solid black;
 `;
 
-type ReplyFeedProps = {
-  postId?: number;
-  parentReplyId?: number;
-}
-
 export type ReplyType = {
   replyId: number;
+  parentReplyId?: number;
   postId: number;
   owner_id: number;
   name: string;
@@ -41,15 +37,23 @@ export type ReplyType = {
   dislikes: number;
   createdAt: string;
   updatedAt: string;
-  attachment: string;
+  attachment?: string;
   isLiked: boolean;
   isDisliked: boolean;
   isFavourited: boolean;
   isEmojied: boolean;
+  replyChain?: ReplyType[];
 }
 
-const ReplyFeed = ({ postId, parentReplyId } : ReplyFeedProps) => {
-  const [replies, setReplies] = useState<ReplyType[]>([]);
+type ReplyFeedProps = {
+  postId?: number;
+  parentReplyId?: number;
+  overrideData?: ReplyType[];
+}
+
+const ReplyFeed = ({ postId, parentReplyId, overrideData } : ReplyFeedProps) => {
+  const [replies, setReplies] = useState<ReplyType[]>(
+    overrideData ?? []);
   const [lastId, setLastId] = useState<number | null>(null);
   const [furtherContentAvailable, setFurtherContentAvailable] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -106,7 +110,7 @@ const ReplyFeed = ({ postId, parentReplyId } : ReplyFeedProps) => {
 
   // Create observer to load more posts when reached
   useEffect(() => {
-    if (!observerRef.current) return;
+    if (!observerRef.current || overrideData) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -128,10 +132,15 @@ const ReplyFeed = ({ postId, parentReplyId } : ReplyFeedProps) => {
     return () => observer.disconnect();
   }, [fetchReplies]);
 
+  // useEffect(() => {
+  //   console.log(postId);
+  //   console.log("overrideData", overrideData);
+  // }, [overrideData]);
+
   return (
     <StyledMainContainer>
       <CreatePostMenu mode="reply" postId={postId} height="250px" numSuggestions={3} parentReplyId={parentReplyId} refetchReplies={refetchReplies}/>
-      {replies && replies.map((reply) => {
+      {replies.length > 0 && replies.map((reply) => {
         return <Reply key={reply.replyId} replyData={reply} updateReply={updateReply}/>
       })}
       <StyledObserver ref={observerRef}/>

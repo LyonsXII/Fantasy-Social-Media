@@ -7,6 +7,7 @@ import ReplyFeed from './ReplyFeed.tsx';
 import PostActions from './PostActions.tsx';
 
 import type { PostType } from './Stream';
+import type { ReplyType } from './ReplyFeed.tsx';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -86,9 +87,12 @@ type PostProps = {
 const Post = ({ postData, updatePost } : PostProps) => {
   const [repliesExpanded, setRepliesExpanded] = useState(false);
   const [shareExpanded, setShareExpanded] = useState(false);
+  const [replyData, setReplyData] = useState<ReplyType[] | null>(
+    postData.replyChain ?? null
+  );
 
   return (
-    <StyledMainContainer>
+    <StyledMainContainer key={postData.postId}>
       <StyledMainPostContainer>
         <StyledContentContainer>
           <CharacterImage
@@ -112,7 +116,7 @@ const Post = ({ postData, updatePost } : PostProps) => {
         <PostActions postData={postData} updatePost={updatePost} setRepliesExpanded={setRepliesExpanded}/>
 
         <StyledDataText>
-          {new Intl.DateTimeFormat("en-GB", {
+          {postData.createdAt && new Intl.DateTimeFormat("en-GB", {
             day: "numeric",
             month: "short",
             hour: "2-digit",
@@ -122,7 +126,7 @@ const Post = ({ postData, updatePost } : PostProps) => {
         </StyledDataText>
       </StyledMainPostContainer>
 
-      {repliesExpanded && <ReplyFeed postId={postData.postId}/>}
+      {repliesExpanded && <ReplyFeed postId={postData.postId} overrideData={replyData ?? undefined}/>}
     </StyledMainContainer>
   )
 };
