@@ -87,6 +87,7 @@ type PostProps = {
 
 const Post = ({ postData, updatePost, override } : PostProps) => {
   const [repliesExpanded, setRepliesExpanded] = useState(false);
+  const [replyExpanded, setReplyExpanded] = useState(false);
   const [shareExpanded, setShareExpanded] = useState(false);
   const [overrideData, setOverrideData] = useState<ReplyType[] | null>(
     postData.replyChain ?? null
@@ -114,7 +115,12 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
 
         </StyledContentContainer>
  
-        <PostActions postData={postData} updatePost={updatePost} setRepliesExpanded={setRepliesExpanded}/>
+        <PostActions 
+          postData={postData} 
+          updatePost={updatePost} 
+          setRepliesExpanded={setRepliesExpanded} 
+          setReplyExpanded={setReplyExpanded}
+        />
 
         <StyledDataText>
           {postData.createdAt && new Intl.DateTimeFormat("en-GB", {
@@ -127,7 +133,14 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
         </StyledDataText>
       </StyledMainPostContainer>
 
-      {repliesExpanded && <ReplyFeed postId={postData.postId} overrideData={overrideData ?? undefined} override={override}/>}
+      {(repliesExpanded || replyExpanded) && 
+        <ReplyFeed 
+          postId={postData.postId} 
+          overrideData={overrideData ?? undefined} 
+          override={override} 
+          depth={1}
+          replyExpanded={replyExpanded}
+        />}
     </StyledMainContainer>
   )
 };

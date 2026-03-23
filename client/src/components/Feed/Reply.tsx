@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import CharacterImage from '../General/CharacterImage';
 import TextEditor from './TextEditor';
@@ -10,16 +10,17 @@ import type { ReplyType } from './ReplyFeed';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-const StyledMainContainer = styled.div`
+const StyledMainContainer = styled.div<{ $depth: number }>`
   display: flex;
   flex-direction: column;
   height: fit-content;
   flex-shrink: 0;
-  width: 100%;
+  width: ${({ $depth }) => `calc(100% - (${$depth} * 20px))`};
+  min-width: 60%;
   gap: 0.2rem;
 `;
 
-const StyledMainPostContainer = styled.div`
+const StyledMainPostContainer = styled.div<{ $depth: number }>`
   position: relative;
   isolation: isolate;
   display: flex;
@@ -28,7 +29,17 @@ const StyledMainPostContainer = styled.div`
   flex-shrink: 0;
   width: 100%;
   gap: 0.6rem;
-  background: white;
+  background-color: ${({ $depth }) => {
+    if ($depth === undefined || $depth === null) {
+      return "#ffffff";
+    }
+
+    const cappedDepth = Math.min($depth, 4);
+    const baseLightness = 100;
+    const step = 3;
+
+    return `hsl(255, 0%, ${baseLightness - (cappedDepth * step)}%)`;
+  }};
   border: 1px solid rgba(0,0,0,0.06);
   box-shadow: 0 6px 20px rgba(0,0,0,0.06);
   overflow: hidden;
@@ -82,14 +93,20 @@ type ReplyProps = {
   replyData: ReplyType;
   updateReply: (replyId: number) => void;
   override?: boolean;
+  depth: number;
 }
 
-const Reply = ({ replyData, updateReply, override } : ReplyProps) => {
+const Reply = ({ replyData, updateReply, override, depth } : ReplyProps) => {
   const [repliesExpanded, setRepliesExpanded] = useState(false);
+  const [replyExpanded, setReplyExpanded] = useState(false);
+
+  useEffect(() => {
+    console.log(replyExpanded);
+  }, [replyExpanded]);
 
   return (
-    <StyledMainContainer>
-      <StyledMainPostContainer>
+    <StyledMainContainer $depth={depth}>
+      <StyledMainPostContainer $depth={depth}>
         <StyledContentContainer>
           <CharacterImage
             alt="Character image"
@@ -107,7 +124,12 @@ const Reply = ({ replyData, updateReply, override } : ReplyProps) => {
           </StyledTextContainer>
         </StyledContentContainer>
 
-        <PostActions postData={replyData} updatePost={updateReply} setRepliesExpanded={setRepliesExpanded}/>
+        <PostActions 
+          postData={replyData} 
+          updatePost={updateReply} 
+          setRepliesExpanded={setRepliesExpanded} 
+          setReplyExpanded={setReplyExpanded}
+        />
 
         <StyledDataText>
           {new Intl.DateTimeFormat("en-GB", {
@@ -120,12 +142,15 @@ const Reply = ({ replyData, updateReply, override } : ReplyProps) => {
         </StyledDataText>
       </StyledMainPostContainer>
 
-      {repliesExpanded && 
+      {(replyExpanded || repliesExpanded) && 
         <ReplyFeed 
           postId={replyData.postId} 
           parentReplyId={replyData.replyId} 
           override={override}
-          overrideData={override ? replyData.replyChain ?? [] : []}/>
+          overrideData={override ? replyData.replyChain ?? [] : []}
+          depth={depth + 1}
+          replyExpanded={replyExpanded}
+        />
       }
     </StyledMainContainer>
   )

@@ -654,6 +654,7 @@ app.get("/favourites", async (req, res) => {
     }
 
     // Fetch all replies needed to form chains (from favourited replies found up to source post)
+      // !!! Need to review, recursion in SQL is confusing... !!!
     const { rows: replyChains } = await db.query(
       `WITH RECURSIVE reply_chains AS (
       SELECT
@@ -809,7 +810,9 @@ app.get("/favourites", async (req, res) => {
 
       FROM posts p
       INNER JOIN characters c ON p.character_id = c.char_id
-      WHERE post_id = ANY($2)`,
+      INNER JOIN post_reactions pr ON p.post_id = pr.post_id
+      WHERE p.post_id = ANY($2)
+      ORDER BY pr.created_at DESC`,
       [userId, postIds]
     );
     const resultIndexMap: Record<number, number> = {};

@@ -8,6 +8,7 @@ import TextEditor from './TextEditor';
 import ReplyFeed from './ReplyFeed.tsx';
 
 import RepliesIcon from "../../assets/icons/replies.svg?react";
+import ReplyIcon from "../../assets/icons/reply.svg?react";
 import ShareIcon from "../../assets/icons/share.svg?react";
 import FavouriteIcon from "../../assets/icons/favourite.svg?react";
 import HeartIcon from "../../assets/icons/heart.svg?react";
@@ -26,26 +27,6 @@ const StyledMainContainer = styled.div`
   flex-shrink: 0;
   width: 100%;
   gap: 0.2rem;
-`;
-
-const StyledContentContainer = styled.div`
-  display: flex;
-  width: 100%;
-  padding: 1.6rem 1.6rem 0rem 1.6rem;
-  gap: 1rem;
-`;
-
-const StyledTextContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  gap: 0.2rem;
-`;
-
-const StyledCharacterName = styled.h3`
-  font-size: 1.4rem;
-  font-weight: 600;
-  margin: 0;
 `;
 
 const StyledActionBar = styled.div`
@@ -116,22 +97,8 @@ const createStyledVoteIcon = (IconComponent: ComponentType<SVGProps<SVGSVGElemen
   }
 `
 
-const StyledDataText = styled.p`
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-`;
-
-const StyledPostImage = styled.img`
-  height: fit-content;
-  max-height: 300px;
-  width: fit-content;
-  margin: 20px 0px 20px 20px;
-  border: 1px solid rgba(0,0,0,0.06);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
-`;
-
 const StyledRepliesIcon = createStyledIcon(RepliesIcon);
+const StyledReplyIcon = createStyledIcon(ReplyIcon);
 const StyledShareIcon = createStyledIcon(ShareIcon);
 const StyledFavouriteIcon = createStyledIcon(FavouriteIcon);
 const StyledHeartIcon = createStyledIcon(HeartIcon);
@@ -142,9 +109,10 @@ type PostProps = {
   postData: PostType | ReplyType;
   updatePost: (postId: number) => void;
   setRepliesExpanded: React.Dispatch<React.SetStateAction<boolean>>;
+  setReplyExpanded: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const PostActions = ({ postData, updatePost, setRepliesExpanded } : PostProps) => {
+const PostActions = ({ postData, updatePost, setRepliesExpanded, setReplyExpanded } : PostProps) => {
   const convPostId = "postId" in postData ? postData.postId : null;
   const convReplyId = "replyId" in postData ? postData.replyId : null;
   const [liked, setLiked] = useState(postData.isLiked);
@@ -212,8 +180,9 @@ const PostActions = ({ postData, updatePost, setRepliesExpanded } : PostProps) =
   return (
     <StyledMainContainer>
         <StyledActionBar>
-          <StyledActionBarIconContainer onClick={() => setRepliesExpanded(prev => !prev)}>
-            <StyledRepliesIcon/>
+          <StyledActionBarIconContainer>
+            <StyledReplyIcon onClick={() => setReplyExpanded(prev => !prev)}/>
+            <StyledRepliesIcon onClick={() => setRepliesExpanded(prev => !prev)}/>
             <StyledActionBarText>
               {convertCounts(postData.replies)}
             </StyledActionBarText>

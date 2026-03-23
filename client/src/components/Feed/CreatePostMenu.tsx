@@ -7,14 +7,24 @@ import TextEditor from './TextEditor';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-const StyledMainContainer = styled.div<{$height?: string}>`
+const StyledMainContainer = styled.div<{$height?: string, $depth?: number}>`
   display: flex;
   height: ${({ $height }) => $height ? $height : "calc((60px * 5) + (0.6rem * 4) + 3.2rem + 2px)"};
   flex-shrink: 0;
   width: 100%;
   padding: 1.6rem 1.6rem 2rem 1.6rem;
   gap: 0.6rem;
-  background: white;
+  background-color: ${({ $depth }) => {
+    if ($depth === undefined || $depth === null) {
+      return "#ffffff";
+    }
+
+    const cappedDepth = Math.min($depth, 4);
+    const baseLightness = 100;
+    const step = 3;
+
+    return `hsl(255, 0%, ${baseLightness - (cappedDepth * step)}%)`;
+  }};
   border: 1px solid rgba(0,0,0,0.06);
   box-shadow: 0 6px 20px rgba(0,0,0,0.06);
   overflow: hidden;
@@ -59,13 +69,14 @@ type CreatePostMenuProps = {
   mode: string;
   height?: string;
   numSuggestions: number;
+  depth?: number;
   postId?: number;
   parentReplyId?: number;
   refetchPosts?: () => void;
   refetchReplies?: () => void;
 }
 
-const CreatePostMenu = ({ mode, height, numSuggestions, postId, parentReplyId, refetchPosts, refetchReplies } : CreatePostMenuProps) => {
+const CreatePostMenu = ({ mode, height, numSuggestions, depth, postId, parentReplyId, refetchPosts, refetchReplies } : CreatePostMenuProps) => {
   const [selectedCharacter, setSelectedCharacter] = useState<number | null>(null);
   const [messageText, setMessageText] = useState<string>("");
   const [showMessageText, setShowMessageText] = useState<boolean>(false);
@@ -173,7 +184,7 @@ const CreatePostMenu = ({ mode, height, numSuggestions, postId, parentReplyId, r
   }, [messageText]);
 
   return (
-    <StyledMainContainer $height={height}>
+    <StyledMainContainer $height={height} $depth={depth}>
         <StyledSearchContainer>
         <Search direction="column" height="100%" numSuggestions={numSuggestions} showPropFilter={false} showCharDescription={true} selectChar={setSelectedCharacter}/>
       </StyledSearchContainer>
