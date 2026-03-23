@@ -135,10 +135,6 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, charac
     }
   };
 
-  useEffect(() => {
-    console.log("lastCreated", lastCreated)
-  }, [lastCreated]);
-
   // Reset on filter change
   useEffect(() => {
     setPosts([]);
@@ -171,16 +167,12 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, charac
     return () => observer.disconnect();
   }, [fetchPosts]);
 
-  useEffect(() => {
-    console.log(posts);
-  }, [posts]);
-
   return ( 
     <StyledMainContainer>
       {showCreatePostMenu && <CreatePostMenu mode="post" numSuggestions={5} refetchPosts={refetchPosts}/>}
       {showCharactersMenu && <CharactersMenu />}
       {posts.length && posts.map((post) => {
-        return <Post key={post.postId} postData={post} updatePost={updatePost}/>
+        return <Post key={post.postId} postData={post} updatePost={updatePost} override={showFavourites}/>
       })}
       <StyledObserver ref={observerRef}/>
     </StyledMainContainer>

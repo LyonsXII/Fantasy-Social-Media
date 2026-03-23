@@ -82,12 +82,13 @@ const StyledPostImage = styled.img`
 type PostProps = {
   postData: PostType
   updatePost: (postId: number) => void;
+  override?: boolean;
 }
 
-const Post = ({ postData, updatePost } : PostProps) => {
+const Post = ({ postData, updatePost, override } : PostProps) => {
   const [repliesExpanded, setRepliesExpanded] = useState(false);
   const [shareExpanded, setShareExpanded] = useState(false);
-  const [replyData, setReplyData] = useState<ReplyType[] | null>(
+  const [overrideData, setOverrideData] = useState<ReplyType[] | null>(
     postData.replyChain ?? null
   );
 
@@ -126,7 +127,7 @@ const Post = ({ postData, updatePost } : PostProps) => {
         </StyledDataText>
       </StyledMainPostContainer>
 
-      {repliesExpanded && <ReplyFeed postId={postData.postId} overrideData={replyData ?? undefined}/>}
+      {repliesExpanded && <ReplyFeed postId={postData.postId} overrideData={overrideData ?? undefined} override={override}/>}
     </StyledMainContainer>
   )
 };

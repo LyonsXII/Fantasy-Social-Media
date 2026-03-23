@@ -653,7 +653,6 @@ app.get("/favourites", async (req, res) => {
       postIds.push(fav.post_id);
     }
 
-    console.log("replyIds", replyIds);
     // Fetch all replies needed to form chains (from favourited replies found up to source post)
     const { rows: replyChains } = await db.query(
       `WITH RECURSIVE reply_chains AS (
@@ -671,7 +670,6 @@ app.get("/favourites", async (req, res) => {
         r.created_at,
         r.updated_at,
         r.attachment,
-        0 AS depth,
 
         EXISTS (
           SELECT 1
@@ -722,7 +720,6 @@ app.get("/favourites", async (req, res) => {
         parent.created_at,
         parent.updated_at,
         parent.attachment,
-        rc.depth + 1,
 
         EXISTS (
           SELECT 1
@@ -761,12 +758,6 @@ app.get("/favourites", async (req, res) => {
       SELECT *
       FROM reply_chains;`,
       [userId, replyIds]);
-    
-    // const replyChainIndexes = [];
-    // replyChains.forEach((reply, index) => {
-    //   replyChainIndexes.push(reply.reply_id);
-    // })
-    // console.log(replyChainIndexes);
 
     // Final output of posts 
     const { rows: result } = await db.query(
@@ -829,38 +820,32 @@ app.get("/favourites", async (req, res) => {
     // Reply chains embedded as new array entry {..., replies: [..., replies: []]}
     function buildChains(replies: any[]) {
       const result: any[] = [];
-      const repliesIndexMap: Record<number, [number, number]> = {}; // [index in result, depth]
+      const repliesMap: Record<number, any> = {};
 
       for (const reply of replies) {
+        // Ensure reply has a replyChain array
+        reply.replyChain = [];
+
+        // Store reference immediately
+        repliesMap[reply.reply_id] = reply;
+
         if (reply.parent_reply_id) {
-          const mapping = repliesIndexMap[reply.parent_reply_id];
-          if (!mapping) continue; // parent not found, skip
+          const parent = repliesMap[reply.parent_reply_id];
 
-          let parent: any = result[mapping[0]];
-
-          // Walk down nested replyChain if depth > 1
-          let depthDiff = reply.depth - mapping[1] - 1;
-          while (depthDiff > 0 && parent.replyChain && parent.replyChain.length > 0) {
-            parent = parent.replyChain[parent.replyChain.length - 1];
-            depthDiff--;
+          if (!parent) {
+            console.log("hey");
+            continue; // parent not found
           }
 
-          // Initialize and attach reply
-          parent.replyChain = parent.replyChain || [];
           parent.replyChain.push(reply);
-
-          // Track this reply in map
-          repliesIndexMap[reply.reply_id] = [mapping[0], reply.depth];
         } else {
-          // Top-level reply
           result.push(reply);
-          repliesIndexMap[reply.reply_id] = [result.length - 1, reply.depth];
         }
       }
 
       return result;
     }
-    replyChains.sort((a, b) => a.depth - b.depth);
+    replyChains.sort((a, b) => a.reply_id - b.reply_id);
     const chains = buildChains(replyChains);
     
     chains.forEach((chain) => {
@@ -964,7 +949,6 @@ app.get("/favourites", async (req, res) => {
 
     const finalResult: PostType[] = result.map(mapPost);
 
-    console.log(finalResult[0].replyChain);
     res.json(finalResult);
   } catch (err) {
     console.error(err);

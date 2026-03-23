@@ -81,9 +81,10 @@ const StyledTextContainer = styled.div`
 type ReplyProps = {
   replyData: ReplyType;
   updateReply: (replyId: number) => void;
+  override?: boolean;
 }
 
-const Reply = ({ replyData, updateReply } : ReplyProps) => {
+const Reply = ({ replyData, updateReply, override } : ReplyProps) => {
   const [repliesExpanded, setRepliesExpanded] = useState(false);
 
   return (
@@ -119,7 +120,13 @@ const Reply = ({ replyData, updateReply } : ReplyProps) => {
         </StyledDataText>
       </StyledMainPostContainer>
 
-      {repliesExpanded && <ReplyFeed postId={replyData.postId} parentReplyId={replyData.replyId}/>}
+      {repliesExpanded && 
+        <ReplyFeed 
+          postId={replyData.postId} 
+          parentReplyId={replyData.replyId} 
+          override={override}
+          overrideData={override ? replyData.replyChain ?? [] : []}/>
+      }
     </StyledMainContainer>
   )
 };

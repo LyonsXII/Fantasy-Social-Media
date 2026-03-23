@@ -49,9 +49,10 @@ type ReplyFeedProps = {
   postId?: number;
   parentReplyId?: number;
   overrideData?: ReplyType[];
+  override?: boolean;
 }
 
-const ReplyFeed = ({ postId, parentReplyId, overrideData } : ReplyFeedProps) => {
+const ReplyFeed = ({ postId, parentReplyId, override, overrideData } : ReplyFeedProps) => {
   const [replies, setReplies] = useState<ReplyType[]>(
     overrideData ?? []);
   const [lastId, setLastId] = useState<number | null>(null);
@@ -110,7 +111,7 @@ const ReplyFeed = ({ postId, parentReplyId, overrideData } : ReplyFeedProps) => 
 
   // Create observer to load more posts when reached
   useEffect(() => {
-    if (!observerRef.current || overrideData) return;
+    if (!observerRef.current || override) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -132,16 +133,11 @@ const ReplyFeed = ({ postId, parentReplyId, overrideData } : ReplyFeedProps) => 
     return () => observer.disconnect();
   }, [fetchReplies]);
 
-  // useEffect(() => {
-  //   console.log(postId);
-  //   console.log("overrideData", overrideData);
-  // }, [overrideData]);
-
   return (
     <StyledMainContainer>
-      <CreatePostMenu mode="reply" postId={postId} height="250px" numSuggestions={3} parentReplyId={parentReplyId} refetchReplies={refetchReplies}/>
+      {!override && <CreatePostMenu mode="reply" postId={postId} height="250px" numSuggestions={3} parentReplyId={parentReplyId} refetchReplies={refetchReplies}/>}
       {replies.length > 0 && replies.map((reply) => {
-        return <Reply key={reply.replyId} replyData={reply} updateReply={updateReply}/>
+        return <Reply key={reply.replyId} replyData={reply} updateReply={updateReply} override={override ? true : false}/>
       })}
       <StyledObserver ref={observerRef}/>
     </StyledMainContainer>
