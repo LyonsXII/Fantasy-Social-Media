@@ -52,9 +52,10 @@ type ReplyFeedProps = {
   override?: boolean;
   depth: number;
   replyExpanded: boolean;
+  repliesExpanded: boolean;
 }
 
-const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, replyExpanded } : ReplyFeedProps) => {
+const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, replyExpanded, repliesExpanded } : ReplyFeedProps) => {
   const [replies, setReplies] = useState<ReplyType[]>(
     overrideData ?? []);
   const [lastId, setLastId] = useState<number | null>(null);
@@ -148,16 +149,20 @@ const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, reply
           refetchReplies={refetchReplies}
         />
       }
-      {replies.length > 0 && replies.map((reply) => {
-        return <Reply 
-        key={reply.replyId} 
-        replyData={reply} 
-        updateReply={updateReply} 
-        override={override ? true : false}
-        depth={depth}
-        />
-      })}
-      <StyledObserver ref={observerRef}/>
+      {repliesExpanded && (
+        <>
+          {replies.length > 0 && replies.map((reply) => (
+            <Reply 
+              key={reply.replyId} 
+              replyData={reply} 
+              updateReply={updateReply} 
+              override={override ? true : false}
+              depth={depth}
+            />
+          ))}
+          <StyledObserver ref={observerRef}/>
+        </>
+      )}
     </StyledMainContainer>
   )
 };
