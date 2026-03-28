@@ -150,6 +150,7 @@ const Reply = ({ replyData, updateReply, override, depth } : ReplyProps) => {
           overrideData={override ? replyData.replyChain ?? [] : []}
           depth={depth + 1}
           replyExpanded={replyExpanded}
+          repliesExpanded={repliesExpanded}
         />
       }
     </StyledMainContainer>

@@ -3,9 +3,7 @@ import { useState } from 'react';
 import type { ComponentType, SVGProps } from 'react';
 import axios from "axios";
 
-import CharacterImage from '../General/CharacterImage';
-import TextEditor from './TextEditor';
-import ReplyFeed from './ReplyFeed.tsx';
+import EmojiBar from './EmojiBar';
 
 import RepliesIcon from "../../assets/icons/replies.svg?react";
 import ReplyIcon from "../../assets/icons/reply.svg?react";
@@ -55,34 +53,51 @@ const createStyledIcon = (IconComponent: ComponentType<SVGProps<SVGSVGElement>>)
   width: 1.6rem;
   cursor: pointer;
   vertical-align: bottom;
-  path:first-of-type {
-    fill: ${({ $active, $activeColour }) => ($active ? $activeColour : "none")};
+
+  & path {
+    pointer-events: none;
   }
 
-  transition: transform 0.4s ease, color 0.25s ease;
+  & path:first-of-type {
+    fill: ${({ $active, $activeColour }) => $active ? $activeColour : "transparent"};
+  }
+`
 
-  &:hover {
+const StyledClickableIcon = styled.div`
+  display: inline-flex;
+  cursor: pointer;
+
+  & > svg {
+    transition: transform 0.4s ease;
+  }
+
+  &:hover > svg {
     transform: scale(1.1);
   }
 
-  &:active {
+  &:active > svg {
     transform: scale(0.2);
   }
-`
+`;
 
 const createStyledVoteIcon = (IconComponent: ComponentType<SVGProps<SVGSVGElement>>) => styled(IconComponent)<{ $active?: boolean, $activeColour : string}>`
   height: 1.6rem;
   width: 1.6rem;
   cursor: pointer;
+  pointer-events: bounding-box;
   vertical-align: bottom;
 
+  & path {
+    pointer-events: none;
+  }
+
   & path:first-of-type {
-    fill: ${({ $active, $activeColour }) => ($active ? $activeColour : "none")};
+    fill: ${({ $active, $activeColour }) => ($active ? $activeColour : "transparent")};
     stroke: ${({ $active }) => ($active ? "none" : "#1C274C")};
   }
 
   & path:last-of-type {
-    fill: ${({ $active, $activeColour }) => ($active ? $activeColour : "none")};
+    fill: ${({ $active, $activeColour }) => ($active ? $activeColour : "transparent")};
     stroke: ${({ $active }) => ($active ? "none" : "#1C274C")};
   }
 
@@ -119,6 +134,7 @@ const PostActions = ({ postData, updatePost, setRepliesExpanded, setReplyExpande
   const [disliked, setDisliked] = useState(postData.isDisliked);
   const [favourited, setFavourited] = useState(postData.isFavourited);
   const [emojied, setEmojied] = useState(postData.isEmojied);
+  const [emojiExpanded, setEmojiExpanded] = useState(false);
 
   function convertCounts(num: number): string {
     if (num < 1000) {
@@ -179,60 +195,77 @@ const PostActions = ({ postData, updatePost, setRepliesExpanded, setReplyExpande
 
   return (
     <StyledMainContainer>
-        <StyledActionBar>
+        {!emojiExpanded && <StyledActionBar>
           <StyledActionBarIconContainer>
-            <StyledReplyIcon onClick={() => setReplyExpanded(prev => !prev)}/>
-            <StyledRepliesIcon onClick={() => setRepliesExpanded(prev => !prev)}/>
+            <StyledClickableIcon onClick={() => setReplyExpanded(prev => !prev)}>
+              <StyledReplyIcon/>
+            </StyledClickableIcon>
+
+            <StyledClickableIcon onClick={() => setRepliesExpanded(prev => !prev)}>
+              <StyledRepliesIcon/>
+            </StyledClickableIcon>
             <StyledActionBarText>
               {convertCounts(postData.replies)}
             </StyledActionBarText>
           </StyledActionBarIconContainer>
 
           <StyledActionBarIconContainer>
-            <StyledShareIcon/>
+            <StyledClickableIcon>
+              <StyledShareIcon/>
+            </StyledClickableIcon>
           </StyledActionBarIconContainer>
 
-          <StyledActionBarIconContainer 
-            onClick={() => {
-            reactToPost("favourite");
-          }}>
-            <StyledFavouriteIcon $active={favourited} $activeColour="yellow"/>
-          </StyledActionBarIconContainer>
-
-          <StyledActionBarIconContainer>
-            <StyledHeartIcon $active={emojied} $activeColour="red"/>
-              <StyledActionBarText>
-                {convertCounts(postData.emojis)}
-              </StyledActionBarText>
+          <StyledActionBarIconContainer onClick={() => {reactToPost("favourite")}}>
+            <StyledClickableIcon>
+              <StyledFavouriteIcon $active={favourited} $activeColour="yellow"/>
+            </StyledClickableIcon>
           </StyledActionBarIconContainer>
 
           <StyledActionBarIconContainer>
-            <StyledLikeIcon 
-              $active={liked} 
-              $activeColour="green" 
-              onClick={() => {
-                reactToPost("like");
-                if (disliked) {
-                  setDisliked(false);
-                }
+            <StyledClickableIcon onClick={() => setEmojiExpanded(prev => !prev)}>
+              <StyledHeartIcon $active={emojied} $activeColour="red"/>
+            </StyledClickableIcon>
+            <StyledActionBarText>
+              {convertCounts(postData.emojis)}
+            </StyledActionBarText>
+          </StyledActionBarIconContainer>
+
+          <StyledActionBarIconContainer>
+            <StyledClickableIcon>
+              <StyledLikeIcon 
+                $active={liked} 
+                $activeColour="green" 
+                onClick={() => {
+                  reactToPost("like");
+                  if (disliked) {
+                    setDisliked(false);
+                  }
               }}/>
-              <StyledActionBarText>
-                {convertCounts(postData.likes)}
-              </StyledActionBarText>
-            <StyledDislikeIcon 
-              $active={disliked} 
-              $activeColour="red" 
-              onClick={() => {
-                reactToPost("dislike");
-                if (liked) {
-                  setLiked(false);
-                }
-              }}/>
-              <StyledActionBarText>
-                {convertCounts(postData.dislikes)}
-              </StyledActionBarText>
+            </StyledClickableIcon>
+            <StyledActionBarText>
+              {convertCounts(postData.likes)}
+            </StyledActionBarText>
+
+            <StyledClickableIcon>
+              <StyledDislikeIcon 
+                $active={disliked} 
+                $activeColour="red" 
+                onClick={() => {
+                  reactToPost("dislike");
+                  if (liked) {
+                    setLiked(false);
+                  }
+                }}/>
+            </StyledClickableIcon>
+            <StyledActionBarText>
+              {convertCounts(postData.dislikes)}
+            </StyledActionBarText>
           </StyledActionBarIconContainer>
         </StyledActionBar>
+      }
+      {emojiExpanded && 
+        <EmojiBar/>
+      }
     </StyledMainContainer>
   )
 };

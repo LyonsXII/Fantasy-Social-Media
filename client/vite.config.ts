@@ -10,6 +10,28 @@ export default defineConfig({
         plugins: [['babel-plugin-react-compiler']],
       },
     }),
-    svgr()
+     svgr({
+      svgrOptions: {
+        plugins: ["@svgr/plugin-svgo", "@svgr/plugin-jsx"],
+        svgoConfig: {
+          plugins: [
+            {
+              name: "preset-default",
+              params: {
+                overrides: {
+                  removeViewBox: false,
+                },
+              },
+            },
+            {
+              name: "prefixIds",
+              params: {
+                prefixIds: true,
+              },
+            },
+          ],
+        } as any, // <-- key fix
+      },
+    }),
   ],
 })

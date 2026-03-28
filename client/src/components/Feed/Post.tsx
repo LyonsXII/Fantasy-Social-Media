@@ -106,7 +106,6 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
           <StyledTextContainer>
             <StyledCharacterName>
               {postData.name}
-              {postData.postId}
             </StyledCharacterName>
 
             {postData.content != "" && <TextEditor showMenu={false} content={postData.content}/>}
