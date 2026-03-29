@@ -5,6 +5,8 @@ import axios from "axios";
 import Reply from './Reply';
 import CreatePostMenu from './CreatePostMenu';
 
+import type { EmojiEntry } from './Stream';
+
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const StyledMainContainer = styled.div`
@@ -43,6 +45,8 @@ export type ReplyType = {
   isFavourited: boolean;
   isEmojied: boolean;
   replyChain?: ReplyType[];
+  emojiCounts: EmojiEntry[];
+  currentEmojiReaction: string;
 }
 
 type ReplyFeedProps = {

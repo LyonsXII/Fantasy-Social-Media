@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 
 import CharacterImage from '../General/CharacterImage';
 import TextEditor from './TextEditor';
+import PostReactions from './PostReactions';
 import PostActions from './PostActions';
 import ReplyFeed from './ReplyFeed';
 
@@ -25,6 +26,7 @@ const StyledMainPostContainer = styled.div<{ $depth: number }>`
   isolation: isolate;
   display: flex;
   flex-direction: column;
+  align-items: center;
   height: fit-content;
   flex-shrink: 0;
   width: 100%;
@@ -100,10 +102,6 @@ const Reply = ({ replyData, updateReply, override, depth } : ReplyProps) => {
   const [repliesExpanded, setRepliesExpanded] = useState(false);
   const [replyExpanded, setReplyExpanded] = useState(false);
 
-  useEffect(() => {
-    console.log(replyExpanded);
-  }, [replyExpanded]);
-
   return (
     <StyledMainContainer $depth={depth}>
       <StyledMainPostContainer $depth={depth}>
@@ -116,7 +114,6 @@ const Reply = ({ replyData, updateReply, override, depth } : ReplyProps) => {
           <StyledTextContainer>
             <StyledCharacterName>
               {replyData.name}
-              {replyData.replyId}
             </StyledCharacterName>
 
             {replyData.content != "" && <TextEditor showMenu={false} content={replyData.content}/>}
@@ -124,8 +121,11 @@ const Reply = ({ replyData, updateReply, override, depth } : ReplyProps) => {
           </StyledTextContainer>
         </StyledContentContainer>
 
+        {replyData.emojiCounts.length > 0 && <PostReactions emojiCounts={replyData.emojiCounts}/>}
+
         <PostActions 
-          postData={replyData} 
+          postData={replyData}
+          currentEmojiReaction={replyData.currentEmojiReaction}
           updatePost={updateReply} 
           setRepliesExpanded={setRepliesExpanded} 
           setReplyExpanded={setReplyExpanded}

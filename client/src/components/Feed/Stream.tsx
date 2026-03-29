@@ -43,6 +43,13 @@ type StreamProps = {
   propertyFilter: number | null;
 };
 
+export type EmojiKey = "aghast" | "angry" | "astonished" | "bandage" | "bored" | "clown" | "crying" | "dizzy" | "downcast" | "explode" | "heartEyes" | "heavyCrying" | "laughing" | "puppyEyes" | "sad" | "shocked" | "skeptical" | "sleeping" | "sleeping" | "smile" | "wink" | "worried" | "zipper";
+
+export type EmojiEntry = {
+  reaction: EmojiKey;
+  count: number;
+};
+
 export type PostType = {
   postId: number;
   name: string;
@@ -60,6 +67,8 @@ export type PostType = {
   isFavourited: boolean;
   isEmojied: boolean;
   replyChain?: ReplyType[];
+  emojiCounts: EmojiEntry[];
+  currentEmojiReaction: string;
 }
 
 const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, characterFilter, propertyFilter } : StreamProps) => {

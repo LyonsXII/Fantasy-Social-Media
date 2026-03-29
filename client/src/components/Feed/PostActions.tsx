@@ -20,7 +20,6 @@ const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const StyledMainContainer = styled.div`
   display: flex;
-  flex-direction: column;
   height: fit-content;
   flex-shrink: 0;
   width: 100%;
@@ -120,14 +119,17 @@ const StyledHeartIcon = createStyledIcon(HeartIcon);
 const StyledLikeIcon = createStyledVoteIcon(LikeIcon);
 const StyledDislikeIcon = createStyledVoteIcon(DislikeIcon);
 
+export type ReactionType = 'like' | 'dislike' | 'love' | 'favourite' | 'emoji';
+
 type PostProps = {
   postData: PostType | ReplyType;
+  currentEmojiReaction: string;
   updatePost: (postId: number) => void;
   setRepliesExpanded: React.Dispatch<React.SetStateAction<boolean>>;
   setReplyExpanded: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const PostActions = ({ postData, updatePost, setRepliesExpanded, setReplyExpanded } : PostProps) => {
+const PostActions = ({ postData, currentEmojiReaction, updatePost, setRepliesExpanded, setReplyExpanded } : PostProps) => {
   const convPostId = "postId" in postData ? postData.postId : null;
   const convReplyId = "replyId" in postData ? postData.replyId : null;
   const [liked, setLiked] = useState(postData.isLiked);
@@ -146,7 +148,6 @@ const PostActions = ({ postData, updatePost, setRepliesExpanded, setReplyExpande
     }
   }
 
-  type ReactionType = 'like' | 'dislike' | 'love' | 'favourite' | 'emoji';
   async function reactToPost(reactionType: ReactionType, reactionValue?: string) {
     switch(reactionType) {
       case 'like':
@@ -222,7 +223,7 @@ const PostActions = ({ postData, updatePost, setRepliesExpanded, setReplyExpande
           </StyledActionBarIconContainer>
 
           <StyledActionBarIconContainer>
-            <StyledClickableIcon onClick={() => setEmojiExpanded(prev => !prev)}>
+            <StyledClickableIcon onClick={() => {setEmojiExpanded(prev => !prev)}}>
               <StyledHeartIcon $active={emojied} $activeColour="red"/>
             </StyledClickableIcon>
             <StyledActionBarText>
@@ -264,7 +265,7 @@ const PostActions = ({ postData, updatePost, setRepliesExpanded, setReplyExpande
         </StyledActionBar>
       }
       {emojiExpanded && 
-        <EmojiBar/>
+        <EmojiBar currentEmojiReaction={currentEmojiReaction} reactToPost={reactToPost} setEmojiExpanded={setEmojiExpanded} setEmojied={setEmojied}/>
       }
     </StyledMainContainer>
   )

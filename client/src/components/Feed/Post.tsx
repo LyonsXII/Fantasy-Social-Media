@@ -5,6 +5,7 @@ import CharacterImage from '../General/CharacterImage';
 import TextEditor from './TextEditor';
 import ReplyFeed from './ReplyFeed.tsx';
 import PostActions from './PostActions.tsx';
+import PostReactions from './PostReactions.tsx';
 
 import type { PostType } from './Stream';
 import type { ReplyType } from './ReplyFeed.tsx';
@@ -25,6 +26,7 @@ const StyledMainPostContainer = styled.div`
   isolation: isolate;
   display: flex;
   flex-direction: column;
+  align-items: center;
   height: fit-content;
   flex-shrink: 0;
   width: 100%;
@@ -113,12 +115,15 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
           </StyledTextContainer>
 
         </StyledContentContainer>
+
+        {postData.emojiCounts.length > 0 && <PostReactions emojiCounts={postData.emojiCounts}/>}
  
         <PostActions 
           postData={postData} 
           updatePost={updatePost} 
           setRepliesExpanded={setRepliesExpanded} 
           setReplyExpanded={setReplyExpanded}
+          currentEmojiReaction={postData.currentEmojiReaction}
         />
 
         <StyledDataText>

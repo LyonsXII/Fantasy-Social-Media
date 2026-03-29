@@ -315,17 +315,52 @@ app.post("/createPost", upload.single("attachment"), async (req, res) => {
 // Retrieve a post
 app.get("/post", async (req, res) => {
   const { postId } = req.query;
+  const owner_id = 1;
 
   try {
     const search = await db.query(
-      `SELECT name, image, content, replies, emojis, likes, dislikes, p.created_at, updated_at
-       FROM posts p
-       INNER JOIN characters c ON p.character_id = c.char_id
-       WHERE post_id = $1;`,
-      [postId]
+      `SELECT
+        name,
+        image,
+        content,
+        replies,
+        emojis,
+        likes,
+        dislikes,
+        p.created_at,
+        updated_at,
+        ec.emoji_counts,
+        pr.reaction_value AS current_emoji_reaction
+      FROM posts p
+      INNER JOIN characters c ON p.character_id = c.char_id
+      LEFT JOIN (
+        SELECT
+          post_id,
+          json_object_agg(reaction_value, count) AS emoji_counts
+        FROM (
+          SELECT
+            post_id,
+            reaction_value,
+            COUNT(*) AS count
+          FROM post_reactions
+          WHERE reply_id IS NULL
+            AND reaction = 'emoji'
+            AND post_id = $2
+          GROUP BY post_id, reaction_value
+        ) t
+        GROUP BY post_id
+      ) ec ON ec.post_id = p.post_id
+      LEFT JOIN post_reactions pr ON pr.user_id = $1
+        AND pr.post_id = p.post_id
+        AND pr.reply_id IS NULL
+        AND pr.reaction = 'emoji'
+      WHERE p.post_id = $2;`,
+      [owner_id, postId]
     );
 
-    const result = search.rows.map(row => ({
+    const row = search.rows[0];
+
+    const result = {
       name: row.name,
       image: row.image,
       content: row.content,
@@ -334,167 +369,21 @@ app.get("/post", async (req, res) => {
       likes: row.likes,
       dislikes: row.dislikes,
       createdAt: row.created_at,
-      updatedAt: row.updated_at
-    }));
+      updatedAt: row.updated_at,
+      emojiCounts: Object.entries(row.emoji_counts || {})
+        .map(([reaction, count]) => ({
+          reaction,
+          count: Number(count),
+        }))
+        .sort((a, b) => b.count - a.count),
+      currentEmojiReaction: row.current_emoji_reaction
+    };
 
-    res.json(result[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// React to a post (or reply)
-  // Either add reaction, update reaction from opposite, or undo previous reaction
-app.post("/react", async (req, res) => {
-  const { postId, replyId, reactionType, reactionValue } = req.body;
-  const userId = 1;
-
-  // Defining whether a post or reply reaction, for use in queries
-  const isReply = replyId != null;
-  const targetId = replyId ?? postId;
-  if (!targetId) {return res.status(400).json({ error: "Missing target" });}
-  const idColumn = isReply ? "reply_id" : "post_id";
-  const table = isReply ? "replies" : "posts";
-
-  type ReactionType = "like" | "dislike" | "favourite" | "emoji";
-  // Mapping reactionType to oppose (e.g. like -> dislike)
-  const oppositeReaction: Record<ReactionType, string | null> = {
-    like: "dislike",
-    dislike: "like",
-    favourite: null,
-    emoji: null,
-  };
-
-  // Mappping reactionType to posts columns (e.g. like -> likes column)
-  const reactionColumns: Record<string, string | null> = {
-    like: "likes",
-    dislike: "dislikes",
-    emoji: "emojis"
-  };
-  const column = reactionColumns[reactionType];
-
-  // Reaction type isn't allowed (not 'like', 'dislike', 'love', 'favourite' or 'emoji')
-  if (!(reactionType in oppositeReaction)) {
-    return res.status(400).json({ error: "Invalid reactionType" });
-  }
-
-  try {
-    await db.query("BEGIN");
-
-    let check;
-    // Selecting all reactions for post by user
-    if (replyId) {
-      check = await db.query(
-        `SELECT reaction, reaction_value
-        FROM post_reactions
-        WHERE user_id = $1 AND post_id = $2 AND reply_id = $3;`,
-        [userId, postId, replyId]
-      );
-    } else {
-      check = await db.query(
-        `SELECT reaction, reaction_value
-        FROM post_reactions
-        WHERE user_id = $1 AND post_id = $2 AND reply_id IS NULL;`,
-        [userId, postId]
-      );      
-    }
-
-    const reactions = new Set(check.rows.map(r => r.reaction));
-
-    let result = null;
-
-    const opposite = oppositeReaction[reactionType as ReactionType];
-    // User has already reacted to post
-    if (reactions.has(reactionType)) {
-      // Delete reaction
-      if (replyId) {
-        result = await db.query(
-          `DELETE FROM post_reactions
-          WHERE user_id = $1 AND post_id = $2 AND reply_id = $3 AND reaction = $4`,
-          [userId, postId, replyId, reactionType]
-        );
-      } else {
-        result = await db.query(
-          `DELETE FROM post_reactions
-          WHERE user_id = $1 AND post_id = $2 AND reply_id IS NULL AND reaction = $3`,
-          [userId, postId, reactionType]
-        );
-      }
-
-      // Decrement count for like, dislike, and emoji
-      if (column) {
-        await db.query(
-          `UPDATE ${table}
-          SET ${column} = ${column} - 1
-          WHERE ${idColumn} = $1`,
-          [targetId]
-        );
-      }
-          
-    } else if (opposite && reactions.has(opposite)) {
-      // User currently has opposite reaction to post (i.e. has disliked and now wants to like)
-      if (replyId) {
-        result = await db.query(
-          `UPDATE post_reactions
-          SET reaction = $4
-          WHERE user_id = $1 AND post_id = $2 AND reply_id = $3 AND reaction = $5`,
-          [userId, postId, replyId, reactionType, oppositeReaction[reactionType as ReactionType]]
-        )
-      } else {
-        result = await db.query(
-          `UPDATE post_reactions
-          SET reaction = $3
-          WHERE user_id = $1 AND post_id = $2 AND reply_id IS NULL AND reaction = $4`,
-          [userId, postId, reactionType, oppositeReaction[reactionType as ReactionType]]
-        ) 
-      }
-
-      const negReaction = oppositeReaction[reactionType as ReactionType];
-      const oppositeColumn =
-        negReaction && negReaction in reactionColumns
-          ? reactionColumns[negReaction as keyof typeof reactionColumns]
-          : null;
-      await db.query(
-        `UPDATE ${table}
-        SET ${column} = ${column} + 1,
-            ${oppositeColumn} = ${oppositeColumn} - 1
-        WHERE ${idColumn} = $1`,
-        [targetId]
-      );
-
-    } else {
-      // No relevant previous reaction, add into table and increment count
-      if (replyId) {
-        result = await db.query(
-          `INSERT INTO post_reactions (user_id, post_id, reply_id, reaction, reaction_value)
-          VALUES ($1, $2, $3, $4, $5)`,
-          [userId, postId, replyId, reactionType, reactionValue]
-        );
-      } else {
-        result = await db.query(
-          `INSERT INTO post_reactions (user_id, post_id, reaction, reaction_value)
-          VALUES ($1, $2, $3, $4)`,
-          [userId, postId, reactionType, reactionValue]
-        );
-      }
-
-      if (column) {
-        await db.query(
-          `UPDATE ${table}
-          SET ${column} = ${column} + 1
-          WHERE ${idColumn} = $1`,
-          [targetId]
-        );
-      }
-    }
-
-    await db.query("COMMIT");
+    console.log(result);
 
     res.json(result);
   } catch (err) {
-    console.log(err);
-    await db.query("ROLLBACK");
+    console.error(err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -519,6 +408,8 @@ app.get("/feed", async (req, res) => {
       p.created_at, 
       p.updated_at, 
       p.attachment,
+      ec.emoji_counts,
+      pr.reaction_value AS current_emoji_reaction,
 
       EXISTS (
         SELECT 1
@@ -553,8 +444,29 @@ app.get("/feed", async (req, res) => {
             AND pr.reaction = 'emoji'
       ) AS "isEmojied"
        
-      FROM posts p
-      INNER JOIN characters c ON p.character_id = c.char_id`
+    FROM posts p
+    INNER JOIN characters c ON p.character_id = c.char_id
+    LEFT JOIN (
+      SELECT
+        post_id,
+        json_object_agg(reaction_value, count) AS emoji_counts
+      FROM (
+        SELECT
+          post_id,
+          reaction_value,
+          COUNT(*) AS count
+        FROM post_reactions
+        WHERE reply_id IS NULL
+          AND reaction = 'emoji'
+        GROUP BY post_id, reaction_value
+      ) t
+      GROUP BY post_id
+    ) ec ON ec.post_id = p.post_id
+    LEFT JOIN post_reactions pr
+      ON pr.user_id = $1
+    AND pr.post_id = p.post_id
+    AND pr.reply_id IS NULL
+    AND pr.reaction = 'emoji'`
 
     const conditions: string[] = [];
     const params: any[] = [userId];
@@ -583,8 +495,6 @@ app.get("/feed", async (req, res) => {
       LIMIT 10;
     `;
 
-    // console.log(query, params);
-
     search = await db.query(query, params);
 
     const result = search.rows.map(row => ({
@@ -602,7 +512,14 @@ app.get("/feed", async (req, res) => {
       isLiked: row.isLiked,
       isDisliked: row.isDisliked,
       isFavourited: row.isFavourited,
-      isEmojied: row.isEmojied
+      isEmojied: row.isEmojied,
+      emojiCounts: Object.entries(row.emoji_counts || {})
+        .map(([reaction, count]) => ({
+          reaction,
+          count: Number(count),
+        }))
+        .sort((a, b) => b.count - a.count),
+      currentEmojiReaction: row.current_emoji_reaction
     }));
 
     res.json(result);
@@ -1008,6 +925,7 @@ app.post("/createReply", upload.single("attachment"), async (req, res) => {
 // Retrieve a reply
 app.get("/reply", async (req, res) => {
   const { replyId } = req.query;
+  const userId = 1;
 
   try {
     const search = await db.query(
@@ -1020,11 +938,39 @@ app.get("/reply", async (req, res) => {
         r.likes, 
         r.dislikes, 
         r.created_at, 
-        r.updated_at
-       FROM replies r
-       INNER JOIN characters c ON r.character_id = c.char_id
-       WHERE reply_id = $1;`,
-      [replyId]
+        r.updated_at,
+        ec.emoji_counts,
+        (
+          SELECT reaction_value
+          FROM post_reactions pr
+          WHERE pr.reply_id = r.reply_id
+            AND pr.user_id = $1
+            AND pr.reaction = 'emoji'
+          LIMIT 1
+        ) AS current_emoji_reaction
+
+      FROM replies r
+      INNER JOIN characters c ON r.character_id = c.char_id
+      LEFT JOIN (
+        SELECT
+          reply_id,
+          json_object_agg(reaction_value, count) AS emoji_counts
+        FROM (
+          SELECT
+            reply_id,
+            reaction_value,
+            COUNT(*) AS count
+          FROM post_reactions
+          WHERE reaction = 'emoji'
+          GROUP BY reply_id, reaction_value
+        ) t
+        GROUP BY reply_id
+      ) ec ON ec.reply_id = r.reply_id
+      LEFT JOIN post_reactions pr ON pr.user_id = $1
+        AND pr.reply_id = r.reply_id
+        AND pr.reaction = 'emoji'
+      WHERE r.reply_id = $2;`,
+      [userId, replyId]
     );
 
     const result = search.rows.map(row => ({
@@ -1036,7 +982,14 @@ app.get("/reply", async (req, res) => {
       likes: row.likes,
       dislikes: row.dislikes,
       createdAt: row.created_at,
-      updatedAt: row.updated_at
+      updatedAt: row.updated_at,
+      emojiCounts: Object.entries(row.emoji_counts || {})
+        .map(([reaction, count]) => ({
+          reaction,
+          count: Number(count),
+        }))
+        .sort((a, b) => b.count - a.count),
+      currentEmojiReaction: row.current_emoji_reaction
     }));
 
     res.json(result[0]);
@@ -1070,38 +1023,62 @@ app.get("/replies", async (req, res) => {
         r.created_at,
         r.updated_at,
         r.attachment,
-
-      EXISTS (
-        SELECT 1
-        FROM post_reactions pr
-        WHERE pr.reply_id = r.reply_id
-          AND pr.user_id = $1
-          AND pr.reaction = 'like'
-      ) AS "isLiked",
-      EXISTS (
-        SELECT 1
-        FROM post_reactions pr
-        WHERE pr.reply_id = r.reply_id
-          AND pr.user_id = $1
-          AND pr.reaction = 'dislike'
-      ) AS "isDisliked",
-      EXISTS (
-          SELECT 1
-          FROM post_reactions pr
-          WHERE pr.reply_id = r.reply_id
-            AND pr.user_id = $1
-            AND pr.reaction = 'favourite'
-      ) AS "isFavourited",
-      EXISTS (
-          SELECT 1
+        ec.emoji_counts,
+        (
+          SELECT reaction_value
           FROM post_reactions pr
           WHERE pr.reply_id = r.reply_id
             AND pr.user_id = $1
             AND pr.reaction = 'emoji'
-      ) AS "isEmojied"
+          LIMIT 1
+        ) AS current_emoji_reaction,
+
+        EXISTS (
+          SELECT 1
+          FROM post_reactions pr
+          WHERE pr.reply_id = r.reply_id
+            AND pr.user_id = $1
+            AND pr.reaction = 'like'
+        ) AS "isLiked",
+        EXISTS (
+          SELECT 1
+          FROM post_reactions pr
+          WHERE pr.reply_id = r.reply_id
+            AND pr.user_id = $1
+            AND pr.reaction = 'dislike'
+        ) AS "isDisliked",
+        EXISTS (
+            SELECT 1
+            FROM post_reactions pr
+            WHERE pr.reply_id = r.reply_id
+              AND pr.user_id = $1
+              AND pr.reaction = 'favourite'
+        ) AS "isFavourited",
+        EXISTS (
+            SELECT 1
+            FROM post_reactions pr
+            WHERE pr.reply_id = r.reply_id
+              AND pr.user_id = $1
+              AND pr.reaction = 'emoji'
+        ) AS "isEmojied"
 
       FROM replies r
       INNER JOIN characters c ON r.character_id = c.char_id
+      LEFT JOIN (
+        SELECT
+          reply_id,
+          json_object_agg(reaction_value, count) AS emoji_counts
+        FROM (
+          SELECT
+            reply_id,
+            reaction_value,
+            COUNT(*) AS count
+          FROM post_reactions
+          WHERE reaction = 'emoji'
+          GROUP BY reply_id, reaction_value
+        ) t
+        GROUP BY reply_id
+      ) ec ON ec.reply_id = r.reply_id
       WHERE r.post_id = $2`
 
     const params: any[] = [userId, postId];
@@ -1142,12 +1119,233 @@ app.get("/replies", async (req, res) => {
       isLiked: row.isLiked,
       isDisliked: row.isDisliked,
       isFavourited: row.isFavourited,
-      isEmojied: row.isEmojied
+      isEmojied: row.isEmojied,
+      emojiCounts: Object.entries(row.emoji_counts || {})
+        .map(([reaction, count]) => ({
+          reaction,
+          count: Number(count),
+        }))
+        .sort((a, b) => b.count - a.count),
+      currentEmojiReaction: row.current_emoji_reaction
     }));
+
+    console.log(result[0]);
 
     res.json(result);
   } catch (err) {
     console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// React to a post (or reply)
+  // Either add reaction, update reaction from opposite, or undo previous reaction
+app.post("/react", async (req, res) => {
+  const { postId, replyId, reactionType, reactionValue } = req.body;
+  const userId = 1;
+
+  // Defining whether a post or reply reaction, for use in queries
+  const isReply = replyId != null;
+  const targetId = replyId ?? postId;
+  if (!targetId) {return res.status(400).json({ error: "Missing target" });}
+  const idColumn = isReply ? "reply_id" : "post_id";
+  const table = isReply ? "replies" : "posts";
+
+  type ReactionType = "like" | "dislike" | "favourite" | "emoji";
+  // Mapping reactionType to opposite if relevant (e.g. like -> dislike)
+  const oppositeReaction: Record<ReactionType, string | null> = {
+    like: "dislike",
+    dislike: "like",
+    favourite: null,
+    emoji: null,
+  };
+
+  // Mappping reactionType to posts columns (e.g. like -> likes column)
+  const reactionColumns: Record<string, string | null> = {
+    like: "likes",
+    dislike: "dislikes",
+    emoji: "emojis"
+  };
+  const column = reactionColumns[reactionType];
+
+  // Reaction type isn't allowed (not one of 'like', 'dislike', 'love', 'favourite' or 'emoji')
+  if (!(reactionType in oppositeReaction)) {
+    return res.status(400).json({ error: "Invalid reactionType" });
+  }
+
+  try {
+    await db.query("BEGIN");
+
+    let check;
+    // Selecting all reactions for post by user
+    if (replyId) {
+      check = await db.query(
+        `SELECT reaction, reaction_value
+        FROM post_reactions
+        WHERE user_id = $1 AND post_id = $2 AND reply_id = $3;`,
+        [userId, postId, replyId]
+      );
+    } else {
+      check = await db.query(
+        `SELECT reaction, reaction_value
+        FROM post_reactions
+        WHERE user_id = $1 AND post_id = $2 AND reply_id IS NULL;`,
+        [userId, postId]
+      );      
+    }
+
+    const reactions = new Set(check.rows.map(r => r.reaction));
+
+    let result = null;
+
+    const opposite = oppositeReaction[reactionType as ReactionType];
+    
+    // Main reaction handling logic
+    if (reactions.has(reactionType) && reactionType == "emoji") {
+      // User has already reacted with an emoji
+  
+      const prevReactionValue = check.rows
+        .map(r => r.reaction_value)
+        .find(v => v != null) ?? null;
+      console.log("prevReactionValue", prevReactionValue);
+
+      if (prevReactionValue == reactionValue) {
+        // Delete emoji
+        if (replyId) {
+          result = await db.query(
+            `DELETE FROM post_reactions
+            WHERE user_id = $1 AND post_id = $2 AND reply_id = $3 AND reaction = $4`,
+            [userId, postId, replyId, reactionType]
+          );
+        } else {
+          result = await db.query(
+            `DELETE FROM post_reactions
+            WHERE user_id = $1 AND post_id = $2 AND reply_id IS NULL AND reaction = $3`,
+            [userId, postId, reactionType]
+          );
+        }
+
+        // Decrement count in relevant table
+        if (column) {
+          await db.query(
+            `UPDATE ${table}
+            SET emojis = emojis - 1
+            WHERE ${idColumn} = $1`,
+            [targetId]
+          );
+        }
+      } else {
+        // Replace previous emoji with the new one
+        if (replyId) {
+          result = await db.query(
+            `UPDATE post_reactions
+            SET reaction_value = $5
+            WHERE user_id = $1 AND post_id = $2 AND reaction = $4 and reply_id = $3`,
+            [userId, postId, replyId, reactionType, reactionValue]
+          )
+        } else {
+          result = await db.query(
+            `UPDATE post_reactions
+            SET reaction_value = $4
+            WHERE user_id = $1 AND post_id = $2 AND reaction = $3 AND reply_id IS NULL`,
+            [userId, postId, reactionType, reactionValue]
+          ) 
+        }
+      }
+
+    } else if (reactions.has(reactionType)) {
+      // User has already reacted to post
+
+      // Delete reaction
+      if (replyId) {
+        result = await db.query(
+          `DELETE FROM post_reactions
+          WHERE user_id = $1 AND post_id = $2 AND reply_id = $3 AND reaction = $4`,
+          [userId, postId, replyId, reactionType]
+        );
+      } else {
+        result = await db.query(
+          `DELETE FROM post_reactions
+          WHERE user_id = $1 AND post_id = $2 AND reply_id IS NULL AND reaction = $3`,
+          [userId, postId, reactionType]
+        );
+      }
+
+      // Decrement count for like or dislike
+      if (column) {
+        await db.query(
+          `UPDATE ${table}
+          SET ${column} = ${column} - 1
+          WHERE ${idColumn} = $1`,
+          [targetId]
+        );
+      }
+          
+    } else if (opposite && reactions.has(opposite)) {
+      // User currently has opposite reaction to post (i.e. has disliked and now wants to like)
+
+      if (replyId) {
+        result = await db.query(
+          `UPDATE post_reactions
+          SET reaction = $4
+          WHERE user_id = $1 AND post_id = $2 AND reply_id = $3 AND reaction = $5`,
+          [userId, postId, replyId, reactionType, oppositeReaction[reactionType as ReactionType]]
+        )
+      } else {
+        result = await db.query(
+          `UPDATE post_reactions
+          SET reaction = $3
+          WHERE user_id = $1 AND post_id = $2 AND reply_id IS NULL AND reaction = $4`,
+          [userId, postId, reactionType, oppositeReaction[reactionType as ReactionType]]
+        ) 
+      }
+
+      const negReaction = oppositeReaction[reactionType as ReactionType];
+      const oppositeColumn =
+        negReaction && negReaction in reactionColumns
+          ? reactionColumns[negReaction as keyof typeof reactionColumns]
+          : null;
+      await db.query(
+        `UPDATE ${table}
+        SET ${column} = ${column} + 1,
+            ${oppositeColumn} = ${oppositeColumn} - 1
+        WHERE ${idColumn} = $1`,
+        [targetId]
+      );
+
+    } else {
+      // No relevant previous reaction, add into table and increment count
+
+      if (replyId) {
+        result = await db.query(
+          `INSERT INTO post_reactions (user_id, post_id, reply_id, reaction, reaction_value)
+          VALUES ($1, $2, $3, $4, $5)`,
+          [userId, postId, replyId, reactionType, reactionValue]
+        );
+      } else {
+        result = await db.query(
+          `INSERT INTO post_reactions (user_id, post_id, reaction, reaction_value)
+          VALUES ($1, $2, $3, $4)`,
+          [userId, postId, reactionType, reactionValue]
+        );
+      }
+
+      if (column) {
+        await db.query(
+          `UPDATE ${table}
+          SET ${column} = ${column} + 1
+          WHERE ${idColumn} = $1`,
+          [targetId]
+        );
+      }
+    }
+
+    await db.query("COMMIT");
+
+    res.json(result);
+  } catch (err) {
+    console.log(err);
+    await db.query("ROLLBACK");
     res.status(500).json({ error: "Internal server error" });
   }
 });
