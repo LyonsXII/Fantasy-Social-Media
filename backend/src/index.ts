@@ -462,11 +462,10 @@ app.get("/feed", async (req, res) => {
       ) t
       GROUP BY post_id
     ) ec ON ec.post_id = p.post_id
-    LEFT JOIN post_reactions pr
-      ON pr.user_id = $1
-    AND pr.post_id = p.post_id
-    AND pr.reply_id IS NULL
-    AND pr.reaction = 'emoji'`
+    LEFT JOIN post_reactions pr ON pr.user_id = $1
+      AND pr.post_id = p.post_id
+      AND pr.reply_id IS NULL
+      AND pr.reaction = 'emoji'`
 
     const conditions: string[] = [];
     const params: any[] = [userId];
@@ -530,6 +529,7 @@ app.get("/feed", async (req, res) => {
 });
 
 // Retrieve all favourited posts and replies for user
+  // Absolute nightmare, do not break this!
 app.get("/favourites", async (req, res) => {
   const userId = 1;
   const lastCreated =
@@ -573,7 +573,24 @@ app.get("/favourites", async (req, res) => {
     // Fetch all replies needed to form chains (from favourited replies found up to source post)
       // !!! Need to review, recursion in SQL is confusing... !!!
     const { rows: replyChains } = await db.query(
-      `WITH RECURSIVE reply_chains AS (
+      `WITH RECURSIVE emoji_counts AS (
+        SELECT
+          reply_id,
+          json_object_agg(reaction_value, count) AS emoji_counts
+        FROM (
+          SELECT
+            reply_id,
+            reaction_value,
+            COUNT(*) AS count
+          FROM post_reactions
+          WHERE reply_id IS NOT NULL
+            AND reaction = 'emoji'
+          GROUP BY reply_id, reaction_value
+        ) t
+        GROUP BY reply_id
+      ),
+      
+      reply_chains AS (
       SELECT
         r.reply_id,
         r.parent_reply_id,
@@ -588,6 +605,16 @@ app.get("/favourites", async (req, res) => {
         r.created_at,
         r.updated_at,
         r.attachment,
+        ec.emoji_counts,
+        (
+          SELECT reaction_value
+          FROM post_reactions pr
+          WHERE pr.user_id = $1
+            AND pr.reply_id = r.reply_id
+            AND pr.reaction = 'emoji'
+          ORDER BY pr.created_at DESC
+          LIMIT 1
+        ) AS current_emoji_reaction,
 
         EXISTS (
           SELECT 1
@@ -620,6 +647,7 @@ app.get("/favourites", async (req, res) => {
 
       FROM replies r
       INNER JOIN characters c ON r.character_id = c.char_id
+      LEFT JOIN emoji_counts ec ON ec.reply_id = r.reply_id
       WHERE r.reply_id = ANY($2)
 
       UNION ALL
@@ -638,6 +666,16 @@ app.get("/favourites", async (req, res) => {
         parent.created_at,
         parent.updated_at,
         parent.attachment,
+        ec.emoji_counts,
+        (
+          SELECT reaction_value
+          FROM post_reactions pr
+          WHERE pr.user_id = $1
+            AND pr.reply_id = parent.reply_id
+            AND pr.reaction = 'emoji'
+          ORDER BY pr.created_at DESC
+          LIMIT 1
+        ) AS current_emoji_reaction,
 
         EXISTS (
           SELECT 1
@@ -672,14 +710,15 @@ app.get("/favourites", async (req, res) => {
       JOIN reply_chains rc
         ON rc.parent_reply_id = parent.reply_id
       INNER JOIN characters c ON parent.character_id = c.char_id
+      LEFT JOIN emoji_counts ec ON ec.reply_id = parent.reply_id
       )
-      SELECT *
-      FROM reply_chains;`,
+
+      SELECT * FROM reply_chains;`,
       [userId, replyIds]);
 
     // Final output of posts 
     const { rows: result } = await db.query(
-      `SELECT
+      `SELECT 
         p.post_id,
         c.name, 
         c.image, 
@@ -691,6 +730,27 @@ app.get("/favourites", async (req, res) => {
         p.created_at, 
         p.updated_at, 
         p.attachment,
+        ec.emoji_counts,
+
+        -- latest reaction timestamp (for sorting)
+        (
+          SELECT MAX(pr.created_at)
+          FROM post_reactions pr
+          WHERE pr.post_id = p.post_id
+            AND pr.reply_id IS NULL
+        ) AS last_reaction_at,
+
+        -- current user emoji
+        (
+          SELECT reaction_value
+          FROM post_reactions pr
+          WHERE pr.user_id = $1
+            AND pr.post_id = p.post_id
+            AND pr.reply_id IS NULL
+            AND pr.reaction = 'emoji'
+          ORDER BY pr.created_at DESC
+          LIMIT 1
+        ) AS current_emoji_reaction,
 
         EXISTS (
           SELECT 1
@@ -700,6 +760,7 @@ app.get("/favourites", async (req, res) => {
             AND pr.reply_id IS NULL
             AND pr.reaction = 'like'
         ) AS "isLiked",
+
         EXISTS (
           SELECT 1
           FROM post_reactions pr
@@ -708,28 +769,48 @@ app.get("/favourites", async (req, res) => {
             AND pr.reply_id IS NULL
             AND pr.reaction = 'dislike'
         ) AS "isDisliked",
+
         EXISTS (
-            SELECT 1
-            FROM post_reactions pr
-            WHERE pr.post_id = p.post_id
-              AND pr.user_id = $1
-              AND pr.reply_id IS NULL
-              AND pr.reaction = 'favourite'
+          SELECT 1
+          FROM post_reactions pr
+          WHERE pr.post_id = p.post_id
+            AND pr.user_id = $1
+            AND pr.reply_id IS NULL
+            AND pr.reaction = 'favourite'
         ) AS "isFavourited",
+
         EXISTS (
-            SELECT 1
-            FROM post_reactions pr
-            WHERE pr.post_id = p.post_id
-              AND pr.user_id = $1
-              AND pr.reply_id IS NULL
-              AND pr.reaction = 'emoji'
+          SELECT 1
+          FROM post_reactions pr
+          WHERE pr.post_id = p.post_id
+            AND pr.user_id = $1
+            AND pr.reply_id IS NULL
+            AND pr.reaction = 'emoji'
         ) AS "isEmojied"
 
       FROM posts p
       INNER JOIN characters c ON p.character_id = c.char_id
-      INNER JOIN post_reactions pr ON p.post_id = pr.post_id
+
+      LEFT JOIN (
+        SELECT
+          post_id,
+          json_object_agg(reaction_value, count) AS emoji_counts
+        FROM (
+          SELECT
+            post_id,
+            reaction_value,
+            COUNT(*) AS count
+          FROM post_reactions
+          WHERE reply_id IS NULL
+            AND reaction = 'emoji'
+          GROUP BY post_id, reaction_value
+        ) t
+        GROUP BY post_id
+      ) ec ON ec.post_id = p.post_id
+
       WHERE p.post_id = ANY($2)
-      ORDER BY pr.created_at DESC`,
+
+      ORDER BY last_reaction_at DESC NULLS LAST;`,
       [userId, postIds]
     );
     const resultIndexMap: Record<number, number> = {};
@@ -778,6 +859,13 @@ app.get("/favourites", async (req, res) => {
       result[mapping].replyChain.push(chain);
     });
 
+    type EmojiKey = "aghast" | "angry" | "astonished" | "bandage" | "bored" | "clown" | "crying" | "dizzy" | "downcast" | "explode" | "heartEyes" | "heavyCrying" | "laughing" | "puppyEyes" | "sad" | "shocked" | "skeptical" | "sleeping" | "sleeping" | "smile" | "wink" | "worried" | "zipper";
+
+    type EmojiEntry = {
+      reaction: EmojiKey;
+      count: number;
+    };
+
     type ReplyType = {
       replyId: number;
       parentReplyId?: number;
@@ -798,6 +886,8 @@ app.get("/favourites", async (req, res) => {
       isFavourited: boolean;
       isEmojied: boolean;
       replyChain?: ReplyType[];
+      emojiCounts: EmojiEntry[];
+      currentEmojiReaction: string;
     }
 
     type PostType = {
@@ -817,6 +907,8 @@ app.get("/favourites", async (req, res) => {
       isFavourited: boolean;
       isEmojied: boolean;
       replyChain?: ReplyType[];
+      emojiCounts: EmojiEntry[];
+      currentEmojiReaction: string;
     }
 
     function mapReply(node: any): ReplyType {
@@ -838,6 +930,15 @@ app.get("/favourites", async (req, res) => {
         isDisliked: node.isDisliked,
         isFavourited: node.isFavourited,
         isEmojied: node.isEmojied,
+        emojiCounts: node.emoji_counts
+          ? (Object.entries(node.emoji_counts) as [EmojiKey, number][])
+              .map(([reaction, count]) => ({
+                reaction,
+                count: Number(count),
+              }))
+              .sort((a, b) => b.count - a.count)
+          : [],
+        currentEmojiReaction: node.current_emoji_reaction,
         replyChain: node.replyChain?.length
           ? node.replyChain.map(mapReply)
           : undefined,
@@ -861,6 +962,15 @@ app.get("/favourites", async (req, res) => {
         isDisliked: post.isDisliked,
         isFavourited: post.isFavourited,
         isEmojied: post.isEmojied,
+        emojiCounts: post.emoji_counts
+          ? (Object.entries(post.emoji_counts) as [EmojiKey, number][])
+              .map(([reaction, count]) => ({
+                reaction,
+                count: Number(count),
+              }))
+              .sort((a, b) => b.count - a.count)
+          : [],
+        currentEmojiReaction: post.current_emoji_reaction,
         replyChain: post.replyChain?.length
           ? post.replyChain.map(mapReply)
           : undefined,
