@@ -5,13 +5,13 @@ import axios from "axios";
 
 import EmojiBar from './EmojiBar';
 
-import RepliesIcon from "../../assets/icons/replies.svg?react";
-import ReplyIcon from "../../assets/icons/reply.svg?react";
-import ShareIcon from "../../assets/icons/share.svg?react";
-import FavouriteIcon from "../../assets/icons/favourite.svg?react";
-import HeartIcon from "../../assets/icons/heart.svg?react";
-import LikeIcon from "../../assets/icons/like.svg?react";
-import DislikeIcon from "../../assets/icons/dislike.svg?react";
+import RepliesIcon from "../../../assets/icons/replies.svg?react";
+import ReplyIcon from "../../../assets/icons/reply.svg?react";
+import ShareIcon from "../../../assets/icons/share.svg?react";
+import FavouriteIcon from "../../../assets/icons/favourite.svg?react";
+import HeartIcon from "../../../assets/icons/heart.svg?react";
+import LikeIcon from "../../../assets/icons/like.svg?react";
+import DislikeIcon from "../../../assets/icons/dislike.svg?react";
 
 import type { PostType } from './Stream';
 import type { ReplyType } from './ReplyFeed';

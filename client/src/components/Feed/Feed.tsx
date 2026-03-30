@@ -2,7 +2,8 @@ import styled from 'styled-components';
 import { useState } from 'react';
 
 import MainMenu from '../Menu/MainMenu';
-import Stream from './Stream';
+import Stream from './Stream/Stream';
+import Discover from '../Discover/Discover';
 
 const StyledMainContainer = styled.div`
   display: grid;
@@ -60,7 +61,7 @@ const Feed = () => {
     <StyledMainContainer>
       <MainMenu toggleShowCreatePostMenu={toggleShowCreatePostMenu} toggleShowCharactersMenu={toggleShowCharactersMenu} toggleShowFavouritesMenu={toggleShowFavouritesMenu} setCharacterFilter={handleSetCharacterFilter} setPropertyFilter={handleSetPropertyFilter}/>
       <Stream showCreatePostMenu={showCreatePostMenu} showCharactersMenu={showCharactersMenu} showFavourites={showFavourites} characterFilter={characterFilter} propertyFilter={propertyFilter}/>
-      <div></div>
+      <Discover/>
     </StyledMainContainer>
   )
 }

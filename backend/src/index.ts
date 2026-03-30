@@ -1460,6 +1460,65 @@ app.post("/react", async (req, res) => {
   }
 });
 
+app.get("/trending", async (req, res) => {
+  try {
+    // Pulling 30 most recent data sources with different weighting for posts / replies / reaction types
+    // Add SUM(weight) to last bit to see actual scores.
+    const { rows: search } = await db.query(
+      `WITH recent_activity AS (
+      SELECT character_id, 2 AS weight, created_at
+      FROM posts
+
+      UNION ALL
+
+      SELECT character_id, 1 AS weight, created_at
+      FROM replies
+
+      UNION ALL
+
+      SELECT
+      COALESCE(p.character_id, r.character_id) AS character_id,
+      CASE pr.reaction
+        WHEN 'favourite' THEN 4
+        WHEN 'like' THEN 2
+        WHEN 'emoji' THEN 3
+        WHEN 'dislike' THEN 1
+        ELSE 1
+      END AS weight,
+      pr.created_at
+      FROM post_reactions pr
+      LEFT JOIN posts p ON pr.post_id = p.post_id
+      LEFT JOIN replies r ON pr.reply_id = r.reply_id
+      WHERE COALESCE(p.character_id, r.character_id) IS NOT NULL
+      ),
+
+      limited AS (
+        SELECT *
+        FROM recent_activity
+        ORDER BY created_at DESC
+        LIMIT 30
+      )
+
+      SELECT
+        prop.name
+      FROM limited ra
+      INNER JOIN characters c ON ra.character_id = c.char_id
+      INNER JOIN properties prop ON c.property_id = prop.property_id
+      GROUP BY prop.property_id, prop.name
+      ORDER BY SUM(weight) DESC
+      LIMIT 5;`,
+      []
+    );
+
+    const result = search.map(prop => prop.name);
+
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });

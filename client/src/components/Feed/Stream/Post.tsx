@@ -1,14 +1,14 @@
 import styled from 'styled-components';
 import { useState } from 'react';
 
-import CharacterImage from '../General/CharacterImage';
-import TextEditor from './TextEditor';
-import ReplyFeed from './ReplyFeed.tsx';
-import PostActions from './PostActions.tsx';
-import PostReactions from './PostReactions.tsx';
+import CharacterImage from '../../General/CharacterImage.tsx';
+import TextEditor from '../Stream/TextEditor.tsx';
+import ReplyFeed from '../Stream/ReplyFeed.tsx';
+import PostActions from '../Stream/PostActions.tsx';
+import PostReactions from '../Stream/PostReactions.tsx';
 
-import type { PostType } from './Stream';
-import type { ReplyType } from './ReplyFeed.tsx';
+import type { PostType } from '../Stream/Stream.tsx';
+import type { ReplyType } from '../Stream/ReplyFeed.tsx';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -90,8 +90,8 @@ type PostProps = {
 const Post = ({ postData, updatePost, override } : PostProps) => {
   const [repliesExpanded, setRepliesExpanded] = useState(false);
   const [replyExpanded, setReplyExpanded] = useState(false);
-  const [shareExpanded, setShareExpanded] = useState(false);
-  const [overrideData, setOverrideData] = useState<ReplyType[] | null>(
+  // const [shareExpanded, setShareExpanded] = useState(false);
+  const [overrideData] = useState<ReplyType[] | null>(
     postData.replyChain ?? null
   );
 

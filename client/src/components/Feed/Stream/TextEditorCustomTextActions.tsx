@@ -6,16 +6,16 @@ import {FORMAT_TEXT_COMMAND} from 'lexical';
 import type {TextFormatType} from 'lexical';
 import {$getSelection, $isRangeSelection, $getRoot} from "lexical";
 
-import BoldIcon from "../../assets/icons/lexical/bold.svg?react";
-import ItalicIcon from "../../assets/icons/lexical/italic.svg?react";
-import UnderlineIcon from "../../assets/icons/lexical/underline.svg?react";
-import CodeIcon from "../../assets/icons/lexical/code.svg?react";
-import HighlightIcon from "../../assets/icons/lexical/highlight.svg?react";
-import StrikethroughIcon from "../../assets/icons/lexical/strikethrough.svg?react";
-import SubscriptIcon from "../../assets/icons/lexical/subscript.svg?react";
-import SuperscriptIcon from "../../assets/icons/lexical/superscript.svg?react";
-import AttachIcon from "../../assets/icons/lexical/attach.svg?react";
-import ConfirmIcon from "../../assets/icons/lexical/confirm.svg?react";
+import BoldIcon from "../../../assets/icons/lexical/bold.svg?react";
+import ItalicIcon from "../../../assets/icons/lexical/italic.svg?react";
+import UnderlineIcon from "../../../assets/icons/lexical/underline.svg?react";
+import CodeIcon from "../../../assets/icons/lexical/code.svg?react";
+import HighlightIcon from "../../../assets/icons/lexical/highlight.svg?react";
+import StrikethroughIcon from "../../../assets/icons/lexical/strikethrough.svg?react";
+import SubscriptIcon from "../../../assets/icons/lexical/subscript.svg?react";
+import SuperscriptIcon from "../../../assets/icons/lexical/superscript.svg?react";
+import AttachIcon from "../../../assets/icons/lexical/attach.svg?react";
+import ConfirmIcon from "../../../assets/icons/lexical/confirm.svg?react";
 
 const StyledButtonContainer = styled.div`
   display: flex;

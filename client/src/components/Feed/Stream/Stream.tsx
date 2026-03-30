@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import axios from "axios";
 
 import CreatePostMenu from './CreatePostMenu';
-import CharactersMenu from './CharactersMenu';
+import CharactersMenu from '../CharactersMenu';
 import Post from './Post';
 import type { ReplyType } from './ReplyFeed';
 

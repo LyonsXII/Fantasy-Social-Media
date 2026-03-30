@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import axios from "axios";
 import styled from 'styled-components';
 
-import Search from '../General/Search';
+import Search from '../../General/Search';
 import TextEditor from './TextEditor';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;

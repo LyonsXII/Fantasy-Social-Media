@@ -1,7 +1,7 @@
 import styled from 'styled-components';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
-import CharacterImage from '../General/CharacterImage';
+import CharacterImage from '../../General/CharacterImage';
 import TextEditor from './TextEditor';
 import PostReactions from './PostReactions';
 import PostActions from './PostActions';
