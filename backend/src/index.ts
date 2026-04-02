@@ -1463,33 +1463,37 @@ app.post("/react", async (req, res) => {
 app.get("/trending", async (req, res) => {
   try {
     // Pulling 30 most recent data sources with different weighting for posts / replies / reaction types
-    // Add SUM(weight) to last bit to see actual scores.
-    const { rows: search } = await db.query(
+    // Add SUM(weight) to last bit to see the actual scores
+    const { rows: result } = await db.query(
       `WITH recent_activity AS (
-      SELECT character_id, 2 AS weight, created_at
-      FROM posts
+        SELECT 
+          character_id, 
+          2 AS weight, 
+          created_at FROM posts
 
-      UNION ALL
+        UNION ALL
 
-      SELECT character_id, 1 AS weight, created_at
-      FROM replies
+        SELECT 
+          character_id, 
+          1 AS weight, 
+          created_at FROM replies
 
-      UNION ALL
+        UNION ALL
 
-      SELECT
-      COALESCE(p.character_id, r.character_id) AS character_id,
-      CASE pr.reaction
-        WHEN 'favourite' THEN 4
-        WHEN 'like' THEN 2
-        WHEN 'emoji' THEN 3
-        WHEN 'dislike' THEN 1
-        ELSE 1
-      END AS weight,
-      pr.created_at
-      FROM post_reactions pr
-      LEFT JOIN posts p ON pr.post_id = p.post_id
-      LEFT JOIN replies r ON pr.reply_id = r.reply_id
-      WHERE COALESCE(p.character_id, r.character_id) IS NOT NULL
+        SELECT
+          COALESCE(p.character_id, r.character_id),
+          CASE pr.reaction
+            WHEN 'favourite' THEN 4
+            WHEN 'like' THEN 2
+            WHEN 'emoji' THEN 3
+            WHEN 'dislike' THEN 1
+            ELSE 1
+          END,
+          pr.created_at
+        FROM post_reactions pr
+        LEFT JOIN posts p ON pr.post_id = p.post_id
+        LEFT JOIN replies r ON pr.reply_id = r.reply_id
+        WHERE COALESCE(p.character_id, r.character_id) IS NOT NULL
       ),
 
       limited AS (
@@ -1497,22 +1501,54 @@ app.get("/trending", async (req, res) => {
         FROM recent_activity
         ORDER BY created_at DESC
         LIMIT 30
+      ),
+
+      character_scores AS (
+        SELECT
+          c.char_id,
+          c.property_id,
+          SUM(weight) AS score
+        FROM limited ra
+        JOIN characters c ON ra.character_id = c.char_id
+        GROUP BY c.char_id, c.property_id
+      ),
+
+      property_scores AS (
+        SELECT
+          property_id,
+          SUM(score) AS score
+        FROM character_scores
+        GROUP BY property_id
       )
 
       SELECT
-        prop.name
-      FROM limited ra
-      INNER JOIN characters c ON ra.character_id = c.char_id
-      INNER JOIN properties prop ON c.property_id = prop.property_id
-      GROUP BY prop.property_id, prop.name
-      ORDER BY SUM(weight) DESC
-      LIMIT 5;`,
+        -- Top 5 characters
+        (
+          SELECT json_agg(t.name)
+          FROM (
+            SELECT c.name
+            FROM character_scores cs
+            JOIN characters c ON c.char_id = cs.char_id
+            ORDER BY cs.score DESC
+            LIMIT 5
+          ) t
+        ) AS "topCharacters",
+
+        -- Top 5 properties
+        (
+          SELECT json_agg(t.name)
+          FROM (
+            SELECT prop.name
+            FROM property_scores ps
+            JOIN properties prop ON prop.property_id = ps.property_id
+            ORDER BY ps.score DESC
+            LIMIT 5
+          ) t
+        ) AS "topProperties";`,
       []
     );
 
-    const result = search.map(prop => prop.name);
-
-    res.json(result);
+    res.json(result[0]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal server error" });

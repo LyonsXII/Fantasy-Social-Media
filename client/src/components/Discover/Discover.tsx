@@ -48,11 +48,20 @@ const StyledHeaderText = styled.h1`
 
 const StyledGeneralText = styled.h1`
   font-size: 1.2rem;
+  line-height: 0.8rem;
   user-select: none;
 `
 
 const Discover = () => {
-  const [trending, setTrending] = useState([]);
+  type TrendingData = {
+    topCharacters: string[];
+    topProperties: string[];
+  };
+
+  const [trending, setTrending] = useState<TrendingData>({
+    topCharacters: [],
+    topProperties: [],
+  });
 
   async function fetchTrending() {
     try {
@@ -75,11 +84,20 @@ const Discover = () => {
     <StyledMainContainer>
       <StyledOption>
         <StyledHeaderText>
-          Trending
-          {trending && trending.map((prop, index) => {
-            return <StyledGeneralText>{index + 1}. {prop}</StyledGeneralText>
-          })}
+          Trending Properties
         </StyledHeaderText>
+        {trending && trending.topProperties.map((prop, index) => {
+          return <StyledGeneralText key={index}>{index + 1}. {prop}</StyledGeneralText>
+        })}
+      </StyledOption>
+
+      <StyledOption>
+        <StyledHeaderText>
+          Trending Characters
+        </StyledHeaderText>
+        {trending && trending.topCharacters.map((prop, index) => {
+          return <StyledGeneralText key={index}>{index + 1}. {prop}</StyledGeneralText>
+        })}
       </StyledOption>
     </StyledMainContainer>
   )
