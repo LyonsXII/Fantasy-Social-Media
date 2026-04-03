@@ -28,6 +28,8 @@ const Feed = () => {
   const [characterFilter, setCharacterFilter] = useState<number | null>(null);
   const [propertyFilter, setPropertyFilter] = useState<number | null>(null);
   const [showFavourites, setShowFavourites] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchText, setSearchText] = useState("");
 
   const toggleShowCreatePostMenu = () => {
     setShowCreatePostMenu(prev => !prev);
@@ -59,8 +61,8 @@ const Feed = () => {
 
   return (
     <StyledMainContainer>
-      <MainMenu toggleShowCreatePostMenu={toggleShowCreatePostMenu} toggleShowCharactersMenu={toggleShowCharactersMenu} toggleShowFavouritesMenu={toggleShowFavouritesMenu} setCharacterFilter={handleSetCharacterFilter} setPropertyFilter={handleSetPropertyFilter}/>
-      <Stream showCreatePostMenu={showCreatePostMenu} showCharactersMenu={showCharactersMenu} showFavourites={showFavourites} characterFilter={characterFilter} propertyFilter={propertyFilter}/>
+      <MainMenu toggleShowCreatePostMenu={toggleShowCreatePostMenu} toggleShowCharactersMenu={toggleShowCharactersMenu} toggleShowFavouritesMenu={toggleShowFavouritesMenu} setCharacterFilter={handleSetCharacterFilter} setPropertyFilter={handleSetPropertyFilter} setSearchText={setSearchText}/>
+      <Stream showCreatePostMenu={showCreatePostMenu} showCharactersMenu={showCharactersMenu} showFavourites={showFavourites} showSearch={showSearch} characterFilter={characterFilter} propertyFilter={propertyFilter} searchText={searchText}/>
       <Discover/>
     </StyledMainContainer>
   )

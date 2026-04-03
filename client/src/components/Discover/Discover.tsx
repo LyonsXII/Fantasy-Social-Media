@@ -70,7 +70,10 @@ const Discover = () => {
           params: {}
         }
       );
-      setTrending(response.data);
+      setTrending({
+        topCharacters: response.data.topCharacters ?? [],
+        topProperties: response.data.topProperties ?? [],
+      });
     } catch (error) {
       console.error("Character search failed", error);
     }
@@ -86,7 +89,7 @@ const Discover = () => {
         <StyledHeaderText>
           Trending Properties
         </StyledHeaderText>
-        {trending && trending.topProperties.map((prop, index) => {
+        {trending.topProperties.length > 0 && trending.topProperties.map((prop, index) => {
           return <StyledGeneralText key={index}>{index + 1}. {prop}</StyledGeneralText>
         })}
       </StyledOption>
@@ -95,7 +98,7 @@ const Discover = () => {
         <StyledHeaderText>
           Trending Characters
         </StyledHeaderText>
-        {trending && trending.topCharacters.map((prop, index) => {
+        {trending.topCharacters.length > 0 && trending.topCharacters.map((prop, index) => {
           return <StyledGeneralText key={index}>{index + 1}. {prop}</StyledGeneralText>
         })}
       </StyledOption>

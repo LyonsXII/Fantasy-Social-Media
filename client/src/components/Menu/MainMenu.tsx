@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 
-import Characters from '../Feed/CharactersMenu';
 import Filter from './Filter';
+import TextSearch from './TextSearch';
 
 const StyledMainContainer = styled.div`
   position: relative;
@@ -51,9 +51,10 @@ type MainMenuProps = {
   toggleShowFavouritesMenu: () => void;
   setCharacterFilter: (charId: number | null) => void;
   setPropertyFilter: (propertyId: number | null) => void;
+  setSearchText: (text: string | null) => void;
 };
 
-const MainMenu = ({ toggleShowCreatePostMenu, toggleShowCharactersMenu, toggleShowFavouritesMenu, setCharacterFilter, setPropertyFilter } : MainMenuProps) => {
+const MainMenu = ({ toggleShowCreatePostMenu, toggleShowCharactersMenu, toggleShowFavouritesMenu, setCharacterFilter, setPropertyFilter, setSearchText } : MainMenuProps) => {
   return (
     <StyledMainContainer>
       <StyledOption onClick={toggleShowCreatePostMenu}>
@@ -68,11 +69,7 @@ const MainMenu = ({ toggleShowCreatePostMenu, toggleShowCharactersMenu, toggleSh
         </StyledOptionText>
       </StyledOption>
 
-      <StyledOption>
-        <StyledOptionText>
-          Search
-        </StyledOptionText>
-      </StyledOption>
+      <TextSearch setSearchText={setSearchText}/>
 
       <Filter setCharacterFilter={setCharacterFilter} setPropertyFilter={setPropertyFilter}/>
 

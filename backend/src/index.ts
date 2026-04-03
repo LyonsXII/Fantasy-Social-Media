@@ -193,6 +193,38 @@ app.get("/properties/search", async (req, res) => {
   }
 });
 
+app.get("/search", async (req, res) => {
+  const { text } = req.query;
+  const charId =
+    typeof req.query.charId === "string"
+      ? req.query.charId
+      : null;
+  const propertyId =
+    typeof req.query.propertyId === "string"
+      ? req.query.propertyId
+      : null;
+
+  console.log(charId, propertyId, text);
+
+
+  const result = await db.query(
+    `SELECT *,
+      ts_rank(search_vector, websearch_to_tsquery('english', $1)) AS rank,
+      similarity(raw_text, $1) AS sim
+    FROM posts
+    WHERE
+      search_vector @@ websearch_to_tsquery('english', $1)
+      OR similarity(raw_text, $1) > 0.2
+    ORDER BY
+      rank DESC,
+      sim DESC
+    LIMIT 20;`,
+    [text]
+  );
+
+  res.json(result);
+});
+
 // Fetch all tag names (and matching tag categories)
 app.get("/tags", async (req, res) => {
   try {
@@ -300,10 +332,53 @@ app.post("/createPost", upload.single("attachment"), async (req, res) => {
   if (postData.length > 5000) return res.status(400).json({ error: "Input too large"});
 
   try {
+    type LexicalNode = {
+      type: string;
+      text?: string;
+      children?: LexicalNode[];
+    };
+    
+    function extractTextFromLexical(lexicalRawText: string) {
+      const lexicalContent = JSON.parse(lexicalRawText);
+
+      if (!lexicalContent?.root) return "";
+
+      const result: string[] = [];
+
+      function traverse(node: LexicalNode) {
+        if (!node) return;
+
+        // Text node
+        if (node.type === "text" && node.text) {
+          result.push(node.text);
+        }
+
+        // Traverse children
+        if (node.children) {
+          node.children.forEach(traverse);
+        }
+
+        // Add spacing for block-level nodes
+        if (
+          node.type === "paragraph" ||
+          node.type === "heading" ||
+          node.type === "listitem"
+        ) {
+          result.push(" ");
+        }
+      }
+
+      traverse(lexicalContent.root);
+
+      return result.join("").replace(/\s+/g, " ").trim();
+    }
+
+    const rawText = extractTextFromLexical(postData);
+
     const result = await db.query(
-      `INSERT INTO posts (owner_id, character_id, content, attachment) 
-      VALUES ($1, $2, $3, $4) RETURNING post_id`, 
-      [owner_id, charId, postData, attachmentName]);
+      `INSERT INTO posts (owner_id, character_id, content, raw_text, attachment) 
+      VALUES ($1, $2, $3, $4, $5) RETURNING post_id`, 
+      [owner_id, charId, postData, rawText, attachmentName]);
 
     res.status(201).json({ postId: result.rows[0].post_id });
   } catch(err: any) {
@@ -378,8 +453,6 @@ app.get("/post", async (req, res) => {
         .sort((a, b) => b.count - a.count),
       currentEmojiReaction: row.current_emoji_reaction
     };
-
-    console.log(result);
 
     res.json(result);
   } catch (err) {
@@ -1000,12 +1073,55 @@ app.post("/createReply", upload.single("attachment"), async (req, res) => {
   if (postData.length > 5000) return res.status(400).json({ error: "Input too large"});
 
   try {
+    type LexicalNode = {
+      type: string;
+      text?: string;
+      children?: LexicalNode[];
+    };
+    
+    function extractTextFromLexical(lexicalRawText: string) {
+      const lexicalContent = JSON.parse(lexicalRawText);
+
+      if (!lexicalContent?.root) return "";
+
+      const result: string[] = [];
+
+      function traverse(node: LexicalNode) {
+        if (!node) return;
+
+        // Text node
+        if (node.type === "text" && node.text) {
+          result.push(node.text);
+        }
+
+        // Traverse children
+        if (node.children) {
+          node.children.forEach(traverse);
+        }
+
+        // Add spacing for block-level nodes
+        if (
+          node.type === "paragraph" ||
+          node.type === "heading" ||
+          node.type === "listitem"
+        ) {
+          result.push(" ");
+        }
+      }
+
+      traverse(lexicalContent.root);
+
+      return result.join("").replace(/\s+/g, " ").trim();
+    }
+
+    const rawText = extractTextFromLexical(postData);
+
     await db.query("BEGIN");
 
     const result = await db.query(
-      `INSERT INTO replies (owner_id, post_id, parent_reply_id, character_id, content, attachment) 
-      VALUES ($1, $2, $3, $4, $5, $6) RETURNING post_id`, 
-      [owner_id, postId, convParentReplyId, charId, postData, attachmentName]);
+      `INSERT INTO replies (owner_id, post_id, parent_reply_id, character_id, content, raw_text, attachment) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING post_id`, 
+      [owner_id, postId, convParentReplyId, charId, postData, rawText, attachmentName]);
 
     // Increment total replies on post
     await db.query(
@@ -1463,7 +1579,6 @@ app.post("/react", async (req, res) => {
 app.get("/trending", async (req, res) => {
   try {
     // Pulling 30 most recent data sources with different weighting for posts / replies / reaction types
-    // Add SUM(weight) to last bit to see the actual scores
     const { rows: result } = await db.query(
       `WITH recent_activity AS (
         SELECT 
@@ -1523,27 +1638,33 @@ app.get("/trending", async (req, res) => {
 
       SELECT
         -- Top 5 characters
-        (
-          SELECT json_agg(t.name)
-          FROM (
-            SELECT c.name
-            FROM character_scores cs
-            JOIN characters c ON c.char_id = cs.char_id
-            ORDER BY cs.score DESC
-            LIMIT 5
-          ) t
+        COALESCE(
+          (
+            SELECT json_agg(t.name)
+            FROM (
+              SELECT c.name
+              FROM character_scores cs
+              JOIN characters c ON c.char_id = cs.char_id
+              ORDER BY cs.score DESC
+              LIMIT 5
+            ) t
+          ),
+          '[]'::json
         ) AS "topCharacters",
 
         -- Top 5 properties
-        (
-          SELECT json_agg(t.name)
-          FROM (
-            SELECT prop.name
-            FROM property_scores ps
-            JOIN properties prop ON prop.property_id = ps.property_id
-            ORDER BY ps.score DESC
-            LIMIT 5
-          ) t
+        COALESCE(
+          (
+            SELECT json_agg(t.name)
+            FROM (
+              SELECT prop.name
+              FROM property_scores ps
+              JOIN properties prop ON prop.property_id = ps.property_id
+              ORDER BY ps.score DESC
+              LIMIT 5
+            ) t
+          ),
+          '[]'::json
         ) AS "topProperties";`,
       []
     );

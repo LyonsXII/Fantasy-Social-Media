@@ -39,8 +39,10 @@ type StreamProps = {
   showCreatePostMenu: boolean;
   showCharactersMenu: boolean;
   showFavourites: boolean;
+  showSearch: boolean;
   characterFilter: number | null;
   propertyFilter: number | null;
+  searchText: string | null;
 };
 
 export type EmojiKey = "aghast" | "angry" | "astonished" | "bandage" | "bored" | "clown" | "crying" | "dizzy" | "downcast" | "explode" | "heartEyes" | "heavyCrying" | "laughing" | "puppyEyes" | "sad" | "shocked" | "skeptical" | "sleeping" | "sleeping" | "smile" | "wink" | "worried" | "zipper";
@@ -71,7 +73,7 @@ export type PostType = {
   currentEmojiReaction: string;
 }
 
-const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, characterFilter, propertyFilter } : StreamProps) => {
+const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, showSearch, characterFilter, propertyFilter, searchText } : StreamProps) => {
   const [posts, setPosts] = useState<PostType[]>([]);
   const [lastId, setLastId] = useState<number | null>(null);
   const [lastCreated, setLastCreated] = useState<string | null>(null);
@@ -86,15 +88,27 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, charac
     try {
       const params: any = {};
 
+      let endpoint = "";
+
       if (showFavourites) {
+        endpoint = "/favourites";
         params.lastCreated = lastCreated;
+
+      } else if (searchText) {
+        endpoint = "/search";
+        params.lastCreated = lastCreated;
+        params.text = searchText;
+        params.charId = characterFilter;
+        params.propertyId = propertyFilter;
+
       } else {
+        endpoint = "/feed";
         params.lastId = lastId
         params.charId = characterFilter;
         params.propertyId = propertyFilter;
       }
 
-      const endpoint = showFavourites ? "/favourites" : "/feed";
+      console.log(endpoint, params);
 
       const { data } = await axios.get<PostType[]>(
         `${backendUrl}${endpoint}`,
@@ -118,7 +132,7 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, charac
     } finally {
       setLoading(false);
     }
-  }, [furtherContentAvailable, characterFilter, propertyFilter, showFavourites, lastId, lastCreated]);
+  }, [furtherContentAvailable, characterFilter, propertyFilter, showFavourites, searchText, lastId, lastCreated]);
 
   function refetchPosts() {
     setPosts([]);
@@ -150,7 +164,7 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, charac
     setLastId(null);
     setLastCreated(null);
     setFurtherContentAvailable(true);
-  }, [characterFilter, propertyFilter, showFavourites]);
+  }, [characterFilter, propertyFilter, showFavourites, searchText]);
 
   // Create observer to load more posts when reached
   useEffect(() => {
@@ -180,7 +194,7 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, charac
     <StyledMainContainer>
       {showCreatePostMenu && <CreatePostMenu mode="post" numSuggestions={5} refetchPosts={refetchPosts}/>}
       {showCharactersMenu && <CharactersMenu />}
-      {posts.length && posts.map((post) => {
+      {posts.length > 0 && posts.map((post) => {
         return <Post key={post.postId} postData={post} updatePost={updatePost} override={showFavourites}/>
       })}
       <StyledObserver ref={observerRef}/>
