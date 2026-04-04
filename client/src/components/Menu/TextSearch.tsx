@@ -77,7 +77,7 @@ const TextSearch = ({ setSearchText } : TextSearchProps) => {
             type="text" 
             name="char" 
             value={userInput} 
-            placeholder="Character Name" 
+            placeholder="Enter text to search..." 
             onChange={(e) => updateUserInput(e.target.value)} />
           <StyledButton
             onFocus={() => {

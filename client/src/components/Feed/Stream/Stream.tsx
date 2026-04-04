@@ -77,6 +77,7 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, showSe
   const [posts, setPosts] = useState<PostType[]>([]);
   const [lastId, setLastId] = useState<number | null>(null);
   const [lastCreated, setLastCreated] = useState<string | null>(null);
+  const [offset, setOffset] = useState(0);
   const [furtherContentAvailable, setFurtherContentAvailable] = useState(true);
   const [loading, setLoading] = useState(false);
   const observerRef = useRef<HTMLDivElement | null>(null);
@@ -121,6 +122,8 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, showSe
       if (postsArray.length > 0) {
         if (showFavourites) {
           setLastCreated(data[data.length - 1].createdAt);
+        } else if (searchText) {
+          setOffset(prev => prev + 10);
         } else {
           setLastId(data[data.length-1].postId);
         }
