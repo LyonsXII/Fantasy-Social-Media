@@ -193,8 +193,12 @@ app.get("/properties/search", async (req, res) => {
   }
 });
 
+// Match posts based on user supplied text
 app.get("/search", async (req, res) => {
-  const { text } = req.query;
+  const text =
+    typeof req.query.text === "string"
+      ? req.query.text
+      : "";
   const charId =
     typeof req.query.charId === "string"
       ? req.query.charId
@@ -203,26 +207,156 @@ app.get("/search", async (req, res) => {
     typeof req.query.propertyId === "string"
       ? req.query.propertyId
       : null;
+  // Having to use offset since would otherwise need to track lastRank + lastSim + lastPostId, messy!
+  // Bad at scale but not a problem currently (maybe limit - too many matches, or min search length > 3?)
+  const offset =
+    typeof req.query.offset === "string"
+      ? Number(req.query.offset)
+      : 0;
+  const userId = 1;
 
-  console.log(charId, propertyId, text);
+  // Text provided too short (preventing e.g. 1000+ matches at scale if searching for posts containing the letter "a")
+  if (text.trim().length < 2) {
+    return res.json([]);
+  }
 
+  let search: QueryResult<any>;
+  try {
+    let query = `
+      SELECT
+        ts_rank(search_vector, websearch_to_tsquery('english', $2)) AS rank,
+        similarity(raw_text, $2) AS sim,
+        p.post_id,
+        c.name, 
+        c.image, 
+        p.content, 
+        p.replies, 
+        p.emojis, 
+        p.likes, 
+        p.dislikes, 
+        p.created_at, 
+        p.updated_at, 
+        p.attachment,
+        ec.emoji_counts,
+        pr.reaction_value AS current_emoji_reaction,
 
-  const result = await db.query(
-    `SELECT *,
-      ts_rank(search_vector, websearch_to_tsquery('english', $1)) AS rank,
-      similarity(raw_text, $1) AS sim
-    FROM posts
-    WHERE
-      search_vector @@ websearch_to_tsquery('english', $1)
-      OR similarity(raw_text, $1) > 0.2
-    ORDER BY
-      rank DESC,
-      sim DESC
-    LIMIT 20;`,
-    [text]
-  );
+        EXISTS (
+          SELECT 1
+          FROM post_reactions pr
+          WHERE pr.post_id = p.post_id
+            AND pr.user_id = $1
+            AND pr.reply_id IS NULL
+            AND pr.reaction = 'like'
+        ) AS "isLiked",
+        EXISTS (
+          SELECT 1
+          FROM post_reactions pr
+          WHERE pr.post_id = p.post_id
+            AND pr.user_id = $1
+            AND pr.reply_id IS NULL
+            AND pr.reaction = 'dislike'
+        ) AS "isDisliked",
+        EXISTS (
+            SELECT 1
+            FROM post_reactions pr
+            WHERE pr.post_id = p.post_id
+              AND pr.user_id = $1
+              AND pr.reply_id IS NULL
+              AND pr.reaction = 'favourite'
+        ) AS "isFavourited",
+        EXISTS (
+            SELECT 1
+            FROM post_reactions pr
+            WHERE pr.post_id = p.post_id
+              AND pr.user_id = $1
+              AND pr.reply_id IS NULL
+              AND pr.reaction = 'emoji'
+        ) AS "isEmojied"
 
-  res.json(result);
+      FROM posts p
+      INNER JOIN characters c ON p.character_id = c.char_id
+      LEFT JOIN (
+        SELECT
+          post_id,
+          json_object_agg(reaction_value, count) AS emoji_counts
+        FROM (
+          SELECT
+            post_id,
+            reaction_value,
+            COUNT(*) AS count
+          FROM post_reactions
+          WHERE reply_id IS NULL
+            AND reaction = 'emoji'
+          GROUP BY post_id, reaction_value
+        ) t
+        GROUP BY post_id
+      ) ec ON ec.post_id = p.post_id
+      LEFT JOIN post_reactions pr ON pr.user_id = $1
+        AND pr.post_id = p.post_id
+        AND pr.reply_id IS NULL
+        AND pr.reaction = 'emoji'`
+
+    const conditions: string[] = [
+      `(search_vector @@ websearch_to_tsquery('english', $2)
+        OR p.raw_text ILIKE '%' || $2 || '%')`
+    ];
+    const params: any[] = [userId, text];
+
+    if (charId != null) {
+      params.push(charId);
+      conditions.push(`p.character_id = $${params.length}`);
+    }
+
+    if (propertyId != null) {
+      params.push(propertyId);
+      conditions.push(`c.property_id = $${params.length}`);
+    }
+
+    if (conditions.length > 0) {
+      query += ` WHERE ` + conditions.join(" AND ");
+    }
+
+    query += `
+      ORDER BY rank DESC, sim DESC, p.post_id DESC
+      LIMIT 10
+      OFFSET $${params.length + 1};
+    `;
+
+    params.push(offset);
+
+    search = await db.query(query, params);
+    console.log(search.rows[0]);
+
+    const result = search.rows.map(row => ({
+      postId: row.post_id,
+      name: row.name,
+      image: row.image,
+      content: row.content,
+      replies: row.replies,
+      emojis: row.emojis,
+      likes: row.likes,
+      dislikes: row.dislikes,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      attachment: row.attachment ? "uploads/" + row.attachment : undefined,
+      isLiked: row.isLiked,
+      isDisliked: row.isDisliked,
+      isFavourited: row.isFavourited,
+      isEmojied: row.isEmojied,
+      emojiCounts: Object.entries(row.emoji_counts || {})
+        .map(([reaction, count]) => ({
+          reaction,
+          count: Number(count),
+        }))
+        .sort((a, b) => b.count - a.count),
+      currentEmojiReaction: row.current_emoji_reaction
+    }));
+
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 // Fetch all tag names (and matching tag categories)
