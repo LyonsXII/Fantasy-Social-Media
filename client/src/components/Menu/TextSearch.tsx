@@ -1,8 +1,5 @@
 import styled from 'styled-components';
-import { useState } from 'react';
-import axios from "axios";
-
-const backendUrl = import.meta.env.VITE_BACKEND_URL;
+import { useState, useEffect } from 'react';
 
 const StyledMainContainer = styled.div<{$expanded: boolean}>`
   display: flex;
@@ -55,7 +52,7 @@ const StyledButton = styled.button`
 `;
 
 type TextSearchProps = {
-  setSearchText: (text: string | null) => void;
+  setSearchText: (text: string) => void;
 };
 
 const TextSearch = ({ setSearchText } : TextSearchProps) => {
@@ -66,23 +63,33 @@ const TextSearch = ({ setSearchText } : TextSearchProps) => {
     setUserInput(text);
   };
 
+  useEffect(() => {
+    if (userInput == "") {
+      setSearchText("");
+    }
+  }, [userInput]);
+
   return (
     <StyledMainContainer $expanded={expanded}>
       <StyledOptionText onClick={() => setExpanded(prev => !prev)}>
         Search
       </StyledOptionText>
       {expanded && 
-        <StyledInputContainer>
+        <StyledInputContainer
+          as="form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            setSearchText(userInput);
+          }}
+        >
           <StyledInput 
             type="text" 
             name="char" 
             value={userInput} 
             placeholder="Enter text to search..." 
-            onChange={(e) => updateUserInput(e.target.value)} />
-          <StyledButton
-            onFocus={() => {
-              setSearchText(userInput);
-          }}>
+            onChange={(e) => updateUserInput(e.target.value)}
+          />
+          <StyledButton type="submit">
             Search
           </StyledButton>
         </StyledInputContainer>

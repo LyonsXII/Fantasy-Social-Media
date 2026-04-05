@@ -51,7 +51,7 @@ type MainMenuProps = {
   toggleShowFavouritesMenu: () => void;
   setCharacterFilter: (charId: number | null) => void;
   setPropertyFilter: (propertyId: number | null) => void;
-  setSearchText: (text: string | null) => void;
+  setSearchText: (text: string) => void;
 };
 
 const MainMenu = ({ toggleShowCreatePostMenu, toggleShowCharactersMenu, toggleShowFavouritesMenu, setCharacterFilter, setPropertyFilter, setSearchText } : MainMenuProps) => {

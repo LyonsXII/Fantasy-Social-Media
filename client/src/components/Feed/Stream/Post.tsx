@@ -67,9 +67,7 @@ const StyledCharacterName = styled.h3`
 `;
 
 const StyledDataText = styled.p`
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
+  font-size: 1rem;
 `;
 
 const StyledPostImage = styled.img`
@@ -80,6 +78,29 @@ const StyledPostImage = styled.img`
   border: 1px solid rgba(0,0,0,0.06);
   box-shadow: 0 6px 20px rgba(0,0,0,0.06);
 `;
+
+const StyledEditContainer = styled.div`
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+`
+
+const StyledButton = styled.button`
+  padding: 0.2rem 0.4rem;
+  font-size: 1rem;
+  border: 1px solid rgba(0,0,0,0.4);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  cursor: pointer;
+`;
+
+const StyledTimestampsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+`
 
 type PostProps = {
   postData: PostType
@@ -107,7 +128,8 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
 
           <StyledTextContainer>
             <StyledCharacterName>
-              {postData.name}
+              {postData.name}_
+              {postData.postId}
             </StyledCharacterName>
 
             {postData.content != "" && <TextEditor showMenu={false} content={postData.content}/>}
@@ -126,15 +148,39 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
           currentEmojiReaction={postData.currentEmojiReaction}
         />
 
-        <StyledDataText>
-          {postData.createdAt && new Intl.DateTimeFormat("en-GB", {
-            day: "numeric",
-            month: "short",
-            hour: "2-digit",
-            minute: "2-digit",
-          }).format(new Date(postData.createdAt))
-          }
-        </StyledDataText>
+        <StyledEditContainer>
+          <StyledButton>
+            Edit
+          </StyledButton>
+          <StyledTimestampsContainer>
+            {postData.createdAt &&
+              <StyledDataText>
+                Created:{" "}
+                {
+                  new Intl.DateTimeFormat("en-GB", {
+                    day: "numeric",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }).format(new Date(postData.createdAt))
+                }
+              </StyledDataText>
+            }
+            {postData.updatedAt &&
+              <StyledDataText>
+                Updated:{" "}
+                {
+                  new Intl.DateTimeFormat("en-GB", {
+                    day: "numeric",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }).format(new Date(postData.updatedAt))
+                }
+              </StyledDataText>
+            }
+          </StyledTimestampsContainer>
+        </StyledEditContainer>
       </StyledMainPostContainer>
 
       {(repliesExpanded || replyExpanded) && 

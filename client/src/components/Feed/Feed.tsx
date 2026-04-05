@@ -62,7 +62,7 @@ const Feed = () => {
   return (
     <StyledMainContainer>
       <MainMenu toggleShowCreatePostMenu={toggleShowCreatePostMenu} toggleShowCharactersMenu={toggleShowCharactersMenu} toggleShowFavouritesMenu={toggleShowFavouritesMenu} setCharacterFilter={handleSetCharacterFilter} setPropertyFilter={handleSetPropertyFilter} setSearchText={setSearchText}/>
-      <Stream showCreatePostMenu={showCreatePostMenu} showCharactersMenu={showCharactersMenu} showFavourites={showFavourites} showSearch={showSearch} characterFilter={characterFilter} propertyFilter={propertyFilter} searchText={searchText}/>
+      <Stream showCreatePostMenu={showCreatePostMenu} showCharactersMenu={showCharactersMenu} showFavourites={showFavourites} characterFilter={characterFilter} propertyFilter={propertyFilter} searchText={searchText}/>
       <Discover/>
     </StyledMainContainer>
   )

@@ -39,7 +39,6 @@ type StreamProps = {
   showCreatePostMenu: boolean;
   showCharactersMenu: boolean;
   showFavourites: boolean;
-  showSearch: boolean;
   characterFilter: number | null;
   propertyFilter: number | null;
   searchText: string | null;
@@ -73,7 +72,7 @@ export type PostType = {
   currentEmojiReaction: string;
 }
 
-const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, showSearch, characterFilter, propertyFilter, searchText } : StreamProps) => {
+const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, characterFilter, propertyFilter, searchText } : StreamProps) => {
   const [posts, setPosts] = useState<PostType[]>([]);
   const [lastId, setLastId] = useState<number | null>(null);
   const [lastCreated, setLastCreated] = useState<string | null>(null);
@@ -97,7 +96,7 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, showSe
 
       } else if (searchText) {
         endpoint = "/search";
-        params.lastCreated = lastCreated;
+        params.offset = offset;
         params.text = searchText;
         params.charId = characterFilter;
         params.propertyId = propertyFilter;
@@ -135,7 +134,7 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, showSe
     } finally {
       setLoading(false);
     }
-  }, [furtherContentAvailable, characterFilter, propertyFilter, showFavourites, searchText, lastId, lastCreated]);
+  }, [furtherContentAvailable, characterFilter, propertyFilter, showFavourites, searchText, offset, lastId, lastCreated]);
 
   function refetchPosts() {
     setPosts([]);
@@ -166,6 +165,7 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, showSe
     setPosts([]);
     setLastId(null);
     setLastCreated(null);
+    setOffset(0);
     setFurtherContentAvailable(true);
   }, [characterFilter, propertyFilter, showFavourites, searchText]);
 

@@ -215,6 +215,8 @@ app.get("/search", async (req, res) => {
       : 0;
   const userId = 1;
 
+  console.log(req.query.offset, offset);
+
   // Text provided too short (preventing e.g. 1000+ matches at scale if searching for posts containing the letter "a")
   if (text.trim().length < 2) {
     return res.json([]);
@@ -325,7 +327,6 @@ app.get("/search", async (req, res) => {
     params.push(offset);
 
     search = await db.query(query, params);
-    console.log(search.rows[0]);
 
     const result = search.rows.map(row => ({
       postId: row.post_id,
