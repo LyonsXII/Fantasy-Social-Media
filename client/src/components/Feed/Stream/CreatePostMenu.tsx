@@ -1,6 +1,6 @@
+import styled from 'styled-components';
 import { useState, useEffect, useRef } from 'react';
 import axios from "axios";
-import styled from 'styled-components';
 
 import Search from '../../General/Search';
 import TextEditor from './TextEditor';
@@ -85,12 +85,11 @@ const CreatePostMenu = ({ mode, height, numSuggestions, depth, postId, parentRep
   const maxSize = 5 * 1024 * 1024;
   const allowedTypes = ["image/png", "image/jpg", "image/jpeg", "image/webp"];
 
-  async function createPost(postData: any, lenRawText: number){
+  async function createPost(content: any){
     try {
       const formData = new FormData();
       formData.append("charId", String(selectedCharacter));
-      formData.append("postData", JSON.stringify(postData));
-      formData.append("lenRawText", String(lenRawText));
+      formData.append("content", JSON.stringify(content));
 
       if (attachment) {
         formData.append("attachment", attachment);
@@ -113,7 +112,7 @@ const CreatePostMenu = ({ mode, height, numSuggestions, depth, postId, parentRep
     }
   };
 
-  async function createReply(postData: any, lenRawText: number){
+  async function createReply(content: any){
     try {
       const formData = new FormData();
       if (postId) {
@@ -123,8 +122,7 @@ const CreatePostMenu = ({ mode, height, numSuggestions, depth, postId, parentRep
         formData.append("parentReplyId", String(parentReplyId));
       }
       formData.append("charId", String(selectedCharacter));
-      formData.append("postData", JSON.stringify(postData));
-      formData.append("lenRawText", String(lenRawText));
+      formData.append("content", JSON.stringify(content));
 
       if (attachment) {
         formData.append("attachment", attachment);
@@ -190,7 +188,7 @@ const CreatePostMenu = ({ mode, height, numSuggestions, depth, postId, parentRep
       </StyledSearchContainer>
 
       <StyledCreatePostContentContainer>
-        <TextEditor 
+        <TextEditor
           createPost={mode === "post" ? createPost : createReply} 
           showMenu={true}
           openPicker={openPicker}

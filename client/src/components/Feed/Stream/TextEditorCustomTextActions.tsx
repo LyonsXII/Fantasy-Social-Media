@@ -17,24 +17,33 @@ import SuperscriptIcon from "../../../assets/icons/lexical/superscript.svg?react
 import AttachIcon from "../../../assets/icons/lexical/attach.svg?react";
 import ConfirmIcon from "../../../assets/icons/lexical/confirm.svg?react";
 
-const StyledButtonContainer = styled.div`
+const StyledButtonContainer = styled.div<{$minimalist?: boolean}>`
   display: flex;
   height: fit-content;
   width: 100%;
   border: 1px solid black;
-  border-bottom: none;
-  border-radius: 1.2rem 1.2rem 0 0;
+  border-bottom: ${({$minimalist }) => {
+    if (!$minimalist) return "none";
+  }};
+  border-top: ${({$minimalist }) => {
+    if ($minimalist) return "none";
+  }};
+  border-radius: ${({ $minimalist }) => $minimalist ? "0" : "1.2rem 1.2rem 0 0"};
 `;
 
-const StyledButton = styled.button<{$position?: string, $active?: boolean}>`
+const StyledButton = styled.button<{$size?: string, $position?: string, $active?: boolean}>`
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 3rem;
+  height: ${({ $size }) => $size == "large" ? "3rem" : "18px"};
   padding: 1rem;
   gap: 0.6rem;
   border: none;
-  font-size: 1.2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1;
+  font-family: inherit;
+  opacity: 0.8;
   cursor: pointer;
 
   ${({ $active }) =>
@@ -47,14 +56,14 @@ const StyledButton = styled.button<{$position?: string, $active?: boolean}>`
 `;
 
 const createStyledIcon = (IconComponent: React.ComponentType<any>) =>
-  styled(IconComponent)`
-    height: 20px;
-    width: 20px;
+  styled(IconComponent)<{ $size?: string }>`
+    height: ${({ $size }) => $size == "large" ? "20px" : "14px"};
+    width: ${({ $size }) => $size == "large" ? "20px" : "14px"};
     cursor: pointer;
     vertical-align: bottom;
     transition: transform 0.4s;
     color: white;
-`;
+  `;
 
 const StyledTextContainer = styled.div`
   display: flex;
@@ -80,14 +89,17 @@ const StyledAttachIcon = createStyledIcon(AttachIcon);
 const StyledConfirmIcon = createStyledIcon(ConfirmIcon);
 
 type LexicalCustomTextActionsProps = {
-  onSubmit?: (postData: any, lenRawText: number) => Promise<void>;
+  closeMenu: (value: boolean) => void;
+  minimalist?: boolean;
+  size?: string;
+  onSubmit?: (postData: any) => Promise<void>;
   openPicker: () => void | undefined;
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void | undefined;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   attachmentName?: string;
 };
 
-export const LexicalCustomTextActions = ({onSubmit, openPicker, handleChange, fileInputRef, attachmentName} : LexicalCustomTextActionsProps) => {
+export const LexicalCustomTextActions = ({closeMenu, minimalist, size, onSubmit, openPicker, handleChange, fileInputRef, attachmentName} : LexicalCustomTextActionsProps) => {
   const [editor] = useLexicalComposerContext();
   const [active, setActive] = useState({
     bold: false,
@@ -134,49 +146,48 @@ export const LexicalCustomTextActions = ({onSubmit, openPicker, handleChange, fi
   }, [editor]);
 
   return (
-      <StyledButtonContainer>
-        <StyledButton $position="first" $active={active.bold} onClick={() => handleOnClick("bold")}>
-          <StyledBoldIcon/>
+      <StyledButtonContainer $minimalist={minimalist}>
+        <StyledButton $size={size} $position="first" $active={active.bold} onClick={() => handleOnClick("bold")}>
+          <StyledBoldIcon $size={size}/>
         </StyledButton>
-        <StyledButton $active={active.italic} onClick={() => handleOnClick("italic")}>
-          <StyledItalicIcon/>
+        <StyledButton $size={size} $active={active.italic} onClick={() => handleOnClick("italic")}>
+          <StyledItalicIcon $size={size}/>
         </StyledButton>
-        <StyledButton $active={active.underline} onClick={() => handleOnClick("underline")}>
-          <StyledUnderlineIcon/>
+        <StyledButton $size={size} $active={active.underline} onClick={() => handleOnClick("underline")}>
+          <StyledUnderlineIcon $size={size}/>
         </StyledButton>
-        <StyledButton $active={active.code} onClick={() => handleOnClick("code")}>
-          <StyledCodeIcon/>
+        <StyledButton $size={size} $active={active.code} onClick={() => handleOnClick("code")}>
+          <StyledCodeIcon $size={size}/>
         </StyledButton>
-        <StyledButton $active={active.highlight} onClick={() => handleOnClick("highlight")}>
-          <StyledHighlightIcon/>
+        <StyledButton $size={size} $active={active.highlight} onClick={() => handleOnClick("highlight")}>
+          <StyledHighlightIcon $size={size}/>
         </StyledButton>
-        <StyledButton $active={active.strikethrough} onClick={() => handleOnClick("strikethrough")}>
-          <StyledStrikethroughIcon/>
+        <StyledButton $size={size} $active={active.strikethrough} onClick={() => handleOnClick("strikethrough")}>
+          <StyledStrikethroughIcon $size={size}/>
         </StyledButton>
-        <StyledButton $active={active.subscript} onClick={() => handleOnClick("subscript")}>
-          <StyledSubscriptIcon/>
+        <StyledButton $size={size} $active={active.subscript} onClick={() => handleOnClick("subscript")}>
+          <StyledSubscriptIcon $size={size}/>
         </StyledButton>
-        <StyledButton $active={active.superscript} onClick={() => handleOnClick("superscript")}>
-          <StyledSuperscriptIcon/>
+        <StyledButton $size={size} $active={active.superscript} onClick={() => handleOnClick("superscript")}>
+          <StyledSuperscriptIcon $size={size}/>
         </StyledButton>
 
         <div style={{"flexGrow":"1"}}/>
 
-        <StyledTextContainer>{attachmentName || "Attach Image"}</StyledTextContainer>
-        <StyledButton onClick={openPicker}>
-          <StyledAttachIcon/>
+        <StyledButton $size={size} onClick={openPicker}>
+          {attachmentName || "Attach Image"}
+          <StyledAttachIcon $size={size}/>
         </StyledButton>
-        <StyledButton   
+        
+        <StyledButton
+          $size={size}
           onClick={async () => {
             const json = editor.getEditorState().toJSON();
-            const lenRawText = editor.getEditorState().read(() => {
-              const text = $getRoot().getTextContent();
-              return text.length
-            });
-            await onSubmit?.(json, lenRawText);
+            await onSubmit?.(json);
+            closeMenu(false);
         }}>
-          Post
-          <StyledConfirmIcon/>
+          {minimalist ? "Update Post" : "Post"}
+          <StyledConfirmIcon $size={size}/>
         </StyledButton>
 
         <input

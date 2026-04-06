@@ -1,5 +1,6 @@
 import styled from 'styled-components';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import axios from "axios";
 
 import CharacterImage from '../../General/CharacterImage.tsx';
 import TextEditor from '../Stream/TextEditor.tsx';
@@ -53,11 +54,11 @@ const StyledContentContainer = styled.div`
   gap: 1rem;
 `;
 
-const StyledTextContainer = styled.div`
+const StyledTextContainer = styled.div<{ $editExpanded: boolean }>`
   display: flex;
   flex-direction: column;
   width: 100%;
-  gap: 0.2rem;
+  gap: ${({ $editExpanded }) => $editExpanded ? "1rem" : "0rem"};
 `;
 
 const StyledCharacterName = styled.h3`
@@ -112,9 +113,66 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
   const [repliesExpanded, setRepliesExpanded] = useState(false);
   const [replyExpanded, setReplyExpanded] = useState(false);
   // const [shareExpanded, setShareExpanded] = useState(false);
+  const [editExpanded, setEditExpanded] = useState(false);
   const [overrideData] = useState<ReplyType[] | null>(
     postData.replyChain ?? null
   );
+
+  // Props for handling post editing
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const maxSize = 5 * 1024 * 1024;
+  const allowedTypes = ["image/png", "image/jpg", "image/jpeg", "image/webp"];
+
+  async function editPost(content: any){
+    try {
+      const formData = new FormData();
+      formData.append("postId", JSON.stringify(postData.postId));
+      formData.append("content", JSON.stringify(content));
+      console.log(formData);
+
+      if (attachment) {
+        formData.append("attachment", attachment);
+      }
+
+      await axios.post(`${backendUrl}/editPost`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data"
+        }
+      });
+
+      updatePost(postData.postId);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          console.log(error.response.data.error);
+        }
+      }
+    }
+  };
+
+  const openPicker = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+    console.log(file.type);
+
+    if (!allowedTypes.includes(file.type)) {
+      alert("Invalid file type");
+      return;
+    }
+
+    if (file.size > maxSize) {
+      alert("File too large");
+      return;
+    }
+
+    setAttachment(file);
+  };
 
   return (
     <StyledMainContainer key={postData.postId}>
@@ -126,13 +184,25 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
             imagePath={postData.image} 
           />
 
-          <StyledTextContainer>
+          <StyledTextContainer $editExpanded={editExpanded}>
             <StyledCharacterName>
               {postData.name}_
               {postData.postId}
             </StyledCharacterName>
 
-            {postData.content != "" && <TextEditor showMenu={false} content={postData.content}/>}
+            {postData.content != "" && 
+              <TextEditor 
+                createPost={editPost} 
+                showMenu={editExpanded}
+                closeMenu={setEditExpanded}
+                minimalist={true} 
+                content={postData.content}
+                openPicker={openPicker}
+                handleChange={handleChange}
+                fileInputRef={fileInputRef}
+                attachmentName={attachment ? attachment.name : undefined}
+              />
+            }
             {postData.attachment && <StyledPostImage src={backendUrl + "/" + postData.attachment}/>}
           </StyledTextContainer>
 
@@ -149,7 +219,7 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
         />
 
         <StyledEditContainer>
-          <StyledButton>
+          <StyledButton onClick={() => setEditExpanded(prev => !prev)}>
             Edit
           </StyledButton>
           <StyledTimestampsContainer>

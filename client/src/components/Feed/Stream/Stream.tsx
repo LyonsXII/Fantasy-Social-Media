@@ -151,6 +151,8 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, charac
         )
       );
 
+      console.log("updatedData", data);
+
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response) {

@@ -88,7 +88,6 @@ const StyledTextContainer = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
-  gap: 0.2rem;
 `;
 
 type ReplyProps = {

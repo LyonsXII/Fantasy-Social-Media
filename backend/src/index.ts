@@ -456,64 +456,134 @@ app.get("/characters", async (req, res) => {
 
 // Create a post
 app.post("/createPost", upload.single("attachment"), async (req, res) => {
-  const { charId, postData, lenRawText } = req.body;
+  const { charId, content } = req.body;
   const attachmentName = req.file?.filename ?? null;
   const owner_id = 1;
 
-  // Bad inputs
-  if (!postData) return res.status(400).json({ error: "Missing content"});
-  if (charId === null || lenRawText === 0) return res.status(400).json({ error: "Missing character or text"});
-  if (lenRawText > 280) return res.status(400).json({ error: "Too many characters"});
-  if (postData.length > 5000) return res.status(400).json({ error: "Input too large"});
+  type LexicalNode = {
+    type: string;
+    text?: string;
+    children?: LexicalNode[];
+  };
+  
+  function extractTextFromLexical(lexicalRawText: string) {
+    const lexicalContent = JSON.parse(lexicalRawText);
 
-  try {
-    type LexicalNode = {
-      type: string;
-      text?: string;
-      children?: LexicalNode[];
-    };
-    
-    function extractTextFromLexical(lexicalRawText: string) {
-      const lexicalContent = JSON.parse(lexicalRawText);
+    if (!lexicalContent?.root) return "";
 
-      if (!lexicalContent?.root) return "";
+    const result: string[] = [];
 
-      const result: string[] = [];
+    function traverse(node: LexicalNode) {
+      if (!node) return;
 
-      function traverse(node: LexicalNode) {
-        if (!node) return;
-
-        // Text node
-        if (node.type === "text" && node.text) {
-          result.push(node.text);
-        }
-
-        // Traverse children
-        if (node.children) {
-          node.children.forEach(traverse);
-        }
-
-        // Add spacing for block-level nodes
-        if (
-          node.type === "paragraph" ||
-          node.type === "heading" ||
-          node.type === "listitem"
-        ) {
-          result.push(" ");
-        }
+      // Text node
+      if (node.type === "text" && node.text) {
+        result.push(node.text);
       }
 
-      traverse(lexicalContent.root);
+      // Traverse children
+      if (node.children) {
+        node.children.forEach(traverse);
+      }
 
-      return result.join("").replace(/\s+/g, " ").trim();
+      // Add spacing for block-level nodes
+      if (
+        node.type === "paragraph" ||
+        node.type === "heading" ||
+        node.type === "listitem"
+      ) {
+        result.push(" ");
+      }
     }
 
-    const rawText = extractTextFromLexical(postData);
+    traverse(lexicalContent.root);
 
+    return result.join("").replace(/\s+/g, " ").trim();
+  }
+
+  const rawText = extractTextFromLexical(content);
+
+  // Bad inputs
+  if (!content) return res.status(400).json({ error: "Missing content"});
+  if (charId === null || rawText.length === 0) return res.status(400).json({ error: "Missing character or text"});
+  if (rawText.length > 280) return res.status(400).json({ error: "Too many characters"});
+
+  try {
     const result = await db.query(
       `INSERT INTO posts (owner_id, character_id, content, raw_text, attachment) 
       VALUES ($1, $2, $3, $4, $5) RETURNING post_id`, 
-      [owner_id, charId, postData, rawText, attachmentName]);
+      [owner_id, charId, content, rawText, attachmentName]);
+
+    res.status(201).json({ postId: result.rows[0].post_id });
+  } catch(err: any) {
+    console.log(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Create a post
+app.post("/editPost", upload.single("attachment"), async (req, res) => {
+  const { postId, content } = req.body;
+  const attachmentName = req.file?.filename ?? null;
+  const owner_id = 1;
+
+  type LexicalNode = {
+    type: string;
+    text?: string;
+    children?: LexicalNode[];
+  };
+
+  function extractTextFromLexical(lexicalRawText: string) {
+    const lexicalContent = JSON.parse(lexicalRawText);
+
+    if (!lexicalContent?.root) return "";
+
+    const result: string[] = [];
+
+    function traverse(node: LexicalNode) {
+      if (!node) return;
+
+      // Text node
+      if (node.type === "text" && node.text) {
+        result.push(node.text);
+      }
+
+      // Traverse children
+      if (node.children) {
+        node.children.forEach(traverse);
+      }
+
+      // Add spacing for block-level nodes
+      if (
+        node.type === "paragraph" ||
+        node.type === "heading" ||
+        node.type === "listitem"
+      ) {
+        result.push(" ");
+      }
+    }
+
+    traverse(lexicalContent.root);
+
+    return result.join("").replace(/\s+/g, " ").trim();
+  }
+
+  const rawText = extractTextFromLexical(content);
+
+  // Bad inputs
+  if (!content) return res.status(400).json({ error: "Missing content"});
+  if (rawText.length > 280) return res.status(400).json({ error: "Too many characters"});
+
+  try {
+    const result = await db.query(
+      `UPDATE posts
+      SET content = $3,
+        attachment = $4,
+        raw_text = $5
+      WHERE owner_id = $1 
+        AND post_id = $2
+      RETURNING *`, 
+      [owner_id, postId, content, attachmentName, rawText]);
 
     res.status(201).json({ postId: result.rows[0].post_id });
   } catch(err: any) {
@@ -539,6 +609,7 @@ app.get("/post", async (req, res) => {
         dislikes,
         p.created_at,
         updated_at,
+        p.attachment,
         ec.emoji_counts,
         pr.reaction_value AS current_emoji_reaction
       FROM posts p
@@ -580,6 +651,7 @@ app.get("/post", async (req, res) => {
       dislikes: row.dislikes,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+      attachment: row.attachment ? "uploads/" + row.attachment : undefined,
       emojiCounts: Object.entries(row.emoji_counts || {})
         .map(([reaction, count]) => ({
           reaction,
@@ -1196,61 +1268,60 @@ app.get("/favourites", async (req, res) => {
 
 // Create a reply
 app.post("/createReply", upload.single("attachment"), async (req, res) => {
-  const { postId, parentReplyId, charId, postData, lenRawText } = req.body;
+  const { postId, parentReplyId, charId, postData } = req.body;
   const convParentReplyId = parentReplyId != undefined ? parentReplyId : null;
   const attachmentName = req.file?.filename ?? null;
   const owner_id = 1;
 
+  type LexicalNode = {
+    type: string;
+    text?: string;
+    children?: LexicalNode[];
+  };
+  
+  function extractTextFromLexical(lexicalRawText: string) {
+    const lexicalContent = JSON.parse(lexicalRawText);
+
+    if (!lexicalContent?.root) return "";
+
+    const result: string[] = [];
+
+    function traverse(node: LexicalNode) {
+      if (!node) return;
+
+      // Text node
+      if (node.type === "text" && node.text) {
+        result.push(node.text);
+      }
+
+      // Traverse children
+      if (node.children) {
+        node.children.forEach(traverse);
+      }
+
+      // Add spacing for block-level nodes
+      if (
+        node.type === "paragraph" ||
+        node.type === "heading" ||
+        node.type === "listitem"
+      ) {
+        result.push(" ");
+      }
+    }
+
+    traverse(lexicalContent.root);
+
+    return result.join("").replace(/\s+/g, " ").trim();
+  }
+
+  const rawText = extractTextFromLexical(postData);
+
   // Bad inputs
   if (!postId && !parentReplyId) return res.status(400).json({ error: "Missing parent to reply to"});
   if (!postData) return res.status(400).json({ error: "Missing content"});
-  if (lenRawText > 280) return res.status(400).json({ error: "Too many characters"});
-  if (postData.length > 5000) return res.status(400).json({ error: "Input too large"});
+  if (rawText.length > 280) return res.status(400).json({ error: "Too many characters"});
 
   try {
-    type LexicalNode = {
-      type: string;
-      text?: string;
-      children?: LexicalNode[];
-    };
-    
-    function extractTextFromLexical(lexicalRawText: string) {
-      const lexicalContent = JSON.parse(lexicalRawText);
-
-      if (!lexicalContent?.root) return "";
-
-      const result: string[] = [];
-
-      function traverse(node: LexicalNode) {
-        if (!node) return;
-
-        // Text node
-        if (node.type === "text" && node.text) {
-          result.push(node.text);
-        }
-
-        // Traverse children
-        if (node.children) {
-          node.children.forEach(traverse);
-        }
-
-        // Add spacing for block-level nodes
-        if (
-          node.type === "paragraph" ||
-          node.type === "heading" ||
-          node.type === "listitem"
-        ) {
-          result.push(" ");
-        }
-      }
-
-      traverse(lexicalContent.root);
-
-      return result.join("").replace(/\s+/g, " ").trim();
-    }
-
-    const rawText = extractTextFromLexical(postData);
-
     await db.query("BEGIN");
 
     const result = await db.query(
