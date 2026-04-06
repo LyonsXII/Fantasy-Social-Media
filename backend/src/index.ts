@@ -1268,10 +1268,12 @@ app.get("/favourites", async (req, res) => {
 
 // Create a reply
 app.post("/createReply", upload.single("attachment"), async (req, res) => {
-  const { postId, parentReplyId, charId, postData } = req.body;
+  const { postId, parentReplyId, charId, content } = req.body;
   const convParentReplyId = parentReplyId != undefined ? parentReplyId : null;
   const attachmentName = req.file?.filename ?? null;
   const owner_id = 1;
+
+  console.log(postId, parentReplyId, charId, content);
 
   type LexicalNode = {
     type: string;
@@ -1314,11 +1316,11 @@ app.post("/createReply", upload.single("attachment"), async (req, res) => {
     return result.join("").replace(/\s+/g, " ").trim();
   }
 
-  const rawText = extractTextFromLexical(postData);
+  const rawText = extractTextFromLexical(content);
 
   // Bad inputs
   if (!postId && !parentReplyId) return res.status(400).json({ error: "Missing parent to reply to"});
-  if (!postData) return res.status(400).json({ error: "Missing content"});
+  if (!content) return res.status(400).json({ error: "Missing content"});
   if (rawText.length > 280) return res.status(400).json({ error: "Too many characters"});
 
   try {
@@ -1327,7 +1329,7 @@ app.post("/createReply", upload.single("attachment"), async (req, res) => {
     const result = await db.query(
       `INSERT INTO replies (owner_id, post_id, parent_reply_id, character_id, content, raw_text, attachment) 
       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING post_id`, 
-      [owner_id, postId, convParentReplyId, charId, postData, rawText, attachmentName]);
+      [owner_id, postId, convParentReplyId, charId, content, rawText, attachmentName]);
 
     // Increment total replies on post
     await db.query(

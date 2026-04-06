@@ -36,7 +36,9 @@ const StyledObserver = styled.div`
 `;
 
 type StreamProps = {
+  streamRef: React.RefObject<HTMLDivElement | null>;
   showCreatePostMenu: boolean;
+  setShowCreatePostMenu: (value: boolean) => void;
   showCharactersMenu: boolean;
   showFavourites: boolean;
   characterFilter: number | null;
@@ -72,7 +74,7 @@ export type PostType = {
   currentEmojiReaction: string;
 }
 
-const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, characterFilter, propertyFilter, searchText } : StreamProps) => {
+const Stream = ({ streamRef, showCreatePostMenu, setShowCreatePostMenu, showCharactersMenu, showFavourites, characterFilter, propertyFilter, searchText } : StreamProps) => {
   const [posts, setPosts] = useState<PostType[]>([]);
   const [lastId, setLastId] = useState<number | null>(null);
   const [lastCreated, setLastCreated] = useState<string | null>(null);
@@ -151,8 +153,6 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, charac
         )
       );
 
-      console.log("updatedData", data);
-
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response) {
@@ -196,9 +196,9 @@ const Stream = ({ showCreatePostMenu, showCharactersMenu, showFavourites, charac
   }, [fetchPosts]);
 
   return ( 
-    <StyledMainContainer>
-      {showCreatePostMenu && <CreatePostMenu mode="post" numSuggestions={5} refetchPosts={refetchPosts}/>}
-      {showCharactersMenu && <CharactersMenu />}
+    <StyledMainContainer ref={streamRef}>
+      {showCreatePostMenu && <CreatePostMenu mode="post" numSuggestions={5} refetchPosts={refetchPosts} closeMenu={setShowCreatePostMenu} streamRef={streamRef}/>}
+      {showCharactersMenu && <CharactersMenu streamRef={streamRef}/>}
       {posts.length > 0 && posts.map((post) => {
         return <Post key={post.postId} postData={post} updatePost={updatePost} override={showFavourites}/>
       })}

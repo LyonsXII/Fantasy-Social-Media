@@ -260,6 +260,7 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
           override={override} 
           depth={1}
           replyExpanded={replyExpanded}
+          setReplyExpanded={setReplyExpanded}
           repliesExpanded={repliesExpanded}
         />}
     </StyledMainContainer>

@@ -78,7 +78,11 @@ type CharType = {
   image: string
 }
 
-const CharactersMenu = () => {
+type CharactersMenuProps = {
+  streamRef: React.RefObject<HTMLDivElement | null>;
+};
+
+const CharactersMenu = ({ streamRef } : CharactersMenuProps) => {
   const [chars, setChars] = useState<CharType[]>([]);
   const [lastId, setLastId] = useState<number | null>(null);
   const [furtherContentAvailable, setFurtherContentAvailable] = useState(true);
@@ -189,6 +193,11 @@ const CharactersMenu = () => {
     const initialFilters = Object.fromEntries(tags.map(t => [t.tagId.toString(), false]));
     setTagFilters(initialFilters);
   }, [tags]);
+
+  // Scroll back to top on load
+  useEffect(() => {
+    streamRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }, []);
 
   return (
     <StyledMainContainer>

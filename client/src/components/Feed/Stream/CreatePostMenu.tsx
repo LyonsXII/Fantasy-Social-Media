@@ -74,9 +74,11 @@ type CreatePostMenuProps = {
   parentReplyId?: number;
   refetchPosts?: () => void;
   refetchReplies?: () => void;
+  closeMenu: (value: boolean) => void;
+  streamRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-const CreatePostMenu = ({ mode, height, numSuggestions, depth, postId, parentReplyId, refetchPosts, refetchReplies } : CreatePostMenuProps) => {
+const CreatePostMenu = ({ mode, height, numSuggestions, depth, postId, parentReplyId, refetchPosts, refetchReplies, closeMenu, streamRef } : CreatePostMenuProps) => {
   const [selectedCharacter, setSelectedCharacter] = useState<number | null>(null);
   const [messageText, setMessageText] = useState<string>("");
   const [showMessageText, setShowMessageText] = useState<boolean>(false);
@@ -181,6 +183,13 @@ const CreatePostMenu = ({ mode, height, numSuggestions, depth, postId, parentRep
     }
   }, [messageText]);
 
+  // Scroll back to top on load
+  useEffect(() => {
+    if (streamRef) {
+      streamRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    }
+  }, []);
+
   return (
     <StyledMainContainer $height={height} $depth={depth}>
         <StyledSearchContainer>
@@ -191,6 +200,7 @@ const CreatePostMenu = ({ mode, height, numSuggestions, depth, postId, parentRep
         <TextEditor
           createPost={mode === "post" ? createPost : createReply} 
           showMenu={true}
+          closeMenu={closeMenu}
           openPicker={openPicker}
           handleChange={handleChange}
           fileInputRef={fileInputRef}

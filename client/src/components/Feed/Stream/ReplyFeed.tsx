@@ -57,9 +57,10 @@ type ReplyFeedProps = {
   depth: number;
   replyExpanded: boolean;
   repliesExpanded: boolean;
+  setReplyExpanded: (value: boolean) => void;
 }
 
-const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, replyExpanded, repliesExpanded } : ReplyFeedProps) => {
+const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, replyExpanded, repliesExpanded, setReplyExpanded } : ReplyFeedProps) => {
   const [replies, setReplies] = useState<ReplyType[]>(
     overrideData ?? []);
   const [lastId, setLastId] = useState<number | null>(null);
@@ -151,6 +152,7 @@ const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, reply
           depth={depth - 1}
           parentReplyId={parentReplyId} 
           refetchReplies={refetchReplies}
+          closeMenu={setReplyExpanded}
         />
       }
       {repliesExpanded && (

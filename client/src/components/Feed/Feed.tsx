@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 import MainMenu from '../Menu/MainMenu';
 import Stream from './Stream/Stream';
@@ -30,6 +30,8 @@ const Feed = () => {
   const [showFavourites, setShowFavourites] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchText, setSearchText] = useState("");
+
+  const streamRef = useRef<HTMLDivElement | null>(null);
 
   const toggleShowCreatePostMenu = () => {
     setShowCreatePostMenu(prev => !prev);
@@ -62,7 +64,7 @@ const Feed = () => {
   return (
     <StyledMainContainer>
       <MainMenu toggleShowCreatePostMenu={toggleShowCreatePostMenu} toggleShowCharactersMenu={toggleShowCharactersMenu} toggleShowFavouritesMenu={toggleShowFavouritesMenu} setCharacterFilter={handleSetCharacterFilter} setPropertyFilter={handleSetPropertyFilter} setSearchText={setSearchText}/>
-      <Stream showCreatePostMenu={showCreatePostMenu} showCharactersMenu={showCharactersMenu} showFavourites={showFavourites} characterFilter={characterFilter} propertyFilter={propertyFilter} searchText={searchText}/>
+      <Stream streamRef={streamRef} showCreatePostMenu={showCreatePostMenu} setShowCreatePostMenu={setShowCreatePostMenu} showCharactersMenu={showCharactersMenu} showFavourites={showFavourites} characterFilter={characterFilter} propertyFilter={propertyFilter} searchText={searchText}/>
       <Discover/>
     </StyledMainContainer>
   )
