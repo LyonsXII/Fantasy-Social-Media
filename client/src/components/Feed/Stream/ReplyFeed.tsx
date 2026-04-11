@@ -9,13 +9,14 @@ import type { EmojiEntry } from './Stream';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-const StyledMainContainer = styled.div`
+const StyledMainContainer = styled.div<{ $replyExpanded: boolean, $numReplies: number }>`
   display: flex;
   flex-direction: column;
   height: fit-content;
   flex-shrink: 0;
   width: 100%;
   gap: 0.2rem;
+  margin-top: ${({ $replyExpanded, $numReplies }) => $replyExpanded || ($numReplies > 0) ? "0" : "calc(-0.2rem - 2px)"};
 `;
 
 const StyledObserver = styled.div`
@@ -142,7 +143,7 @@ const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, reply
   }, [fetchReplies]);
 
   return (
-    <StyledMainContainer>
+    <StyledMainContainer $replyExpanded={replyExpanded} $numReplies={replies.length}>
       {replyExpanded && !override && 
         <CreatePostMenu 
           mode="reply" 
