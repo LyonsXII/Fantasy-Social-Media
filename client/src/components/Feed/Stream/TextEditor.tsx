@@ -8,7 +8,7 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
-import { LexicalCustomTextActions } from './TextEditorCustomTextActions.tsx'
+import { TextEditorCustomTextActions } from './TextEditorCustomTextActions.tsx'
 
 import './Lexical.css';
 
@@ -34,6 +34,13 @@ const StyledEditableContent = styled(ContentEditable)<{ $showMenu?: boolean, $mi
   }};
   border-radius: ${({ $minimalist }) => ($minimalist ? "0" : "0 0 1.2rem 1.2rem")};
   overflow-y: auto;
+
+  &:focus {
+    outline: none;
+    background-color: rgba(0, 0, 0, 0.01);
+  }
+
+  -webkit-tap-highlight-color: transparent;
 `;
 
 const StyledPlaceholder = styled.div`
@@ -69,6 +76,16 @@ const EditablePlugin = ({ editable }: { editable: boolean }) => {
   return null;
 };
 
+const AutoFocusPlugin = () => {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    editor.focus();
+  }, [editor]);
+
+  return null;
+};
+
 type TextEditorProps = {
   showMenu?: boolean;
   closeMenu: (value: boolean) => void;  
@@ -76,7 +93,8 @@ type TextEditorProps = {
   content?: string;
   createPost?: (postData: any) => Promise<void>;
   openPicker?: () => void;
-  handleChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleAttachment?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  removeAttachment?: () => void;
   fileInputRef?: React.RefObject<HTMLInputElement | null>;
   attachmentName?: string;
 };
@@ -114,18 +132,22 @@ const TextEditor = (props : TextEditorProps) => {
       <LexicalComposer initialConfig={lexicalConfig}>
         <StyledEditorContainer $minimalist={minimalist}>
           <EditablePlugin editable={!!showMenu} />
-          {showMenu && props.createPost && props.openPicker && props.handleChange && props.fileInputRef && (
-            <LexicalCustomTextActions
+          {showMenu && props.createPost && props.openPicker && props.handleAttachment && props.fileInputRef && (
+            <TextEditorCustomTextActions
               closeMenu={closeMenu}
               minimalist={minimalist}
               size={minimalist ? "small" : "large"}
               onSubmit={props.createPost}
               openPicker={props.openPicker}
-              handleChange={props.handleChange}
+              handleAttachment={props.handleAttachment}
+              removeAttachment={props.removeAttachment}
               fileInputRef={props.fileInputRef}
               attachmentName={props.attachmentName}
             />
           )}
+          
+          {showMenu && <AutoFocusPlugin />}
+
           <RichTextPlugin
               contentEditable={CustomContent}
               placeholder={showMenu ? <CustomPlaceholder/> : null}

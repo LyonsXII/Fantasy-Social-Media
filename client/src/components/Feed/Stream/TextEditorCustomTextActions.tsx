@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import {useLexicalComposerContext} from "@lexical/react/LexicalComposerContext";
 import {FORMAT_TEXT_COMMAND} from 'lexical';
 import type {TextFormatType} from 'lexical';
-import {$getSelection, $isRangeSelection, $getRoot} from "lexical";
+import {$getSelection, $isRangeSelection} from "lexical";
 
 import BoldIcon from "../../../assets/icons/lexical/bold.svg?react";
 import ItalicIcon from "../../../assets/icons/lexical/italic.svg?react";
@@ -16,6 +16,7 @@ import SubscriptIcon from "../../../assets/icons/lexical/subscript.svg?react";
 import SuperscriptIcon from "../../../assets/icons/lexical/superscript.svg?react";
 import AttachIcon from "../../../assets/icons/lexical/attach.svg?react";
 import ConfirmIcon from "../../../assets/icons/lexical/confirm.svg?react";
+import CancelIcon from "../../../assets/icons/lexical/cancel.svg?react";
 
 const StyledButtonContainer = styled.div<{$minimalist?: boolean}>`
   display: flex;
@@ -31,14 +32,24 @@ const StyledButtonContainer = styled.div<{$minimalist?: boolean}>`
   border-radius: ${({ $minimalist }) => $minimalist ? "0" : "1.2rem 1.2rem 0 0"};
 `;
 
-const StyledButton = styled.button<{$size?: string, $position?: string, $active?: boolean}>`
+const StyledButton = styled.button<{$size?: string, $position?: string, $padding?: string, $active?: boolean}>`
   display: flex;
   justify-content: center;
   align-items: center;
   height: ${({ $size }) => $size == "large" ? "3rem" : "18px"};
-  padding: 1rem;
+  padding: ${({ $padding }) => $padding ? `1rem ${$padding}` : "1rem"};
   gap: 0.6rem;
   border: none;
+  border-radius: ${({ $position }) => {
+    switch ($position) {
+      case "first":
+        return "20px 0 0 0";
+      case "last":
+        return "0 20px 0 0";
+      default:
+        return "0";
+    }
+  }};
   font-size: 1rem;
   font-weight: 600;
   line-height: 1;
@@ -46,12 +57,10 @@ const StyledButton = styled.button<{$size?: string, $position?: string, $active?
   opacity: 0.8;
   cursor: pointer;
 
-  ${({ $active }) =>
-    $active &&
-    `
-    `}
+  ${({ $active }) => $active && `background-color: rgba(220, 220, 220, 1);`}
 
   &:hover {
+    background-color: ${({ $active }) => ($active ? "rgba(185, 185, 185, 1)" : "rgba(220, 220, 220, 1)")};
   }
 `;
 
@@ -65,18 +74,6 @@ const createStyledIcon = (IconComponent: React.ComponentType<any>) =>
     color: white;
   `;
 
-const StyledTextContainer = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  font-size: 1rem;
-  font-weight: 600;
-  opacity: 0.8;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`
-
 const StyledBoldIcon = createStyledIcon(BoldIcon);
 const StyledItalicIcon = createStyledIcon(ItalicIcon);
 const StyledUnderlineIcon = createStyledIcon(UnderlineIcon);
@@ -87,19 +84,21 @@ const StyledSubscriptIcon = createStyledIcon(SubscriptIcon);
 const StyledSuperscriptIcon = createStyledIcon(SuperscriptIcon);
 const StyledAttachIcon = createStyledIcon(AttachIcon);
 const StyledConfirmIcon = createStyledIcon(ConfirmIcon);
+const StyledCancelIcon = createStyledIcon(CancelIcon);
 
-type LexicalCustomTextActionsProps = {
+type TextEditorCustomTextActionsProps = {
   closeMenu: (value: boolean) => void;
   minimalist?: boolean;
   size?: string;
   onSubmit?: (postData: any) => Promise<void>;
   openPicker: () => void | undefined;
-  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void | undefined;
+  handleAttachment: (e: React.ChangeEvent<HTMLInputElement>) => void | undefined;
+  removeAttachment?: () => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   attachmentName?: string;
 };
 
-export const LexicalCustomTextActions = ({closeMenu, minimalist, size, onSubmit, openPicker, handleChange, fileInputRef, attachmentName} : LexicalCustomTextActionsProps) => {
+export const TextEditorCustomTextActions = ({closeMenu, minimalist, size, onSubmit, openPicker, handleAttachment, removeAttachment, fileInputRef, attachmentName} : TextEditorCustomTextActionsProps) => {
   const [editor] = useLexicalComposerContext();
   const [active, setActive] = useState({
     bold: false,
@@ -174,13 +173,19 @@ export const LexicalCustomTextActions = ({closeMenu, minimalist, size, onSubmit,
 
         <div style={{"flexGrow":"1"}}/>
 
-        <StyledButton $size={size} onClick={openPicker}>
+        {attachmentName && 
+          <StyledButton $size={size} $padding="0.2rem">
+            <StyledCancelIcon onClick={removeAttachment}/>
+          </StyledButton>
+        }
+        <StyledButton $size={size} $padding="0.6rem" onClick={openPicker}>
           {attachmentName || "Attach Image"}
           <StyledAttachIcon $size={size}/>
         </StyledButton>
         
         <StyledButton
           $size={size}
+          $position="last"
           onClick={async () => {
             const json = editor.getEditorState().toJSON();
             await onSubmit?.(json);
@@ -194,7 +199,7 @@ export const LexicalCustomTextActions = ({closeMenu, minimalist, size, onSubmit,
           type="file"
           ref={fileInputRef}
           style={{ display: "none" }}
-          onChange={handleChange}
+          onChange={handleAttachment}
           accept="image/png,image/jpeg,image/webp"
         />
       </StyledButtonContainer>

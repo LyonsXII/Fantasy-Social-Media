@@ -151,7 +151,7 @@ const CreatePostMenu = ({ mode, height, numSuggestions, depth, postId, parentRep
     fileInputRef.current?.click();
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
     if (!file) return;
@@ -168,6 +168,10 @@ const CreatePostMenu = ({ mode, height, numSuggestions, depth, postId, parentRep
     }
 
     setAttachment(file);
+  };
+
+  const removeAttachment = () => {
+    setAttachment(null);
   };
 
   // Show message text popup temporarily
@@ -202,7 +206,8 @@ const CreatePostMenu = ({ mode, height, numSuggestions, depth, postId, parentRep
           showMenu={true}
           closeMenu={closeMenu}
           openPicker={openPicker}
-          handleChange={handleChange}
+          handleAttachment={handleAttachment}
+          removeAttachment={removeAttachment}
           fileInputRef={fileInputRef}
           attachmentName={attachment ? attachment.name : undefined}
         />

@@ -521,9 +521,9 @@ app.post("/createPost", upload.single("attachment"), async (req, res) => {
   }
 });
 
-// Create a post
+// Edit a post
 app.post("/editPost", upload.single("attachment"), async (req, res) => {
-  const { postId, content } = req.body;
+  const { postId, content, updateAttachment } = req.body;
   const attachmentName = req.file?.filename ?? null;
   const owner_id = 1;
 
@@ -568,24 +568,30 @@ app.post("/editPost", upload.single("attachment"), async (req, res) => {
     return result.join("").replace(/\s+/g, " ").trim();
   }
 
-  const rawText = extractTextFromLexical(content);
-
   // Bad inputs
   if (!content) return res.status(400).json({ error: "Missing content"});
+  const rawText = extractTextFromLexical(content);
   if (rawText.length > 280) return res.status(400).json({ error: "Too many characters"});
 
   try {
-    const result = await db.query(
-      `UPDATE posts
+    let query = `UPDATE posts
       SET content = $3,
-        attachment = $4,
-        raw_text = $5
-      WHERE owner_id = $1 
-        AND post_id = $2
-      RETURNING *`, 
-      [owner_id, postId, content, attachmentName, rawText]);
+      raw_text = $4`
 
-    res.status(201).json({ postId: result.rows[0].post_id });
+    const params = [owner_id, postId, content, rawText];
+
+    if (updateAttachment) {
+      query += `, attachment = $5`
+      params.push(attachmentName);
+    }
+
+    query += ` WHERE owner_id = $1 
+        AND post_id = $2
+      RETURNING *`
+
+    const result = await db.query(query, params);
+
+    res.status(200).json({ postId: result.rows[0].post_id });
   } catch(err: any) {
     console.log(err);
     res.status(500).json({ error: "Internal server error" });
@@ -1272,8 +1278,6 @@ app.post("/createReply", upload.single("attachment"), async (req, res) => {
   const convParentReplyId = parentReplyId != undefined ? parentReplyId : null;
   const attachmentName = req.file?.filename ?? null;
   const owner_id = 1;
-
-  console.log(postId, parentReplyId, charId, content);
 
   type LexicalNode = {
     type: string;

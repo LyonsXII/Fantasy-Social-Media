@@ -121,6 +121,8 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
   // Props for handling post editing
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [attachment, setAttachment] = useState<File | null>(null);
+  const [attachmentName, setAttachmentName] = useState(postData.attachment || "");
+  const [updateAttachment, setUpdateAttachment] = useState(false);
   const maxSize = 5 * 1024 * 1024;
   const allowedTypes = ["image/png", "image/jpg", "image/jpeg", "image/webp"];
 
@@ -129,10 +131,13 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
       const formData = new FormData();
       formData.append("postId", JSON.stringify(postData.postId));
       formData.append("content", JSON.stringify(content));
-      console.log(formData);
 
       if (attachment) {
         formData.append("attachment", attachment);
+      }
+
+      if (updateAttachment) {
+        formData.append("updateAttachment", String(updateAttachment));
       }
 
       await axios.post(`${backendUrl}/editPost`, formData, {
@@ -155,11 +160,10 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
     fileInputRef.current?.click();
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
     if (!file) return;
-    console.log(file.type);
 
     if (!allowedTypes.includes(file.type)) {
       alert("Invalid file type");
@@ -172,7 +176,17 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
     }
 
     setAttachment(file);
+    setUpdateAttachment(true);
   };
+
+  const removeAttachment = () => {
+    setAttachment(null);
+    setUpdateAttachment(true);
+    setAttachmentName("");
+  };
+
+  // Update attachmentName to display new image
+  useEffect(() => {setAttachmentName(postData.attachment)}, [postData.attachment])
 
   return (
     <StyledMainContainer key={postData.postId}>
@@ -198,12 +212,17 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
                 minimalist={true} 
                 content={postData.content}
                 openPicker={openPicker}
-                handleChange={handleChange}
+                handleAttachment={handleAttachment}
+                removeAttachment={removeAttachment}
                 fileInputRef={fileInputRef}
-                attachmentName={attachment ? attachment.name : undefined}
+                attachmentName={
+                  attachment ? attachment.name :
+                    attachmentName ? attachmentName.slice(8)
+                    : undefined
+                }
               />
             }
-            {postData.attachment && <StyledPostImage src={backendUrl + "/" + postData.attachment}/>}
+            {attachmentName && <StyledPostImage src={backendUrl + "/" + postData.attachment}/>}
           </StyledTextContainer>
 
         </StyledContentContainer>
