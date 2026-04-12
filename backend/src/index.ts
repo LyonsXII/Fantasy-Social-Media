@@ -587,7 +587,7 @@ app.post("/editPost", upload.single("attachment"), async (req, res) => {
 
     query += ` WHERE owner_id = $1 
         AND post_id = $2
-      RETURNING *`
+      RETURNING post_id`
 
     const result = await db.query(query, params);
 
@@ -1360,6 +1360,83 @@ app.post("/createReply", upload.single("attachment"), async (req, res) => {
   }
 });
 
+// Edit a post
+app.post("/editReply", upload.single("attachment"), async (req, res) => {
+  const { replyId, content, updateAttachment } = req.body;
+  const attachmentName = req.file?.filename ?? null;
+  const owner_id = 1;
+
+  type LexicalNode = {
+    type: string;
+    text?: string;
+    children?: LexicalNode[];
+  };
+
+  function extractTextFromLexical(lexicalRawText: string) {
+    const lexicalContent = JSON.parse(lexicalRawText);
+
+    if (!lexicalContent?.root) return "";
+
+    const result: string[] = [];
+
+    function traverse(node: LexicalNode) {
+      if (!node) return;
+
+      // Text node
+      if (node.type === "text" && node.text) {
+        result.push(node.text);
+      }
+
+      // Traverse children
+      if (node.children) {
+        node.children.forEach(traverse);
+      }
+
+      // Add spacing for block-level nodes
+      if (
+        node.type === "paragraph" ||
+        node.type === "heading" ||
+        node.type === "listitem"
+      ) {
+        result.push(" ");
+      }
+    }
+
+    traverse(lexicalContent.root);
+
+    return result.join("").replace(/\s+/g, " ").trim();
+  }
+
+  // Bad inputs
+  if (!content) return res.status(400).json({ error: "Missing content"});
+  const rawText = extractTextFromLexical(content);
+  if (rawText.length > 280) return res.status(400).json({ error: "Too many characters"});
+
+  try {
+    let query = `UPDATE replies
+      SET content = $3,
+      raw_text = $4`
+
+    const params = [owner_id, replyId, content, rawText];
+
+    if (updateAttachment) {
+      query += `, attachment = $5`
+      params.push(attachmentName);
+    }
+
+    query += ` WHERE owner_id = $1 
+        AND reply_id = $2
+      RETURNING reply_id`
+
+    const result = await db.query(query, params);
+
+    res.status(200).json({ replyId: result.rows[0].reply_id });
+  } catch(err: any) {
+    console.log(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Retrieve a reply
 app.get("/reply", async (req, res) => {
   const { replyId } = req.query;
@@ -1377,6 +1454,7 @@ app.get("/reply", async (req, res) => {
         r.dislikes, 
         r.created_at, 
         r.updated_at,
+        r.attachment,
         ec.emoji_counts,
         (
           SELECT reaction_value
@@ -1421,6 +1499,7 @@ app.get("/reply", async (req, res) => {
       dislikes: row.dislikes,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+      attachment: row.attachment ? "uploads/" + row.attachment : undefined,
       emojiCounts: Object.entries(row.emoji_counts || {})
         .map(([reaction, count]) => ({
           reaction,
@@ -1566,8 +1645,6 @@ app.get("/replies", async (req, res) => {
         .sort((a, b) => b.count - a.count),
       currentEmojiReaction: row.current_emoji_reaction
     }));
-
-    console.log(result[0]);
 
     res.json(result);
   } catch (err) {

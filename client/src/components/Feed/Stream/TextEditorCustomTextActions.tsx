@@ -32,7 +32,7 @@ const StyledButtonContainer = styled.div<{$minimalist?: boolean}>`
   border-radius: ${({ $minimalist }) => $minimalist ? "0" : "1.2rem 1.2rem 0 0"};
 `;
 
-const StyledButton = styled.button<{$size?: string, $position?: string, $padding?: string, $active?: boolean}>`
+const StyledButton = styled.button<{$size?: string, $position?: string, $padding?: string, $active?: boolean, $minimalist?: boolean}>`
   display: flex;
   justify-content: center;
   align-items: center;
@@ -40,14 +40,13 @@ const StyledButton = styled.button<{$size?: string, $position?: string, $padding
   padding: ${({ $padding }) => $padding ? `1rem ${$padding}` : "1rem"};
   gap: 0.6rem;
   border: none;
-  border-radius: ${({ $position }) => {
-    switch ($position) {
-      case "first":
-        return "20px 0 0 0";
-      case "last":
-        return "0 20px 0 0";
-      default:
-        return "0";
+  border-radius: ${({ $position, $minimalist }) => {
+    if ($position == "first" && !$minimalist) {
+      return "20px 0 0 0";
+    } else if ($position == "last" && !$minimalist) {
+      return "0 20px 0 0";
+    } else {
+      return "0";
     }
   }};
   font-size: 1rem;
@@ -146,7 +145,7 @@ export const TextEditorCustomTextActions = ({closeMenu, minimalist, size, onSubm
 
   return (
       <StyledButtonContainer $minimalist={minimalist}>
-        <StyledButton $size={size} $position="first" $active={active.bold} onClick={() => handleOnClick("bold")}>
+        <StyledButton $size={size} $position="first" $minimalist={minimalist} $active={active.bold} onClick={() => handleOnClick("bold")}>
           <StyledBoldIcon $size={size}/>
         </StyledButton>
         <StyledButton $size={size} $active={active.italic} onClick={() => handleOnClick("italic")}>
@@ -186,6 +185,7 @@ export const TextEditorCustomTextActions = ({closeMenu, minimalist, size, onSubm
         <StyledButton
           $size={size}
           $position="last"
+          $minimalist={minimalist}
           onClick={async () => {
             const json = editor.getEditorState().toJSON();
             await onSubmit?.(json);

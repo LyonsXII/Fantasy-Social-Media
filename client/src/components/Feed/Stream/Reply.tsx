@@ -1,5 +1,6 @@
 import styled from 'styled-components';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import axios from "axios";
 
 import CharacterImage from '../../General/CharacterImage';
 import TextEditor from './TextEditor';
@@ -59,7 +60,7 @@ const StyledMainPostContainer = styled.div<{ $depth: number }>`
 const StyledContentContainer = styled.div`
   display: flex;
   width: 100%;
-  padding: 1.6rem 1.6rem 1.6rem 1.6rem;
+  padding: 1.6rem 1.6rem 0rem 1.6rem;
   gap: 1rem;
 `;
 
@@ -70,9 +71,7 @@ const StyledCharacterName = styled.h3`
 `;
 
 const StyledDataText = styled.p`
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
+  font-size: 1rem;
 `;
 
 const StyledPostImage = styled.img`
@@ -84,11 +83,35 @@ const StyledPostImage = styled.img`
   box-shadow: 0 6px 20px rgba(0,0,0,0.06);
 `;
 
-const StyledTextContainer = styled.div`
+const StyledTextContainer = styled.div<{ $editExpanded: boolean }>`
   display: flex;
   flex-direction: column;
   width: 100%;
+  gap: ${({ $editExpanded }) => $editExpanded ? "1rem" : "0rem"};
 `;
+
+const StyledEditContainer = styled.div`
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+`
+
+const StyledButton = styled.button`
+  padding: 0.2rem 0.4rem;
+  font-size: 1rem;
+  border: 1px solid rgba(0,0,0,0.4);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  cursor: pointer;
+`;
+
+const StyledTimestampsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+`
 
 type ReplyProps = {
   replyData: ReplyType;
@@ -100,6 +123,79 @@ type ReplyProps = {
 const Reply = ({ replyData, updateReply, override, depth } : ReplyProps) => {
   const [repliesExpanded, setRepliesExpanded] = useState(false);
   const [replyExpanded, setReplyExpanded] = useState(false);
+  const [editExpanded, setEditExpanded] = useState(false);
+
+  // Props for handling post editing
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [attachmentName, setAttachmentName] = useState(replyData.attachment || "");
+  const [updateAttachment, setUpdateAttachment] = useState(false);
+  const maxSize = 5 * 1024 * 1024;
+  const allowedTypes = ["image/png", "image/jpg", "image/jpeg", "image/webp"];
+
+  async function editReply(content: any){
+    try {
+      const formData = new FormData();
+      formData.append("replyId", JSON.stringify(replyData.replyId));
+      formData.append("content", JSON.stringify(content));
+
+      if (attachment) {
+        formData.append("attachment", attachment);
+      }
+
+      if (updateAttachment) {
+        formData.append("updateAttachment", String(updateAttachment));
+      }
+
+      await axios.post(`${backendUrl}/editReply`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data"
+        }
+      });
+
+      updateReply(replyData.replyId);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          console.log(error.response.data.error);
+        }
+      }
+    }
+  };
+
+  const openPicker = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    if (!allowedTypes.includes(file.type)) {
+      alert("Invalid file type");
+      return;
+    }
+
+    if (file.size > maxSize) {
+      alert("File too large");
+      return;
+    }
+
+    setAttachment(file);
+    setUpdateAttachment(true);
+  };
+
+  const removeAttachment = () => {
+    setAttachment(null);
+    setUpdateAttachment(true);
+    setAttachmentName("");
+  };
+
+  // Update attachmentName to display new image
+  useEffect(() => {
+    setAttachmentName(replyData.attachment)
+  }, [replyData.attachment]);
 
   return (
     <StyledMainContainer $depth={depth}>
@@ -110,13 +206,29 @@ const Reply = ({ replyData, updateReply, override, depth } : ReplyProps) => {
             size="70px"
             imagePath={replyData.image} 
           />
-          <StyledTextContainer>
+          <StyledTextContainer $editExpanded={editExpanded}>
             <StyledCharacterName>
               {replyData.name}
             </StyledCharacterName>
 
-            {replyData.content != "" && <TextEditor showMenu={false} content={replyData.content}/>}
-            {replyData.attachment && <StyledPostImage src={backendUrl + "/" + replyData.attachment}/>}
+            {replyData.content != "" && 
+              <TextEditor 
+                createPost={editReply} 
+                showMenu={editExpanded} 
+                closeMenu={setEditExpanded}
+                minimalist={true} 
+                content={replyData.content}
+                openPicker={openPicker}
+                handleAttachment={handleAttachment}
+                removeAttachment={removeAttachment}
+                fileInputRef={fileInputRef}
+                attachmentName={
+                  attachment ? attachment.name :
+                    attachmentName ? attachmentName.slice(8)
+                    : undefined
+                }
+              />}
+            {attachmentName && <StyledPostImage src={backendUrl + "/" + replyData.attachment}/>}
           </StyledTextContainer>
         </StyledContentContainer>
 
@@ -130,15 +242,39 @@ const Reply = ({ replyData, updateReply, override, depth } : ReplyProps) => {
           setReplyExpanded={setReplyExpanded}
         />
 
-        <StyledDataText>
-          {new Intl.DateTimeFormat("en-GB", {
-            day: "numeric",
-            month: "short",
-            hour: "2-digit",
-            minute: "2-digit",
-          }).format(new Date(replyData.createdAt))
-          }
-        </StyledDataText>
+        <StyledEditContainer>
+          <StyledButton onClick={() => setEditExpanded(prev => !prev)}>
+            Edit
+          </StyledButton>
+          <StyledTimestampsContainer>
+            {replyData.createdAt &&
+              <StyledDataText>
+                Created:{" "}
+                {
+                  new Intl.DateTimeFormat("en-GB", {
+                    day: "numeric",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }).format(new Date(replyData.createdAt))
+                }
+              </StyledDataText>
+            }
+            {replyData.updatedAt &&
+              <StyledDataText>
+                Updated:{" "}
+                {
+                  new Intl.DateTimeFormat("en-GB", {
+                    day: "numeric",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }).format(new Date(replyData.updatedAt))
+                }
+              </StyledDataText>
+            }
+          </StyledTimestampsContainer>
+        </StyledEditContainer>
       </StyledMainPostContainer>
 
       {(replyExpanded || repliesExpanded) && 
@@ -149,6 +285,7 @@ const Reply = ({ replyData, updateReply, override, depth } : ReplyProps) => {
           overrideData={override ? replyData.replyChain ?? [] : []}
           depth={depth + 1}
           replyExpanded={replyExpanded}
+          setReplyExpanded={setReplyExpanded}
           repliesExpanded={repliesExpanded}
         />
       }

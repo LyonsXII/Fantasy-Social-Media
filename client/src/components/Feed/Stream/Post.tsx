@@ -186,7 +186,9 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
   };
 
   // Update attachmentName to display new image
-  useEffect(() => {setAttachmentName(postData.attachment)}, [postData.attachment])
+  useEffect(() => {
+    setAttachmentName(postData.attachment)
+  }, [postData.attachment]);
 
   return (
     <StyledMainContainer key={postData.postId}>

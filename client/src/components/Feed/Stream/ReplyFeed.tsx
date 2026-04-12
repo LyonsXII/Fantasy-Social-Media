@@ -40,7 +40,7 @@ export type ReplyType = {
   dislikes: number;
   createdAt: string;
   updatedAt: string;
-  attachment?: string;
+  attachment: string;
   isLiked: boolean;
   isDisliked: boolean;
   isFavourited: boolean;
