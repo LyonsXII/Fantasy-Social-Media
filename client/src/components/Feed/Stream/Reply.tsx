@@ -116,11 +116,12 @@ const StyledTimestampsContainer = styled.div`
 type ReplyProps = {
   replyData: ReplyType;
   updateReply: (replyId: number) => void;
+  updatePost: (postId: number) => void;
   override?: boolean;
   depth: number;
 }
 
-const Reply = ({ replyData, updateReply, override, depth } : ReplyProps) => {
+const Reply = ({ replyData, updateReply, updatePost, override, depth } : ReplyProps) => {
   const [repliesExpanded, setRepliesExpanded] = useState(false);
   const [replyExpanded, setReplyExpanded] = useState(false);
   const [editExpanded, setEditExpanded] = useState(false);
@@ -208,7 +209,7 @@ const Reply = ({ replyData, updateReply, override, depth } : ReplyProps) => {
           />
           <StyledTextContainer $editExpanded={editExpanded}>
             <StyledCharacterName>
-              {replyData.name}
+              {replyData.name}_{replyData.replyId}
             </StyledCharacterName>
 
             {replyData.content != "" && 
@@ -287,6 +288,8 @@ const Reply = ({ replyData, updateReply, override, depth } : ReplyProps) => {
           replyExpanded={replyExpanded}
           setReplyExpanded={setReplyExpanded}
           repliesExpanded={repliesExpanded}
+          updatePost={updatePost}
+          updateParentReply={updateReply}
         />
       }
     </StyledMainContainer>

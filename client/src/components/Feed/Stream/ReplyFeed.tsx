@@ -51,7 +51,7 @@ export type ReplyType = {
 }
 
 type ReplyFeedProps = {
-  postId?: number;
+  postId: number;
   parentReplyId?: number;
   overrideData?: ReplyType[];
   override?: boolean;
@@ -59,9 +59,11 @@ type ReplyFeedProps = {
   replyExpanded: boolean;
   repliesExpanded: boolean;
   setReplyExpanded: (value: boolean) => void;
+  updatePost: (postId: number) => void;
+  updateParentReply?: (parentReplyId: number) => void;
 }
 
-const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, replyExpanded, repliesExpanded, setReplyExpanded } : ReplyFeedProps) => {
+const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, replyExpanded, repliesExpanded, setReplyExpanded, updatePost, updateParentReply } : ReplyFeedProps) => {
   const [replies, setReplies] = useState<ReplyType[]>(
     overrideData ?? []);
   const [lastId, setLastId] = useState<number | null>(null);
@@ -99,6 +101,10 @@ const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, reply
     setReplies([]);
     setLastId(null);
     setFurtherContentAvailable(true);
+    updatePost(postId); // Update replies count on main post
+    if (updateParentReply && parentReplyId) {
+      updateParentReply(parentReplyId); // Update replies count on parent reply
+    }
   }
 
   async function updateReply(replyId: number) {
@@ -162,7 +168,8 @@ const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, reply
             <Reply 
               key={reply.replyId} 
               replyData={reply} 
-              updateReply={updateReply} 
+              updateReply={updateReply}
+              updatePost={updatePost}
               override={override ? true : false}
               depth={depth}
             />

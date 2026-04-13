@@ -1336,10 +1336,10 @@ app.post("/createReply", upload.single("attachment"), async (req, res) => {
       [owner_id, postId, convParentReplyId, charId, content, rawText, attachmentName]);
 
     // Increment total replies on post
-    await db.query(
-      `UPDATE posts
-      SET replies = replies + 1
-      WHERE post_id = $1`, [postId]);
+    // await db.query(
+    //   `UPDATE posts
+    //   SET replies = replies + 1
+    //   WHERE post_id = $1`, [postId]);
 
     // Increment parent reply total replies if relevant
     // ToDo: Chain totals up a reply stack? Might be a bit complicated

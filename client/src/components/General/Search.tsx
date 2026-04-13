@@ -143,6 +143,7 @@ const Search = ({ direction, height, width, numSuggestions, showPropFilter, show
   };
 
   async function fetchCharacters(charNameInput: string) {
+    if (charNameInput == "") return;
     try {
       const response = await axios.get(`${backendUrl}/characters/search`, 
         {
@@ -156,6 +157,7 @@ const Search = ({ direction, height, width, numSuggestions, showPropFilter, show
   };
 
   async function fetchProperties(propertyNameInput: string) {
+    if (propertyNameInput == "") return;
     try {
       const response = await axios.get(`${backendUrl}/properties/search`, 
         {
