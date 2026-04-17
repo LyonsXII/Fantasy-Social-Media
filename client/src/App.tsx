@@ -6,6 +6,7 @@ import { useAuth } from './context/AuthContext';
 
 import LandingPage from './components/LandingPage/LandingPage.tsx';
 import Feed from './components/Feed/Feed.tsx';
+import PostPage from './components/MiscPages/PostPage.tsx';
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -13,8 +14,9 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/feed" element={isAuthenticated ? <Feed /> : <Navigate to="/" replace />} />
+      <Route path="/feed" element={isAuthenticated ? <Feed /> : <Navigate to="/" replace />}/>
       <Route path="/profile/:userId" element={isAuthenticated ? <Feed /> : <Navigate to="/" replace />}/>
+      <Route path="/post/:postId" element={<PostPage/>}/>
     </Routes>
   )
 }

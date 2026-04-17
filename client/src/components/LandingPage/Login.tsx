@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from "axios";
 
-import { StyledContentWrapper, StyledMessageText, StyledLoginWrapper, StyledFieldsWrapper, StyledField, StyledInput, StyledLoginButtonWrapper, StyledLoginButton, StyledLoginButtonText, StyledNewUserWrapper, StyledNewUserButton, StyledLoginIcon, StyledPasswordIcon, StyledEyeIcon, StyledNewUserIcon } from './Login.styles';
+import { StyledContentWrapper, StyledMessageText, StyledLoginWrapper, StyledFieldsWrapper, StyledField, StyledInput, StyledLoginButtonWrapper, StyledLoginButton, StyledLoginButtonText, StyledNewUserWrapper, StyledNewUserButton, StyledLoginIcon, StyledPasswordIcon, StyledEyeIcon, StyledNewUserIcon, StyledExitBox } from './Login.styles';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -177,6 +177,8 @@ const Login = ({ handleLogin } : LoginRouteProps) => {
           <StyledNewUserIcon $shadow={true}/>
         </StyledNewUserButton>
       </StyledNewUserWrapper>
+
+      {showLogin && <StyledExitBox onClick={() => {setShowLogin(false)}}/>}
     </StyledContentWrapper>
   )
 }

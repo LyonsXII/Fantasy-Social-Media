@@ -19,8 +19,9 @@ export const StyledContentWrapper = styled.div<{ $expanded : boolean, $showLogin
   width: fit-content;
   padding: 2rem;
   background: ${({ $expanded }) => $expanded ? "hsl(213deg 85% 97%)" : "none"};
-  box-shadow: 0 0 2em hsl(231deg 62% 94%);
+  /* box-shadow: 0 0 2em hsl(231deg 62% 94%); */
   border-radius: 30px;
+  z-index: 2;
 
   ${({ $showLoginOutro }) =>
     $showLoginOutro
@@ -217,3 +218,10 @@ export const StyledNewUserButton = styled.button<{ $expanded : boolean }>`
     transform: scale(1.02);
   }
 `;
+
+export const StyledExitBox = styled.div`
+  position: absolute;
+  height: 100dvh;
+  width: 100dvw;
+  z-index: 1;
+`

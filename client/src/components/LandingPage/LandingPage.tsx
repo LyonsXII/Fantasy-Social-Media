@@ -1,10 +1,41 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import styled from 'styled-components';
 
 import FlexboxContainer from '../General/FlexboxContainer.tsx';
-// import PrimaryTitle from '../General/PrimaryTitle.tsx';
 import Login from './Login.tsx';
 import Marquee from './Marquee.tsx';
+
+const StyledBackground = styled.div`
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: url('/images/fantasy map edited.jpg');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-blend-mode: multiply; 
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url('/images/Patina.jpg');
+    background-size: cover;
+    background-blend-mode: multiply; 
+    opacity: 0.7;
+    pointer-events: none;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, #d3fcff, #29709c);
+    opacity: 0.8;
+    background-blend-mode: multiply; 
+    pointer-events: none;
+  }
+`;
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -17,16 +48,11 @@ const LandingPage = () => {
 
   return (
     <FlexboxContainer height="100dvh" width="100dvw" $direction="column">
-      {/* <PrimaryTitle
-        $fontSize="4rem"
-        $backgroundImage="data:image/svg+xml,%3Csvg width='2250' height='900' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Cpath fill='%2300A080' d='M0 0h2255v899H0z'/%3E%3Ccircle cx='366' cy='207' r='366' fill='%2300FDCF'/%3E%3Ccircle cx='1777.5' cy='318.5' r='477.5' fill='%2300FDCF'/%3E%3Ccircle cx='1215' cy='737' r='366' fill='%23008060'/%3E%3C/g%3E%3C/svg%3E"
-        $backgroundSize="110% auto"
-      >
-        Dramatis Personae
-      </PrimaryTitle> */}
       <Login handleLogin={handleLogin}/>
       <Marquee $direction="horizontal" $length={20} $offset="6dvh" $size="20dvh"/>
       <Marquee $direction="vertical" $length={5} $offset="5.5dvw" $size="28dvw"/>
+
+      <StyledBackground/>
     </FlexboxContainer>
   )
 }

@@ -1,12 +1,5 @@
 import styled, { keyframes } from 'styled-components';
 
-type MarqueeProps = {
-  $direction: string
-  $length: number
-  $offset: string
-  $size: string
-}
-
 const scrollHorizontal = keyframes`
   0%   { transform: translateX(0); }
   100% { transform: translateX(50%); }
@@ -41,6 +34,7 @@ const MarqueeWrapper = styled.div<{ $direction: string, $offset: string, $size: 
     0 0px 10px rgba(0, 0, 0, 1),
     0 0px 10px rgba(0, 0, 0, 1),
     0 0px 10px rgba(0, 0, 0, 1);
+  opacity: 0.6;
 `;
 
 const MarqueePortraitsContainer = styled.div<{ $direction? : string }>`
@@ -72,6 +66,13 @@ const MarqueePortrait = styled.div<{ $direction : string, $value : number, $src 
     inset 0 0 20px rgba(0, 0, 0, 0.6);
   filter: brightness(0.95) contrast(1.2) saturate(1.5);
 `;
+
+type MarqueeProps = {
+  $direction: string
+  $length: number
+  $offset: string
+  $size: string
+}
 
 const Marquee = ({ $direction, $length, $offset, $size } : MarqueeProps) => {
 

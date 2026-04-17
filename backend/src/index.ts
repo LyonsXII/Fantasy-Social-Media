@@ -1,8 +1,8 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import cors from "cors";
 import pg from "pg";
 import type { QueryResult } from "pg";
@@ -17,7 +17,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
-
 
 app.use((req, res, next) => {
   console.log(`Incoming request: ${req.method} ${req.url}`);
@@ -75,6 +74,41 @@ const port = 5000;
 
 app.use(cors({ origin: "*" }));
 
+declare global {
+  namespace Express {
+    interface Request {
+      user?: JwtPayload & { id: number; login: string };
+    }
+  }
+}
+
+// Authentication middleware
+function authenticateToken(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ error: "No token provided" });
+  }
+
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET as string
+    ) as JwtPayload & { id: number; login: string };
+
+    req.user = decoded;
+
+    next();
+  } catch (err) {
+    return res.status(403).json({ error: "Invalid token" });
+  }
+}
+
 // Register a new account
 app.post("/register", async (req, res) => {
   const { login, password } = req.body;
@@ -121,7 +155,7 @@ app.post("/login", async(req, res) => {
       return res.status(400).json({ error: "Invalid password"})
     }
 
-    const token = jwt.sign({ id: user.id, login: user.login }, process.env.JWT_SECRET!, { expiresIn: "1h" });
+    const token = jwt.sign({ id: user.user_id, login: user.login }, process.env.JWT_SECRET!, { expiresIn: "1h" });
     res.status(200).json({ id: user.id, login: user.login, token: token })
   } catch(err) {
     console.log(err);
@@ -1963,6 +1997,25 @@ app.get("/trending", async (req, res) => {
     console.error(err);
     res.status(500).json({ error: "Internal server error" });
   }
+});
+
+app.get("/recentActivity", authenticateToken, async (req, res) => {
+
+  
+  const { rows: result } = await db.query(`
+    SELECT
+      -- posts
+      (SELECT COUNT(*) FROM posts WHERE created_at >= NOW() - INTERVAL '24 hours') AS "postsDay",
+      (SELECT COUNT(*) FROM posts WHERE created_at >= NOW() - INTERVAL '7 days')   AS "postsWeek",
+      (SELECT COUNT(*) FROM posts WHERE created_at >= NOW() - INTERVAL '1 month')   AS "postsMonth",
+
+      -- replies
+      (SELECT COUNT(*) FROM replies WHERE created_at >= NOW() - INTERVAL '24 hours') AS "repliesDay",
+      (SELECT COUNT(*) FROM replies WHERE created_at >= NOW() - INTERVAL '7 days')   AS "repliesWeek",
+      (SELECT COUNT(*) FROM replies WHERE created_at >= NOW() - INTERVAL '1 month') AS "repliesMonth";
+  `, []);
+
+  res.json(result[0]);
 });
 
 app.listen(port, () => {
