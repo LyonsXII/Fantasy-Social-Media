@@ -10,29 +10,23 @@ const StyledBackground = styled.div`
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: url('/images/fantasy map edited.jpg');
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-blend-mode: multiply; 
+  background: 
+    url('/images/fantasy map edited.jpg'),
+    url('/images/Patina.jpg');
+  background-repeat: no-repeat, no-repeat;
+  background-size: cover, cover;
+  background-blend-mode: multiply;
+  opacity: 0.5;
 
   &::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: url('/images/Patina.jpg');
-    background-size: cover;
-    background-blend-mode: multiply; 
-    opacity: 0.7;
-    pointer-events: none;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to bottom, #d3fcff, #29709c);
-    opacity: 0.8;
-    background-blend-mode: multiply; 
+    background: linear-gradient(
+      to bottom,
+      rgba(211, 252, 255, 0.4),
+      rgba(41, 112, 156, 0.6)
+    );
     pointer-events: none;
   }
 `;

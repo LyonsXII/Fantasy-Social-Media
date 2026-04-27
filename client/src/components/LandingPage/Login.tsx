@@ -30,9 +30,9 @@ const Login = ({ handleLogin } : LoginRouteProps) => {
 
   function toggleLoginVisible() {
     if (showLogin) {
-      setShowLogin(prev => !prev);
-    } else {
       setShowLoginOutro(true);
+    } else {
+      setShowLogin(prev => !prev);
     }
   };
 
@@ -110,7 +110,7 @@ const Login = ({ handleLogin } : LoginRouteProps) => {
     if (showLoginOutro) {
       const timer = setTimeout(() => {
         setShowLoginOutro(false);
-        setShowLogin(true);
+        setShowLogin(false);
       }, 400);
 
       return () => clearTimeout(timer);
@@ -146,6 +146,10 @@ const Login = ({ handleLogin } : LoginRouteProps) => {
     }
   }, [messageText]);
 
+  useEffect(() => {
+    console.log(showLoginOutro)
+  }, [showLoginOutro]);
+
   return (
     <StyledContentWrapper $expanded={showLogin} $showLoginOutro={showLoginOutro}>
       <StyledMessageText $showMessageText={showMessageText}>
@@ -156,17 +160,29 @@ const Login = ({ handleLogin } : LoginRouteProps) => {
         <StyledFieldsWrapper $visible={showLogin}>
           <StyledField $visible={showLogin}>
             <StyledLoginIcon $shadow={false}/>
-            <StyledInput type="text" name="login" value={details.login} placeholder="Login" onChange={((e) => updateField("login", e.target.value))}/>
+            <StyledInput 
+              type="text" 
+              name="login" 
+              value={details.login} 
+              placeholder="Login" 
+              onChange={((e) => updateField("login", e.target.value))}/>
           </StyledField>
           <StyledField $visible={showLogin}>
             <StyledPasswordIcon $shadow={false}/>
-            <StyledInput type={passwordVisible ? "text" : "password"} name="password" value={details.password} placeholder="Password" onChange={((e) => updateField("password", e.target.value))}/>
+            <StyledInput 
+              type={passwordVisible ? "text" : "password"} 
+              name="password" value={details.password} 
+              placeholder="Password" 
+              onChange={((e) => updateField("password", e.target.value))}/>
             <StyledEyeIcon $shadow={false} onClick={togglePasswordVisible}/>
           </StyledField>
         </StyledFieldsWrapper>
+
         <StyledLoginButtonWrapper $expanded={showLogin}>
           <StyledLoginButton onClick={showLogin ? handleMode : toggleLoginVisible} $expanded={showLogin}>
-            <StyledLoginButtonText $showSubmitModeTransition={showSubmitModeTransition}>{submitMode == "login" ? "Login" : "Register"}</StyledLoginButtonText>
+            <StyledLoginButtonText $showSubmitModeTransition={showSubmitModeTransition}>
+              {submitMode == "login" ? "Login" : "Register"}
+            </StyledLoginButtonText>
           </StyledLoginButton>
         </StyledLoginButtonWrapper>
       </StyledLoginWrapper>
@@ -178,7 +194,13 @@ const Login = ({ handleLogin } : LoginRouteProps) => {
         </StyledNewUserButton>
       </StyledNewUserWrapper>
 
-      {showLogin && <StyledExitBox onClick={() => {setShowLogin(false)}}/>}
+      {showLogin && 
+        <StyledExitBox 
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {setShowLoginOutro(true)}}
+          }
+        />
+      }
     </StyledContentWrapper>
   )
 }

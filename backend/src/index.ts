@@ -1,8 +1,8 @@
-import express, { Request, Response, NextFunction } from "express";
+import express from "express";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 import bcrypt from "bcrypt";
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import cors from "cors";
 import pg from "pg";
 import type { QueryResult } from "pg";
@@ -73,41 +73,6 @@ const upload = multer({
 const port = 5000;
 
 app.use(cors({ origin: "*" }));
-
-declare global {
-  namespace Express {
-    interface Request {
-      user?: JwtPayload & { id: number; login: string };
-    }
-  }
-}
-
-// Authentication middleware
-function authenticateToken(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  const authHeader = req.headers.authorization;
-  const token = authHeader?.split(" ")[1];
-
-  if (!token) {
-    return res.status(401).json({ error: "No token provided" });
-  }
-
-  try {
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET as string
-    ) as JwtPayload & { id: number; login: string };
-
-    req.user = decoded;
-
-    next();
-  } catch (err) {
-    return res.status(403).json({ error: "Invalid token" });
-  }
-}
 
 // Register a new account
 app.post("/register", async (req, res) => {
@@ -1999,7 +1964,7 @@ app.get("/trending", async (req, res) => {
   }
 });
 
-app.get("/recentActivity", authenticateToken, async (req, res) => {
+app.get("/recentActivity", async (req, res) => {
 
   
   const { rows: result } = await db.query(`

@@ -9,6 +9,28 @@ type StyledLoginButton = {
   $expanded: boolean
 }
 
+const fadeIn = keyframes`
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
+const fadeOut = keyframes`
+  0% {
+    opacity: 1;
+    transform: translateY(0px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+`;
+
 export const StyledContentWrapper = styled.div<{ $expanded : boolean, $showLoginOutro : boolean }>`
   position: relative;
   display: flex;
@@ -18,7 +40,7 @@ export const StyledContentWrapper = styled.div<{ $expanded : boolean, $showLogin
   height: fit-content;
   width: fit-content;
   padding: 2rem;
-  background: ${({ $expanded }) => $expanded ? "hsl(213deg 85% 97%)" : "none"};
+  background: ${({ $expanded }) => $expanded ? "hsl(213deg 85% 97%)" : "none"}; // Keep active until transitioned
   /* box-shadow: 0 0 2em hsl(231deg 62% 94%); */
   border-radius: 30px;
   z-index: 2;
@@ -26,6 +48,7 @@ export const StyledContentWrapper = styled.div<{ $expanded : boolean, $showLogin
   ${({ $showLoginOutro }) =>
     $showLoginOutro
       ? css`
+          background: hsl(213deg 85% 97%);
           animation: ${fadeOut} 400ms ease-in forwards;
         `
       : css`
@@ -52,28 +75,6 @@ export const StyledLoginWrapper = styled.div`
   height: fit-content;
   width: fit-content;
   padding: 2rem 0rem 1.2rem 0rem;
-`;
-
-const fadeIn = keyframes`
-  0% {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-`;
-
-const fadeOut = keyframes`
-  0% {
-    opacity: 1;
-    transform: translateY(0px);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
 `;
 
 export const StyledFieldsWrapper = styled.div<{$visible: boolean}>`
@@ -223,5 +224,5 @@ export const StyledExitBox = styled.div`
   position: absolute;
   height: 100dvh;
   width: 100dvw;
-  z-index: 1;
+  z-index: -1;
 `
