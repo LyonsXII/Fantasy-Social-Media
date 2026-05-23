@@ -125,11 +125,13 @@ type PostProps = {
   postData: PostType | ReplyType;
   currentEmojiReaction: string;
   updatePost: (postId: number) => void;
+  repliesExpanded: boolean;
   setRepliesExpanded: React.Dispatch<React.SetStateAction<boolean>>;
+  replyExpanded: boolean;
   setReplyExpanded: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const PostActions = ({ postData, currentEmojiReaction, updatePost, setRepliesExpanded, setReplyExpanded } : PostProps) => {
+const PostActions = ({ postData, currentEmojiReaction, updatePost, repliesExpanded, setRepliesExpanded, replyExpanded, setReplyExpanded } : PostProps) => {
   const convPostId = "postId" in postData ? postData.postId : null;
   const convReplyId = "replyId" in postData ? postData.replyId : null;
   const [liked, setLiked] = useState(postData.isLiked);
@@ -198,11 +200,28 @@ const PostActions = ({ postData, currentEmojiReaction, updatePost, setRepliesExp
     <StyledMainContainer>
         {!emojiExpanded && <StyledActionBar>
           <StyledActionBarIconContainer>
-            <StyledClickableIcon onClick={() => setReplyExpanded(prev => !prev)}>
+            <StyledClickableIcon onClick={() => {
+                if (!replyExpanded) {
+                  setReplyExpanded(true);
+                  setRepliesExpanded(true);
+                }
+                else {
+                  setReplyExpanded(false);
+                  setRepliesExpanded(false);
+                }
+              }
+            }>
               <StyledReplyIcon/>
             </StyledClickableIcon>
 
-            <StyledClickableIcon onClick={() => setRepliesExpanded(prev => !prev)}>
+            <StyledClickableIcon onClick={() => {
+                if (!repliesExpanded) setRepliesExpanded(true);
+                else {
+                  setReplyExpanded(false);
+                  setRepliesExpanded(false);
+                }
+              }
+            }>
               <StyledRepliesIcon/>
             </StyledClickableIcon>
             <StyledActionBarText>

@@ -233,8 +233,10 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
  
         <PostActions 
           postData={postData} 
-          updatePost={updatePost} 
-          setRepliesExpanded={setRepliesExpanded} 
+          updatePost={updatePost}
+          repliesExpanded={repliesExpanded}
+          setRepliesExpanded={setRepliesExpanded}
+          replyExpanded={replyExpanded}
           setReplyExpanded={setReplyExpanded}
           currentEmojiReaction={postData.currentEmojiReaction}
         />
@@ -281,8 +283,8 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
           override={override} 
           depth={1}
           replyExpanded={replyExpanded}
-          setReplyExpanded={setReplyExpanded}
           repliesExpanded={repliesExpanded}
+          setReplyExpanded={setReplyExpanded}
           updatePost={updatePost}
         />}
     </StyledMainContainer>

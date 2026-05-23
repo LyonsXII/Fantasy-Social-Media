@@ -237,10 +237,12 @@ const Reply = ({ replyData, updateReply, updatePost, override, depth } : ReplyPr
 
         <PostActions 
           postData={replyData}
-          currentEmojiReaction={replyData.currentEmojiReaction}
-          updatePost={updateReply} 
-          setRepliesExpanded={setRepliesExpanded} 
+          updatePost={updateReply}
+          repliesExpanded={repliesExpanded}
+          setRepliesExpanded={setRepliesExpanded}
+          replyExpanded={replyExpanded}
           setReplyExpanded={setReplyExpanded}
+          currentEmojiReaction={replyData.currentEmojiReaction}
         />
 
         <StyledEditContainer>
