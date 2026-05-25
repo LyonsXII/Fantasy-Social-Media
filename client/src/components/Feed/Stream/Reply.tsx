@@ -134,6 +134,11 @@ const Reply = ({ replyData, updateReply, updatePost, override, depth } : ReplyPr
   const maxSize = 5 * 1024 * 1024;
   const allowedTypes = ["image/png", "image/jpg", "image/jpeg", "image/webp"];
 
+  // Animation parameters
+  const [playRepliesExit, setPlayRepliesExit] = useState(false);
+  const replyFeedRef = useRef<HTMLDivElement | null>(null);
+  const [replyFeedHeight, setReplyFeedHeight] = useState(0);
+
   async function editReply(content: any){
     try {
       const formData = new FormData();
@@ -198,6 +203,16 @@ const Reply = ({ replyData, updateReply, updatePost, override, depth } : ReplyPr
     setAttachmentName(replyData.attachment)
   }, [replyData.attachment]);
 
+  // Play exit animation for reply feed then set show to false
+  useEffect(() => {
+    if (!playRepliesExit) return;
+    setTimeout(() => {
+      setRepliesExpanded(false);
+      setReplyExpanded(false);
+      setPlayRepliesExit(false);
+    }, 400);
+  }, [playRepliesExit]);
+
   return (
     <StyledMainContainer $depth={depth}>
       <StyledMainPostContainer $depth={depth}>
@@ -243,6 +258,7 @@ const Reply = ({ replyData, updateReply, updatePost, override, depth } : ReplyPr
           replyExpanded={replyExpanded}
           setReplyExpanded={setReplyExpanded}
           currentEmojiReaction={replyData.currentEmojiReaction}
+          setPlayRepliesExit={setPlayRepliesExit}
         />
 
         <StyledEditContainer>
@@ -292,6 +308,10 @@ const Reply = ({ replyData, updateReply, updatePost, override, depth } : ReplyPr
           repliesExpanded={repliesExpanded}
           updatePost={updatePost}
           updateParentReply={updateReply}
+          playRepliesExit={playRepliesExit}
+          replyFeedRef={replyFeedRef}
+          replyFeedHeight={replyFeedHeight}
+          setReplyFeedHeight={setReplyFeedHeight}
         />
       }
     </StyledMainContainer>

@@ -129,9 +129,10 @@ type PostProps = {
   setRepliesExpanded: React.Dispatch<React.SetStateAction<boolean>>;
   replyExpanded: boolean;
   setReplyExpanded: React.Dispatch<React.SetStateAction<boolean>>;
+  setPlayRepliesExit: (value: boolean) => void;
 }
 
-const PostActions = ({ postData, currentEmojiReaction, updatePost, repliesExpanded, setRepliesExpanded, replyExpanded, setReplyExpanded } : PostProps) => {
+const PostActions = ({ postData, currentEmojiReaction, updatePost, repliesExpanded, setRepliesExpanded, replyExpanded, setReplyExpanded, setPlayRepliesExit } : PostProps) => {
   const convPostId = "postId" in postData ? postData.postId : null;
   const convReplyId = "replyId" in postData ? postData.replyId : null;
   const [liked, setLiked] = useState(postData.isLiked);
@@ -206,8 +207,7 @@ const PostActions = ({ postData, currentEmojiReaction, updatePost, repliesExpand
                   setRepliesExpanded(true);
                 }
                 else {
-                  setReplyExpanded(false);
-                  setRepliesExpanded(false);
+                  setPlayRepliesExit(true);
                 }
               }
             }>
@@ -217,8 +217,7 @@ const PostActions = ({ postData, currentEmojiReaction, updatePost, repliesExpand
             <StyledClickableIcon onClick={() => {
                 if (!repliesExpanded) setRepliesExpanded(true);
                 else {
-                  setReplyExpanded(false);
-                  setRepliesExpanded(false);
+                  setPlayRepliesExit(true);
                 }
               }
             }>

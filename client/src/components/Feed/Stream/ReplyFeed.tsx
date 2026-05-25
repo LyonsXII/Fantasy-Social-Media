@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
 import {  useState, useEffect, useRef, useCallback } from 'react';
 import axios from "axios";
 
@@ -9,14 +9,48 @@ import type { EmojiEntry } from './Stream';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-const StyledMainContainer = styled.div<{ $replyExpanded: boolean, $numReplies: number }>`
+const enterAnimation = keyframes`
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+`;
+
+const exitAnimation = keyframes`
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+`;
+
+const StyledMainContainer = styled.div<{ $replyExpanded: boolean, $numReplies: number, $entering: boolean, $replyFeedHeight: number }>`
   display: flex;
   flex-direction: column;
-  height: fit-content;
+  max-height: ${({ $entering, $replyFeedHeight }) => $entering ? `${$replyFeedHeight}px` : "0px"};
   flex-shrink: 0;
   width: 100%;
   gap: 0.2rem;
   margin-top: ${({ $replyExpanded, $numReplies }) => $replyExpanded || ($numReplies > 0) ? "0" : "calc(-0.2rem - 2px)"};
+
+  transition: max-height 300ms ease;
+
+  ${({ $entering }) =>
+    $entering &&
+    css`
+      animation: ${enterAnimation} 600ms ease-out forwards;
+    `}
+
+  ${({ $entering }) =>
+    !$entering &&
+    css`
+      animation: ${exitAnimation} 300ms ease-in forwards;
+    `}
 `;
 
 const StyledObserver = styled.div`
@@ -61,11 +95,14 @@ type ReplyFeedProps = {
   setReplyExpanded: (value: boolean) => void;
   updatePost: (postId: number) => void;
   updateParentReply?: (parentReplyId: number) => void;
+  playRepliesExit: boolean;
+  replyFeedRef: React.RefObject<HTMLDivElement | null>;
+  replyFeedHeight: number;
+  setReplyFeedHeight: (value: number) => void;
 }
 
-const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, replyExpanded, repliesExpanded, setReplyExpanded, updatePost, updateParentReply } : ReplyFeedProps) => {
-  const [replies, setReplies] = useState<ReplyType[]>(
-    overrideData ?? []);
+const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, replyExpanded, repliesExpanded, setReplyExpanded, updatePost, updateParentReply, playRepliesExit, replyFeedRef, replyFeedHeight, setReplyFeedHeight } : ReplyFeedProps) => {
+  const [replies, setReplies] = useState<ReplyType[]>(overrideData ?? []);
   const [lastId, setLastId] = useState<number | null>(null);
   const [furtherContentAvailable, setFurtherContentAvailable] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -148,8 +185,15 @@ const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, reply
     return () => observer.disconnect();
   }, [fetchReplies]);
 
+  // Keep ref updated with height of reply feed for max-height transition animation
+  useEffect(() => {
+    if (replyFeedRef.current) {
+      setReplyFeedHeight(replyFeedRef.current.scrollHeight);
+    }
+  }, [replies.length, replyExpanded]);
+
   return (
-    <StyledMainContainer $replyExpanded={replyExpanded} $numReplies={replies.length}>
+    <StyledMainContainer $replyExpanded={replyExpanded} $numReplies={replies.length} $entering={!playRepliesExit} $replyFeedHeight={replyFeedHeight} ref={replyFeedRef}>
       {replyExpanded && !override && 
         <CreatePostMenu 
           mode="reply" 
