@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { useState, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 import MainMenu from '../Menu/MainMenu';
 import Stream from './Stream/Stream';
@@ -31,6 +31,10 @@ const Feed = () => {
   const [showSearch, setShowSearch] = useState(false);
   const [searchText, setSearchText] = useState("");
 
+  // Animation parameters
+  const [playCreatePostExit, setPlayCreatePostExit] = useState(false);
+  const [playCharactersMenuExit, setPlayCharactersMenuExit] = useState(false);
+
   const streamRef = useRef<HTMLDivElement | null>(null);
 
   const toggleShowCreatePostMenu = () => {
@@ -61,10 +65,49 @@ const Feed = () => {
     }
   };
 
+  // Play exit animation for create post menu then set show to false
+  useEffect(() => {
+    if (!playCreatePostExit) return;
+    setTimeout(() => {
+      setShowCreatePostMenu(false);
+    }, 600);
+  }, [playCreatePostExit]);
+
+  // Play exit animation for create post menu then set show to false
+  useEffect(() => {
+    if (!playCharactersMenuExit) return;
+    setTimeout(() => {
+      setShowCharactersMenu(false);
+    }, 1000);
+  }, [playCharactersMenuExit]);
+
   return (
     <StyledMainContainer>
-      <MainMenu toggleShowCreatePostMenu={toggleShowCreatePostMenu} toggleShowCharactersMenu={toggleShowCharactersMenu} toggleShowFavouritesMenu={toggleShowFavouritesMenu} setCharacterFilter={handleSetCharacterFilter} setPropertyFilter={handleSetPropertyFilter} setSearchText={setSearchText}/>
-      <Stream streamRef={streamRef} showCreatePostMenu={showCreatePostMenu} setShowCreatePostMenu={setShowCreatePostMenu} showCharactersMenu={showCharactersMenu} showFavourites={showFavourites} characterFilter={characterFilter} propertyFilter={propertyFilter} searchText={searchText}/>
+      <MainMenu 
+        showCreatePostMenu={showCreatePostMenu} 
+        setShowCreatePostMenu={setShowCreatePostMenu} 
+        setPlayCreatePostExit={setPlayCreatePostExit}
+        showCharactersMenu={showCharactersMenu}
+        setShowCharactersMenu={setShowCharactersMenu}
+        setPlayCharactersMenuExit={setPlayCharactersMenuExit} 
+        toggleShowFavouritesMenu={toggleShowFavouritesMenu} 
+        setCharacterFilter={handleSetCharacterFilter} 
+        setPropertyFilter={handleSetPropertyFilter} 
+        setSearchText={setSearchText}/>
+      <Stream 
+        streamRef={streamRef} 
+        showCreatePostMenu={showCreatePostMenu} 
+        setShowCreatePostMenu={setShowCreatePostMenu} 
+        playCreatePostExit={playCreatePostExit} 
+        setPlayCreatePostExit={setPlayCreatePostExit}
+        showCharactersMenu={showCharactersMenu}
+        setShowCharactersMenu={setShowCharactersMenu}
+        playCharactersMenuExit={playCharactersMenuExit}
+        setPlayCharactersMenuExit={setPlayCharactersMenuExit}
+        showFavourites={showFavourites} 
+        characterFilter={characterFilter} 
+        propertyFilter={propertyFilter} 
+        searchText={searchText}/>
       <Discover/>
     </StyledMainContainer>
   )

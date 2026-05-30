@@ -46,24 +46,49 @@ const StyledOptionText = styled.p`
 `;
 
 type MainMenuProps = {
-  toggleShowCreatePostMenu: () => void;
-  toggleShowCharactersMenu: () => void;
+  showCreatePostMenu: boolean;
+  setShowCreatePostMenu: (value: boolean) => void;
+  setPlayCreatePostExit: (value: boolean) => void;
+  showCharactersMenu: boolean;
+  setShowCharactersMenu: (value: boolean) => void;
+  setPlayCharactersMenuExit: (value: boolean) => void;
   toggleShowFavouritesMenu: () => void;
   setCharacterFilter: (charId: number | null) => void;
   setPropertyFilter: (propertyId: number | null) => void;
   setSearchText: (text: string) => void;
 };
 
-const MainMenu = ({ toggleShowCreatePostMenu, toggleShowCharactersMenu, toggleShowFavouritesMenu, setCharacterFilter, setPropertyFilter, setSearchText } : MainMenuProps) => {
+const MainMenu = ({ showCreatePostMenu, setShowCreatePostMenu, setPlayCreatePostExit, showCharactersMenu, setShowCharactersMenu, setPlayCharactersMenuExit, toggleShowFavouritesMenu, setCharacterFilter, setPropertyFilter, setSearchText } : MainMenuProps) => {
   return (
     <StyledMainContainer>
-      <StyledOption onClick={toggleShowCreatePostMenu}>
+      <StyledOption onClick={() => {
+          if (!showCreatePostMenu) {
+            setShowCreatePostMenu(true);
+          } else {
+            setPlayCreatePostExit(true);
+            setTimeout(() => {
+              setShowCreatePostMenu(false);
+              setPlayCreatePostExit(false);
+            }, 600);
+          }
+        }
+      }>
         <StyledOptionText>
           Create Post
         </StyledOptionText>
       </StyledOption>
 
-      <StyledOption onClick={toggleShowCharactersMenu}>
+      <StyledOption onClick={() => {
+          if (!showCharactersMenu) {
+            setShowCharactersMenu(true);
+          } else {
+            setPlayCharactersMenuExit(true);
+            setTimeout(() => {
+              setShowCharactersMenu(false);
+              setPlayCharactersMenuExit(false);
+            }, 1000);
+          }
+        }}>
         <StyledOptionText>
           Characters
         </StyledOptionText>

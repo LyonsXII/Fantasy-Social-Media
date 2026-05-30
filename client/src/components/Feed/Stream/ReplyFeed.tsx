@@ -29,16 +29,17 @@ const exitAnimation = keyframes`
   }
 `;
 
-const StyledMainContainer = styled.div<{ $replyExpanded: boolean, $numReplies: number, $entering: boolean, $replyFeedHeight: number }>`
+const StyledMainContainer = styled.div<{ $replyExpanded: boolean, $numReplies: number, $entering: boolean, $replyFeedHeight: number, $visible: boolean }>`
   display: flex;
   flex-direction: column;
+  height: ${({ $visible, $replyFeedHeight }) => $visible ? `${$replyFeedHeight}px` : "0px"};
   max-height: ${({ $entering, $replyFeedHeight }) => $entering ? `${$replyFeedHeight}px` : "0px"};
   flex-shrink: 0;
   width: 100%;
   gap: 0.2rem;
   margin-top: ${({ $replyExpanded, $numReplies }) => $replyExpanded || ($numReplies > 0) ? "0" : "calc(-0.2rem - 2px)"};
 
-  transition: max-height 300ms ease;
+  transition: height 300ms ease,  300ms ease;
 
   ${({ $entering }) =>
     $entering &&
@@ -107,6 +108,9 @@ const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, reply
   const [furtherContentAvailable, setFurtherContentAvailable] = useState(true);
   const [loading, setLoading] = useState(false);
   const observerRef = useRef<HTMLDivElement | null>(null);
+
+  // Animation parameters
+  const [visible, setVisible] = useState(false);
 
   const fetchReplies = useCallback(async () => {
     if (loading || !furtherContentAvailable) return;
@@ -192,8 +196,16 @@ const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, reply
     }
   }, [replies.length, replyExpanded]);
 
+  // Janky work around to get an entrance animation to animate for posts
+  // Not happy with this but it does work (not for create post menu appearing after initially opening just the replies)
+  useEffect(() => {
+    setTimeout(() => {
+      setVisible(true);
+    }, 0);
+  }, [])
+
   return (
-    <StyledMainContainer $replyExpanded={replyExpanded} $numReplies={replies.length} $entering={!playRepliesExit} $replyFeedHeight={replyFeedHeight} ref={replyFeedRef}>
+    <StyledMainContainer $replyExpanded={replyExpanded} $numReplies={replies.length} $entering={!playRepliesExit} $replyFeedHeight={replyFeedHeight} $visible={visible} ref={replyFeedRef}>
       {replyExpanded && !override && 
         <CreatePostMenu 
           mode="reply" 

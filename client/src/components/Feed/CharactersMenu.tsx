@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import axios from "axios";
 
@@ -7,26 +7,65 @@ import Search from '../General/Search';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-const StyledMainContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-start;
+const enterAnimation = keyframes`
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+`;
+
+const exitAnimation = keyframes`
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+`;
+
+const StyledMainContainer = styled.div<{$visible: boolean, $entering: boolean}>`
   height: calc(100% - 0.6rem);
+  max-height: ${({ $visible }) => $visible ? "100%" : "0px"};
   width: 100%;
-  gap: 1rem;
-  padding: 1.6rem 1.6rem 1.6rem 1.6rem;
   background: white;
+  border: 1px solid rgba(0,0,0,0.06);
   box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  /* overflow: hidden; Breaks everything for some reason, fix at some point*/
 
-  transition: box-shadow 0.2s ease;
+  transition: box-shadow 0.2s ease, max-height 1s ease;
 
+  ${({ $entering }) =>
+    $entering &&
+    css`
+      animation: ${enterAnimation} 1s ease-out forwards;
+    `}
+
+  ${({ $entering }) =>
+    !$entering &&
+    css`
+      animation: ${exitAnimation} 1s ease-in forwards;
+    `}
+    
   &:hover {
     box-shadow: 
     0 6px 20px rgba(0,0,0,0.06),
     0px 4px 4px rgba(0,0,0,0.1);
   }
 `;
+
+const StyledPaddingWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  height: 100%;
+  padding: 1.6rem 1.6rem 2rem 1.6rem;
+  gap: 1rem;
+`
 
 const StyledOptionText = styled.p`
   font-size: 1rem;
@@ -79,10 +118,11 @@ type CharType = {
 }
 
 type CharactersMenuProps = {
+  playCharactersMenuExit?: boolean;
   streamRef: React.RefObject<HTMLDivElement | null>;
 };
 
-const CharactersMenu = ({ streamRef } : CharactersMenuProps) => {
+const CharactersMenu = ({ playCharactersMenuExit, streamRef } : CharactersMenuProps) => {
   const [chars, setChars] = useState<CharType[]>([]);
   const [lastId, setLastId] = useState<number | null>(null);
   const [furtherContentAvailable, setFurtherContentAvailable] = useState(true);
@@ -93,6 +133,9 @@ const CharactersMenu = ({ streamRef } : CharactersMenuProps) => {
   const [propertyNameInput, setPropertyNameInput] = useState<number | null>(null);
   type TagFilterState = Record<string, boolean>;
   const [tagFilters, setTagFilters] = useState<TagFilterState>({});
+
+  // Animation parameters
+  const [visible, setVisible] = useState(false);
 
   const fetchChars = useCallback(async () => {
     console.log("fired");
@@ -199,31 +242,44 @@ const CharactersMenu = ({ streamRef } : CharactersMenuProps) => {
     streamRef.current?.scrollTo({ top: 0, behavior: "auto" });
   }, []);
 
+  // Janky work around to get an entrance animation to animate for posts
+  // Not happy with this but it does work
+  useEffect(() => {
+    setTimeout(() => {
+      setVisible(true);
+    }, 0);
+  }, [])
+
   return (
-    <StyledMainContainer>
-      <Search direction="row" height="94px" width="100%" numSuggestions={1} showPropFilter={true} selectChar={setCharNameInput} selectProperty={setPropertyNameInput}/>
+    <StyledMainContainer 
+      $visible={!playCharactersMenuExit ? visible : !playCharactersMenuExit} 
+      $entering={!playCharactersMenuExit}
+    >
+      <StyledPaddingWrapper>
+        <Search direction="row" height="94px" width="100%" numSuggestions={1} showPropFilter={true} selectChar={setCharNameInput} selectProperty={setPropertyNameInput}/>
 
-      <StyledCharactersContainer>
-        {chars && chars.map((char, i) => {
-          if (i < chars.length - 1) {
-            return <CharacterImage key={char.charId} alt="Character image" size="160px" imagePath={char.image}/>
-          } else {
-            return <CharacterImage key={char.charId} alt="Character image" size="160px" imagePath={char.image}/>
-          }
-        })}
-        <div ref={observerRef} style={{"height": "1px", "width": "1px", "border": "1px solid black", "opacity": "0.01"}}/>
-      </StyledCharactersContainer>
+        <StyledCharactersContainer>
+          {chars && chars.map((char, i) => {
+            if (i < chars.length - 1) {
+              return <CharacterImage key={char.charId} alt="Character image" size="160px" imagePath={char.image}/>
+            } else {
+              return <CharacterImage key={char.charId} alt="Character image" size="160px" imagePath={char.image}/>
+            }
+          })}
+          <div ref={observerRef} style={{"height": "1px", "width": "1px", "border": "1px solid black", "opacity": "0.01"}}/>
+        </StyledCharactersContainer>
 
-      <StyledGenreButtonsContainer>
-        {tags && tags.map((tag) => {
-          return (
-            <StyledButton key={tag.tag} onClick={() => toggleTag(tag.tagId)} $active={tagFilters[tag.tagId]}>
-              <StyledOptionText>
-                {tag.tag}
-              </StyledOptionText>
-            </StyledButton>
-          )})}
-      </StyledGenreButtonsContainer>
+        <StyledGenreButtonsContainer>
+          {tags && tags.map((tag) => {
+            return (
+              <StyledButton key={tag.tag} onClick={() => toggleTag(tag.tagId)} $active={tagFilters[tag.tagId]}>
+                <StyledOptionText>
+                  {tag.tag}
+                </StyledOptionText>
+              </StyledButton>
+            )})}
+        </StyledGenreButtonsContainer>
+      </StyledPaddingWrapper>
     </StyledMainContainer>
   )
 }

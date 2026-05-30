@@ -39,7 +39,12 @@ type StreamProps = {
   streamRef: React.RefObject<HTMLDivElement | null>;
   showCreatePostMenu: boolean;
   setShowCreatePostMenu: (value: boolean) => void;
+  playCreatePostExit: boolean;
+  setPlayCreatePostExit: (value: boolean) => void;
   showCharactersMenu: boolean;
+  setShowCharactersMenu: (value: boolean) => void;
+  playCharactersMenuExit: boolean;
+  setPlayCharactersMenuExit: (value: boolean) => void;
   showFavourites: boolean;
   characterFilter: number | null;
   propertyFilter: number | null;
@@ -74,7 +79,7 @@ export type PostType = {
   currentEmojiReaction: string;
 }
 
-const Stream = ({ streamRef, showCreatePostMenu, setShowCreatePostMenu, showCharactersMenu, showFavourites, characterFilter, propertyFilter, searchText } : StreamProps) => {
+const Stream = ({ streamRef, showCreatePostMenu, setShowCreatePostMenu, playCreatePostExit, setPlayCreatePostExit, showCharactersMenu, playCharactersMenuExit, setPlayCharactersMenuExit, showFavourites, characterFilter, propertyFilter, searchText } : StreamProps) => {
   const [posts, setPosts] = useState<PostType[]>([]);
   const [lastId, setLastId] = useState<number | null>(null);
   const [lastCreated, setLastCreated] = useState<string | null>(null);
@@ -197,8 +202,22 @@ const Stream = ({ streamRef, showCreatePostMenu, setShowCreatePostMenu, showChar
 
   return ( 
     <StyledMainContainer ref={streamRef}>
-      {showCreatePostMenu && <CreatePostMenu mode="post" numSuggestions={5} refetchPosts={refetchPosts} closeMenu={setShowCreatePostMenu} streamRef={streamRef}/>}
-      {showCharactersMenu && <CharactersMenu streamRef={streamRef}/>}
+      {showCreatePostMenu && 
+        <CreatePostMenu 
+          mode="post" 
+          numSuggestions={5} 
+          refetchPosts={refetchPosts} 
+          closeMenu={setShowCreatePostMenu} 
+          playCreatePostExit={playCreatePostExit} 
+          streamRef={streamRef}
+        />
+      }
+      {showCharactersMenu && 
+        <CharactersMenu 
+          playCharactersMenuExit={playCharactersMenuExit}
+          streamRef={streamRef}
+      />
+      }
       {posts.length > 0 && posts.map((post) => {
         return <Post key={post.postId} postData={post} updatePost={updatePost} override={showFavourites}/>
       })}
