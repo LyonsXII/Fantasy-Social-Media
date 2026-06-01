@@ -29,13 +29,9 @@ const exitAnimation = keyframes`
   }
 `;
 
-const StyledMainContainer = styled.div<{ $replyExpanded: boolean, $numReplies: number, $entering: boolean, $replyFeedHeight: number, $visible: boolean }>`
-  height: ${({ $visible, $replyFeedHeight }) => $visible ? `${$replyFeedHeight}px` : "0px"};
-  max-height: ${({ $entering, $replyFeedHeight }) => $entering ? `${$replyFeedHeight}px` : "0px"};
+const StyledMainContainer = styled.div<{ $replyExpanded: boolean, $numReplies: number, $entering: boolean, $visible: boolean }>`
   width: 100%;
   margin-top: ${({ $replyExpanded, $numReplies }) => $replyExpanded || ($numReplies > 0) ? "0" : "calc(-0.2rem - 2px)"};
-  
-  transition: height 300ms ease, max-height 300ms ease;
 
   ${({ $entering }) =>
     $entering &&
@@ -63,7 +59,7 @@ const StyledObserver = styled.div`
   bottom: 0;
   height: 1px;
   width: 1px;
-  opacity: 1;
+  opacity: 0.01;
   border: 1px solid black;
   pointer-events: none;
 `;
@@ -196,25 +192,6 @@ const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, reply
     return () => observer.disconnect();
   }, [fetchReplies]);
 
-  // Use observer to keep ref updated with height of reply feed for max-height transition animation
-  useEffect(() => {
-    const element = replyFeedRef.current;
-
-    if (!element) return;
-
-    const observer = new ResizeObserver(() => {
-      requestAnimationFrame(() => {
-        setReplyFeedHeight(element.getBoundingClientRect().height);
-      });
-    });
-
-    observer.observe(element);
-
-    setReplyFeedHeight(element.getBoundingClientRect().height);
-
-    return () => observer.disconnect();
-  }, []);
-
   // Janky work around to get an entrance animation to animate for posts
   // Not happy with this but it does work (not for create post menu appearing after initially opening just the replies)
   useEffect(() => {
@@ -224,7 +201,7 @@ const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, reply
   }, [])
 
   return (
-    <StyledMainContainer $replyExpanded={replyExpanded} $numReplies={replies.length} $entering={!playRepliesExit} $replyFeedHeight={replyFeedHeight} $visible={visible}>
+    <StyledMainContainer $replyExpanded={replyExpanded} $numReplies={replies.length} $entering={!playRepliesExit}  $visible={visible}>
       <StyledContentContainer ref={replyFeedRef}>
         {replyExpanded && !override && 
           <CreatePostMenu 
