@@ -30,16 +30,12 @@ const exitAnimation = keyframes`
 `;
 
 const StyledMainContainer = styled.div<{ $replyExpanded: boolean, $numReplies: number, $entering: boolean, $replyFeedHeight: number, $visible: boolean }>`
-  display: flex;
-  flex-direction: column;
   height: ${({ $visible, $replyFeedHeight }) => $visible ? `${$replyFeedHeight}px` : "0px"};
   max-height: ${({ $entering, $replyFeedHeight }) => $entering ? `${$replyFeedHeight}px` : "0px"};
-  flex-shrink: 0;
   width: 100%;
-  gap: 0.2rem;
   margin-top: ${({ $replyExpanded, $numReplies }) => $replyExpanded || ($numReplies > 0) ? "0" : "calc(-0.2rem - 2px)"};
-
-  transition: height 300ms ease,  300ms ease;
+  
+  transition: height 300ms ease, max-height 300ms ease;
 
   ${({ $entering }) =>
     $entering &&
@@ -54,11 +50,22 @@ const StyledMainContainer = styled.div<{ $replyExpanded: boolean, $numReplies: n
     `}
 `;
 
+const StyledContentContainer = styled.div`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: 0.2rem;
+`
+
 const StyledObserver = styled.div`
+  position: absolute;
+  bottom: 0;
   height: 1px;
   width: 1px;
-  opacity: 0.01;
+  opacity: 1;
   border: 1px solid black;
+  pointer-events: none;
 `;
 
 export type ReplyType = {
@@ -189,12 +196,24 @@ const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, reply
     return () => observer.disconnect();
   }, [fetchReplies]);
 
-  // Keep ref updated with height of reply feed for max-height transition animation
+  // Use observer to keep ref updated with height of reply feed for max-height transition animation
   useEffect(() => {
-    if (replyFeedRef.current) {
-      setReplyFeedHeight(replyFeedRef.current.scrollHeight);
-    }
-  }, [replies.length, replyExpanded]);
+    const element = replyFeedRef.current;
+
+    if (!element) return;
+
+    const observer = new ResizeObserver(() => {
+      requestAnimationFrame(() => {
+        setReplyFeedHeight(element.getBoundingClientRect().height);
+      });
+    });
+
+    observer.observe(element);
+
+    setReplyFeedHeight(element.getBoundingClientRect().height);
+
+    return () => observer.disconnect();
+  }, []);
 
   // Janky work around to get an entrance animation to animate for posts
   // Not happy with this but it does work (not for create post menu appearing after initially opening just the replies)
@@ -205,34 +224,36 @@ const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, reply
   }, [])
 
   return (
-    <StyledMainContainer $replyExpanded={replyExpanded} $numReplies={replies.length} $entering={!playRepliesExit} $replyFeedHeight={replyFeedHeight} $visible={visible} ref={replyFeedRef}>
-      {replyExpanded && !override && 
-        <CreatePostMenu 
-          mode="reply" 
-          postId={postId} 
-          height="250px" 
-          numSuggestions={3}
-          depth={depth - 1}
-          parentReplyId={parentReplyId} 
-          refetchReplies={refetchReplies}
-          closeMenu={setReplyExpanded}
-        />
-      }
-      {repliesExpanded && (
-        <>
-          {replies.length > 0 && replies.map((reply) => (
-            <Reply 
-              key={reply.replyId} 
-              replyData={reply} 
-              updateReply={updateReply}
-              updatePost={updatePost}
-              override={override ? true : false}
-              depth={depth}
-            />
-          ))}
-          <StyledObserver ref={observerRef}/>
-        </>
-      )}
+    <StyledMainContainer $replyExpanded={replyExpanded} $numReplies={replies.length} $entering={!playRepliesExit} $replyFeedHeight={replyFeedHeight} $visible={visible}>
+      <StyledContentContainer ref={replyFeedRef}>
+        {replyExpanded && !override && 
+          <CreatePostMenu 
+            mode="reply" 
+            postId={postId} 
+            height="250px" 
+            numSuggestions={3}
+            depth={depth - 1}
+            parentReplyId={parentReplyId} 
+            refetchReplies={refetchReplies}
+            closeMenu={setReplyExpanded}
+          />
+        }
+        {repliesExpanded && (
+          <>
+            {replies.length > 0 && replies.map((reply) => (
+              <Reply 
+                key={reply.replyId} 
+                replyData={reply} 
+                updateReply={updateReply}
+                updatePost={updatePost}
+                override={override ? true : false}
+                depth={depth}
+              />
+            ))}
+            <StyledObserver ref={observerRef}/>
+          </>
+        )}
+      </StyledContentContainer>
     </StyledMainContainer>
   )
 };

@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { useState, useEffect, useRef } from 'react';
 import axios from "axios";
 
@@ -12,6 +12,18 @@ import type { ReplyType } from './ReplyFeed';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
+const enterAnimation = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+`;
+
 const StyledMainContainer = styled.div<{ $depth: number }>`
   display: flex;
   flex-direction: column;
@@ -20,6 +32,8 @@ const StyledMainContainer = styled.div<{ $depth: number }>`
   width: ${({ $depth }) => `calc(100% - (${$depth} * 20px))`};
   min-width: 60%;
   gap: 0.2rem;
+
+  animation: ${enterAnimation} 300ms ease-out forwards;
 `;
 
 const StyledMainPostContainer = styled.div<{ $depth: number }>`
