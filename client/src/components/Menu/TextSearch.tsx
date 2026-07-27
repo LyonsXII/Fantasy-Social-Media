@@ -4,15 +4,16 @@ import { useState, useEffect } from 'react';
 const StyledMainContainer = styled.div<{$expanded: boolean}>`
   display: flex;
   flex-direction: column;
-  height: fit-content;
+  max-height: ${({ $expanded }) => $expanded ? "160px" : "80px"};
   width: 100%;
   padding: 1.6rem 1.6rem 1.6rem 1.6rem;
   gap: 0.6rem;
   background: white;
   border: 1px solid rgba(0,0,0,0.06);
   box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  overflow: hidden;
 
-  transition: box-shadow 0.2s ease;
+  transition: box-shadow 0.2s ease, max-height 1s ease;
 
   &:hover {
     box-shadow: 
@@ -74,26 +75,25 @@ const TextSearch = ({ setSearchText } : TextSearchProps) => {
       <StyledOptionText onClick={() => setExpanded(prev => !prev)}>
         Search
       </StyledOptionText>
-      {expanded && 
-        <StyledInputContainer
-          as="form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            setSearchText(userInput);
-          }}
-        >
-          <StyledInput 
-            type="text" 
-            name="char" 
-            value={userInput} 
-            placeholder="Enter text to search..." 
-            onChange={(e) => updateUserInput(e.target.value)}
-          />
-          <StyledButton type="submit">
-            Search
-          </StyledButton>
-        </StyledInputContainer>
-      }
+
+      <StyledInputContainer
+        as="form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          setSearchText(userInput);
+        }}
+      >
+        <StyledInput 
+          type="text" 
+          name="char" 
+          value={userInput} 
+          placeholder="Enter text to search..." 
+          onChange={(e) => updateUserInput(e.target.value)}
+        />
+        <StyledButton type="submit">
+          Search
+        </StyledButton>
+      </StyledInputContainer>
     </StyledMainContainer>
   )
 }

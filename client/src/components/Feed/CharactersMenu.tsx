@@ -18,23 +18,27 @@ const enterAnimation = keyframes`
 `;
 
 const exitAnimation = keyframes`
-  from {
+  0% {
     opacity: 1;
   }
 
-  to {
+  50% {
+    opacity: 0.1;
+  }
+
+  100% {
     opacity: 0;
   }
 `;
 
 const StyledMainContainer = styled.div<{$visible: boolean, $entering: boolean}>`
-  height: calc(100% - 0.6rem);
-  max-height: ${({ $visible }) => $visible ? "100%" : "0px"};
+  height: calc(100dvh - 0.6rem);
+  max-height: ${({ $visible }) => $visible ? "calc(100dvh - 0.6rem)" : "0px"};
   width: 100%;
   background: white;
   border: 1px solid rgba(0,0,0,0.06);
   box-shadow: 0 6px 20px rgba(0,0,0,0.06);
-  /* overflow: hidden; Breaks everything for some reason, fix at some point*/
+  /* overflow: hidden; */
 
   transition: box-shadow 0.2s ease, max-height 1s ease;
 
@@ -78,12 +82,17 @@ const StyledCharactersContainer = styled.div`
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  min-height: calc(320px + 2rem);
+  flex-grow: 1;
+  max-height: 510px;
   width: 100%;
   gap: 0.6rem;
   padding-bottom: 2rem;
   overflow-y: auto;
   scroll-behavior: smooth;
+  scroll-snap-type: y mandatory;
+  overflow: none;
+
+  transition: max-height 1s ease;
 
   scrollbar-width: none;
   &::-webkit-scrollbar {
@@ -96,6 +105,7 @@ const StyledGenreButtonsContainer = styled.div`
   justify-content: center;
   flex-wrap: wrap;
   height: fit-content;
+  margin-top: 34px;
   gap: 0.6rem;
   width: 100%;
 `;
@@ -138,7 +148,6 @@ const CharactersMenu = ({ playCharactersMenuExit, streamRef } : CharactersMenuPr
   const [visible, setVisible] = useState(false);
 
   const fetchChars = useCallback(async () => {
-    console.log("fired");
     if (loading || !furtherContentAvailable) return;
     console.log("past loading / further content available");
 
@@ -242,7 +251,7 @@ const CharactersMenu = ({ playCharactersMenuExit, streamRef } : CharactersMenuPr
     streamRef.current?.scrollTo({ top: 0, behavior: "auto" });
   }, []);
 
-  // Janky work around to get an entrance animation to animate for posts
+  // Janky work around to get an entrance animation to animate
   // Not happy with this but it does work
   useEffect(() => {
     setTimeout(() => {

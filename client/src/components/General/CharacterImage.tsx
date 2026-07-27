@@ -9,6 +9,7 @@ const StyledSuggestionImage = styled.img<{$size: string}>`
   object-fit: cover;
   border: 2px solid white;
   box-shadow: 0 0.2em 0.2em rgba(0, 0, 0, 0.4);
+  scroll-snap-align: start;
   cursor: pointer;
 `
 

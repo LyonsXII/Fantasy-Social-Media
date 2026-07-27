@@ -9,17 +9,19 @@ const backendUrl = import.meta.env.VITE_BACKEND_URL;
 const StyledMainContainer = styled.div<{ $direction?: string, $width?: string, $height?: string}>`
   display: flex;
   flex-direction: ${({ $direction }) => $direction ? $direction : "row"};
+  flex: 0 0 auto;
   align-items: ${({ $direction }) => $direction ? "flex-start" : "center"};
   height: ${({ $direction, $height }) => $direction == "row" ? $height : "100%"};
   width: ${({ $width }) => $width ? $width : "100%"};
-  gap: 1rem;
+  gap: 0rem;
 `;
 
-const StyledFilterSectionContainer = styled.div`
+const StyledFilterSectionContainer = styled.div<{ $direction?: string}>`
   display: flex;
   justify-content: left;
-  align-items: center;
+  align-items: flex-start;
   height: fit-content;
+  min-height: ${({ $direction }) => $direction == "column" ? "94px" : "0px"};
   width: 100%;
 `;
 
@@ -246,7 +248,7 @@ const Search = ({ direction, height, width, numSuggestions, showPropFilter, show
 
   return (
     <StyledMainContainer $direction={direction} $width={width} $height={height}>
-      <StyledFilterSectionContainer>
+      <StyledFilterSectionContainer $direction={direction}>
         <StyledInputContainer>
           <StyledInput 
             type="text" 
@@ -305,7 +307,7 @@ const Search = ({ direction, height, width, numSuggestions, showPropFilter, show
       }
 
       {showPropFilter && 
-        <StyledFilterSectionContainer>
+        <StyledFilterSectionContainer $direction={direction}>
           <StyledInputContainer>
             <StyledInput 
               type="text" 
