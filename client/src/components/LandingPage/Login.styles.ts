@@ -12,7 +12,7 @@ type StyledLoginButton = {
 const fadeIn = keyframes`
   0% {
     opacity: 0;
-    transform: translateY(-20px);
+    transform: translateY(-60px);
   }
   100% {
     opacity: 1;
@@ -31,7 +31,7 @@ const fadeOut = keyframes`
   }
 `;
 
-export const StyledContentWrapper = styled.div<{ $expanded : boolean, $showLoginOutro : boolean }>`
+export const StyledContentWrapper = styled.div<{ $expanded : boolean, $showLoginOutro : string }>`
   position: relative;
   display: flex;
   justify-content: center;
@@ -41,19 +41,20 @@ export const StyledContentWrapper = styled.div<{ $expanded : boolean, $showLogin
   width: fit-content;
   padding: 2rem;
   background: ${({ $expanded }) => $expanded ? "hsl(213deg 85% 97%)" : "none"}; // Keep active until transitioned
-  /* box-shadow: 0 0 2em hsl(231deg 62% 94%); */
+  box-shadow: ${({ $expanded }) => $expanded ? "0 0 2em hsl(231deg 62% 94%)" : "none"};
   border-radius: 30px;
   z-index: 2;
 
   ${({ $showLoginOutro }) =>
-    $showLoginOutro
+    $showLoginOutro == "intro"
       ? css`
-          background: hsl(213deg 85% 97%);
           animation: ${fadeOut} 400ms ease-in forwards;
-        `
-      : css`
+        ` :
+      $showLoginOutro == "outro" ? css`
           animation: ${fadeIn} 400ms ease-out forwards;
-        `}
+        ` : 
+      "none"
+    }
 `;
 
 export const StyledMessageText = styled.div<{ $showMessageText : boolean }>`

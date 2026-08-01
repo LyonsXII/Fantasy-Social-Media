@@ -16,7 +16,7 @@ export interface LoginRouteProps {
 
 const Login = ({ handleLogin } : LoginRouteProps) => {
   const [showLogin, setShowLogin] = useState<boolean>(false);
-  const [showLoginOutro, setShowLoginOutro] = useState<boolean>(false);
+  const [showLoginOutro, setShowLoginOutro] = useState<string>("");
   const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
   const [submitMode, setSubmitMode] = useState<"login" | "register">("login");
   const [showSubmitModeTransition, setShowSubmitModeTransition] = useState<boolean>(false);
@@ -30,9 +30,9 @@ const Login = ({ handleLogin } : LoginRouteProps) => {
 
   function toggleLoginVisible() {
     if (showLogin) {
-      setShowLoginOutro(true);
+      setShowLoginOutro("outro");
     } else {
-      setShowLogin(prev => !prev);
+      setShowLoginOutro("intro");
     }
   };
 
@@ -107,10 +107,17 @@ const Login = ({ handleLogin } : LoginRouteProps) => {
 
   // Toggle fade out / in for login box when expanding
   useEffect(() => {
-    if (showLoginOutro) {
+    if (showLoginOutro == "intro") {
       const timer = setTimeout(() => {
-        setShowLoginOutro(false);
-        setShowLogin(false);
+        setShowLoginOutro("");
+        setShowLogin(true);
+      }, 400);
+
+      return () => clearTimeout(timer);
+    } else if (showLoginOutro == "outro") {
+      setShowLogin(false);
+      const timer = setTimeout(() => {
+        setShowLoginOutro("");
       }, 400);
 
       return () => clearTimeout(timer);
@@ -127,7 +134,7 @@ const Login = ({ handleLogin } : LoginRouteProps) => {
         } else {
           setSubmitMode("login");
         }
-      }, 400);
+      }, 200);
 
       return () => clearTimeout(timer);
     }
@@ -146,12 +153,16 @@ const Login = ({ handleLogin } : LoginRouteProps) => {
     }
   }, [messageText]);
 
-  useEffect(() => {
-    console.log(showLoginOutro)
-  }, [showLoginOutro]);
+useEffect(() => {
+  console.log({
+    showLogin,
+    showLoginOutro,
+    expanded: showLogin && showLoginOutro === ""
+  });
+}, [showLogin, showLoginOutro]);
 
   return (
-    <StyledContentWrapper $expanded={showLogin} $showLoginOutro={showLoginOutro}>
+    <StyledContentWrapper $expanded={showLogin && showLoginOutro == ""} $showLoginOutro={showLoginOutro}>
       <StyledMessageText $showMessageText={showMessageText}>
         {messageText}
       </StyledMessageText>
@@ -197,7 +208,7 @@ const Login = ({ handleLogin } : LoginRouteProps) => {
       {showLogin && 
         <StyledExitBox 
           onClick={(e) => {
-            if (e.target === e.currentTarget) {setShowLoginOutro(true)}}
+            if (e.target === e.currentTarget) {setShowLoginOutro("outro")}}
           }
         />
       }
