@@ -111,7 +111,7 @@ const RainBackground = ({dropCount = 800}: RainOverlayProps) => {
 
     ctx.globalCompositeOperation = "source-over";
 
-      ctx.strokeStyle = "rgba(255,255,255,0.4)";
+      ctx.strokeStyle = "rgba(255,255,255,0.2)";
       ctx.lineWidth = 1;
 
       drops.forEach((drop) => {
