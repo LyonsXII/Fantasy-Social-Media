@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useState } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes, css } from 'styled-components';
 
 import Login from './Login.tsx';
 import Marquee from './Marquee.tsx';
@@ -35,9 +35,10 @@ const StyledBackground = styled.div`
   background: 
     url('/images/fantasy map edited.jpg'),
     url('/images/Patina.jpg');
-  background-repeat: no-repeat, no-repeat;
-  background-size: cover, cover;
+  background-repeat: no-repeat;
+  background-size: cover;
   background-blend-mode: multiply;
+  background-position: 50% 25%;
   opacity: 0.5;
 
   &::before {
@@ -60,9 +61,10 @@ const StyledHighlightedBackground = styled.div`
   background: 
     url('/images/fantasy map edited.jpg'),
     url('/images/Patina.jpg');
-  background-repeat: no-repeat, no-repeat;
-  background-size: cover, cover;
+  background-repeat: no-repeat;
+  background-size: cover;
   background-blend-mode: multiply;
+  background-position: 50% 25%;
   opacity: 1;
 
   filter:
@@ -92,7 +94,7 @@ const StyledHighlightedBackground = styled.div`
   }
 `;
 
-const StyledMonsterLayer = styled.div`
+const StyledRevealLayer = styled.div`
   position: absolute;
   inset: 0;
 
@@ -108,25 +110,35 @@ const StyledMonsterLayer = styled.div`
   );
 `;
 
-const monsterFloat = keyframes`
-  0% {
+const idleFloat = keyframes`
+  0%, 100% {
     transform: translateY(0px);
   }
 
   50% {
-    transform: translateY(-10px);
-  }
-
-  100% {
-    transform: translateY(0px);
+    transform: translateY(-4px);
   }
 `;
+
+const StyledFloatingWrapper = styled.div`
+  position: absolute;
+  inset: 0;
+
+  pointer-events: none;
+
+  animation:
+    ${idleFloat}
+    2s
+    ease-in-out
+    infinite;
+
+`
 
 const StyledMonster = styled.img<{$size: string, $highlighted?: boolean, $active?: boolean}>`
   position: absolute;
 
-  bottom: 33%;
-  left: 14%;
+  bottom: 21%;
+  left: 15%;
 
   width: ${({ $size }) => $size};
   height: auto;
@@ -137,27 +149,99 @@ const StyledMonster = styled.img<{$size: string, $highlighted?: boolean, $active
   ${({ $highlighted }) =>
     $highlighted
       ? `
+        opacity: 0.6;
         filter:
-          brightness(1)
+          brightness(0.5)
           saturate(0)
-          contrast(1.1);
+          contrast(1);
       `
       : `
-        opacity: 0.3;
-
+        opacity: 0.2;
         filter:
           brightness(0.5)
           saturate(0)
           contrast(0.6);
       `}
 
-    ${({ $active }) =>
-      $active &&
-      `
-        animation: ${monsterFloat} 2s ease-in-out infinite;
-      `
-    }
+  transform: ${({ $active }) => 
+    $active 
+     ? `translate(-50px, 30px) 
+    rotate(8deg)` : 
+    `translate(0px, 0px) rotate(0deg)`
+  }; 
+  
+  transition: transform 2.4s cubic-bezier(0.22, 1, 0.36, 1);
 `;
+
+const StyledShipwreck = styled.img<{$size: string, $highlighted?: boolean, $active?: boolean}>`
+  position: absolute;
+
+  bottom: 76%;
+  left: 22%;
+
+  width: ${({ $size }) => $size};
+  height: auto;
+
+  pointer-events: none;
+  z-index: 2;
+
+  ${({ $highlighted }) =>
+    $highlighted
+      ? `
+        opacity: 0.4;
+        filter:
+          brightness(0.5)
+          saturate(0)
+          contrast(1);
+      `
+      : `
+        opacity: 0.2;
+        filter:
+          brightness(0.5)
+          saturate(0)
+          contrast(0.6);
+      `}
+
+  transform: ${({ $active }) =>
+    $active
+      ? `
+        translate(0px, 10px)
+      `
+      : `
+        translate(0px, 0px)
+      `};
+
+transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+`;
+
+const StyledCompass = styled.img<{$size: string, $highlighted?: boolean, $active?: boolean}>`
+  position: absolute;
+
+  top: 29%;
+  left: 10%;
+
+  width: ${({ $size }) => $size};
+  height: auto;
+
+        opacity: 0.4;
+        filter:
+          brightness(0.5)
+          saturate(0)
+          contrast(1);
+
+  transform: ${({ $active }) =>
+    $active
+      ? `
+        translate(0px, 10px)
+        rotate(360deg)
+      `
+      : `
+        translate(0px, 0px)
+        rotate(0deg)
+      `};
+
+  transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+`
 
 const StyledPillar = styled.img<{ $side: "left" | "right" }>`
   position: absolute;
@@ -195,15 +279,15 @@ const LandingPage = () => {
   const { login } = useAuth();
 
   const [monsterActive, setMonsterActive] = useState(false);
+  const [shipActive, setShipActive] = useState(false);
+  const [compassActive, setCompassActive] = useState(false);
 
   async function handleLogin(token: string) {
     login(token);
     navigate('/feed');
   }
 
-const handleMouseMove = (
-  event: React.MouseEvent<HTMLDivElement>
-) => {
+const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
   const rect =
     event.currentTarget.getBoundingClientRect();
 
@@ -219,6 +303,39 @@ const handleMouseMove = (
     "--mouse-y",
     `${y}px`
   );
+
+  // Trigger monster animation when cursor close
+  const monsterX = rect.width * 0.21 + 100;
+  const monsterY = rect.height * 0.85;
+
+  const monsterDistance = Math.sqrt(
+    Math.pow(event.clientX - rect.left - monsterX, 2) +
+    Math.pow(event.clientY - rect.top - monsterY, 2)
+  );
+
+  setMonsterActive(monsterDistance < 200);
+
+  // Trigger ship animation when cursor close
+  const shipX = rect.width * 0.22 + 100;
+  const shipY = rect.height * 0.14;
+
+  const shipDistance = Math.sqrt(
+    Math.pow(event.clientX - rect.left - shipX, 2) +
+    Math.pow(event.clientY - rect.top - shipY, 2)
+  );
+
+  setShipActive(shipDistance < 200);
+
+  // Trigger compass animation when cursor close
+  const compassX = rect.width * 0.15;
+  const compassY = rect.height * 0.40;
+
+  const compassDistance = Math.sqrt(
+    Math.pow(event.clientX - rect.left - compassX, 2) +
+    Math.pow(event.clientY - rect.top - compassY, 2)
+  );
+
+  setCompassActive(compassDistance < 80);
 };
 
   return (
@@ -228,14 +345,22 @@ const handleMouseMove = (
       <Marquee $direction="horizontal" $length={20} $offset="74dvh" $size="20dvh"/> */}
       {/* <Marquee $direction="vertical" $length={5} $offset="5.5dvw" $size="28dvw"/> */}
 
-      <StyledPillar src="/images/pillar.png" $side="left"/>
-      <StyledPillar src="/images/pillar.png" $side="right"/>
+      {/* <StyledPillar src="/images/pillar.png" $side="left"/>
+      <StyledPillar src="/images/pillar.png" $side="right"/> */}
 
       <RainBackground/>
-      <StyledMonster src="/images/sea monster.png" $size="200px" $highlighted={false}/>
-      <StyledMonsterLayer>
-        <StyledMonster src="/images/sea monster.png" $size="200px" $highlighted={true} $active={monsterActive}/>
-      </StyledMonsterLayer>
+      <StyledCompass src="/images/compass.png" $size="200px" $highlighted={false} $active={compassActive}/>
+      <StyledFloatingWrapper>
+        <StyledMonster src="/images/sea monster.png" $size="200px" $highlighted={false} $active={monsterActive}/>
+        <StyledShipwreck src="/images/shipwreck.png" $size="160px" $highlighted={false} $active={shipActive}/>
+      </StyledFloatingWrapper>
+
+      <StyledRevealLayer>
+        <StyledFloatingWrapper>
+          <StyledMonster src="/images/sea monster.png" $size="200px" $highlighted={true} $active={monsterActive}/>
+          <StyledShipwreck src="/images/shipwreck.png" $size="160px" $highlighted={true} $active={shipActive}/>
+        </StyledFloatingWrapper>
+      </StyledRevealLayer>
       <StyledBackground/>
       <StyledHighlightedBackground/>
     </StyledMainContainer>
