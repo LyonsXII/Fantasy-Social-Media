@@ -110,10 +110,21 @@ export const StyledInput = styled.input`
   outline: none;
   border: none;
 
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover,
+  &:-webkit-autofill:focus,
+  &:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px hsl(213deg 85% 97%) inset;
+    box-shadow: 0 0 0 1000px hsl(213deg 85% 97%) inset;
+
+    -webkit-text-fill-color: black;
+    caret-color: black;
+  }
+
   &::placeholder {
     color: hsl(0deg 0% 0%);
     font-size: 0.9em;
-  } 
+  }
 `
 
 const createStyledIcon = (IconComponent: React.ComponentType<any>) =>

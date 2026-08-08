@@ -217,30 +217,39 @@ transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 const StyledCompass = styled.img<{$size: string, $highlighted?: boolean, $active?: boolean}>`
   position: absolute;
 
-  top: 29%;
-  left: 10%;
+  top: 28.6%;
+  left: 9.6%;
 
   width: ${({ $size }) => $size};
   height: auto;
 
-        opacity: 0.4;
+  ${({ $highlighted }) =>
+    $highlighted
+      ? `
+        opacity: 0.6;
         filter:
           brightness(0.5)
           saturate(0)
           contrast(1);
+      `
+      : `
+        opacity: 0.2;
+        filter:
+          brightness(0.5)
+          saturate(0)
+          contrast(0.6);
+      `}
 
   transform: ${({ $active }) =>
     $active
       ? `
-        translate(0px, 10px)
         rotate(360deg)
       `
       : `
-        translate(0px, 0px)
         rotate(0deg)
       `};
 
-  transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 4s cubic-bezier(0.34, 1.56, 0.64, 1);
 `
 
 const StyledPillar = styled.img<{ $side: "left" | "right" }>`
@@ -345,20 +354,18 @@ const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
       <Marquee $direction="horizontal" $length={20} $offset="74dvh" $size="20dvh"/> */}
       {/* <Marquee $direction="vertical" $length={5} $offset="5.5dvw" $size="28dvw"/> */}
 
-      {/* <StyledPillar src="/images/pillar.png" $side="left"/>
-      <StyledPillar src="/images/pillar.png" $side="right"/> */}
-
       <RainBackground/>
-      <StyledCompass src="/images/compass.png" $size="200px" $highlighted={false} $active={compassActive}/>
+      <StyledCompass src="/images/compass.png" $size="11%" $highlighted={false} $active={compassActive}/>
       <StyledFloatingWrapper>
-        <StyledMonster src="/images/sea monster.png" $size="200px" $highlighted={false} $active={monsterActive}/>
-        <StyledShipwreck src="/images/shipwreck.png" $size="160px" $highlighted={false} $active={shipActive}/>
+        <StyledMonster src="/images/sea monster.png" $size="11%" $highlighted={false} $active={monsterActive}/>
+        <StyledShipwreck src="/images/shipwreck.png" $size="8%" $highlighted={false} $active={shipActive}/>
       </StyledFloatingWrapper>
 
       <StyledRevealLayer>
+        <StyledCompass src="/images/compass.png" $size="11%" $highlighted={true} $active={compassActive}/>
         <StyledFloatingWrapper>
-          <StyledMonster src="/images/sea monster.png" $size="200px" $highlighted={true} $active={monsterActive}/>
-          <StyledShipwreck src="/images/shipwreck.png" $size="160px" $highlighted={true} $active={shipActive}/>
+          <StyledMonster src="/images/sea monster.png" $size="11%" $highlighted={true} $active={monsterActive}/>
+          <StyledShipwreck src="/images/shipwreck.png" $size="8%" $highlighted={true} $active={shipActive}/>
         </StyledFloatingWrapper>
       </StyledRevealLayer>
       <StyledBackground/>
