@@ -4,7 +4,7 @@ import { useState } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 
 import Login from './Login.tsx';
-import Marquee from './Marquee.tsx';
+// import Marquee from './Marquee.tsx';
 import RainBackground from '../General/RainBackground.tsx';
 
 const StyledMainContainer = styled.div<{$direction: string, $height: string, $width: string}>`
@@ -54,7 +54,7 @@ const StyledBackground = styled.div`
   }
 `;
 
-const StyledHighlightedBackground = styled.div`
+const StyledHighlightedBackground = styled.div<{ $initialised: boolean }>`
   position: absolute;
   inset: 0;
   z-index: -3;
@@ -65,7 +65,8 @@ const StyledHighlightedBackground = styled.div`
   background-size: cover;
   background-blend-mode: multiply;
   background-position: 50% 25%;
-  opacity: 1;
+
+  opacity: ${({ $initialised }) => ($initialised ? 1 : 0)};
 
   filter:
     brightness(1.35)
@@ -73,7 +74,7 @@ const StyledHighlightedBackground = styled.div`
     contrast(1.1);
 
   mask-image: radial-gradient(
-    circle 350px at var(--mouse-x) var(--mouse-y),
+    circle 350px at var(--mouse-x, -500px) var(--mouse-y, -500px),
     black 0%,
     rgba(0,0,0,0.8) 20%,
     transparent 80%
@@ -97,13 +98,11 @@ const StyledHighlightedBackground = styled.div`
 const StyledRevealLayer = styled.div`
   position: absolute;
   inset: 0;
-
   pointer-events: none;
-
   z-index: 2;
 
   mask-image: radial-gradient(
-    circle 350px at var(--mouse-x) var(--mouse-y),
+    circle 350px at var(--mouse-x, -500px) var(--mouse-y, -500px),
     black 0%,
     rgba(0,0,0,0.8) 20%,
     transparent 80%
@@ -252,41 +251,13 @@ const StyledCompass = styled.img<{$size: string, $highlighted?: boolean, $active
   transition: transform 4s cubic-bezier(0.34, 1.56, 0.64, 1);
 `
 
-const StyledPillar = styled.img<{ $side: "left" | "right" }>`
-  position: absolute;
-
-  top: 0;
-  bottom: 0;
-
-  ${({ $side }) =>
-    $side === "left"
-      ? `
-        left: 0;
-        filter:
-          drop-shadow(6px 0 4px rgba(0, 0, 0, 0.8))
-          drop-shadow(20px 0 25px rgba(0, 0, 0, 0.35))
-          brightness(0.7);
-      `
-      : `
-        right: 0;
-        filter:
-          drop-shadow(-6px 0 4px rgba(0, 0, 0, 0.8))
-          drop-shadow(-20px 0 25px rgba(0, 0, 0, 0.35))
-          brightness(0.7);
-        transform: scaleX(-1);
-      `}
-
-  height: 100dvh;
-  width: auto;
-  opacity: 0.7;
-
-  pointer-events: none;
-`;
-
 const LandingPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  const [mouseInitialized, setMouseInitialized] = useState(false);
+
+  // Map element active flags
   const [monsterActive, setMonsterActive] = useState(false);
   const [shipActive, setShipActive] = useState(false);
   const [compassActive, setCompassActive] = useState(false);
@@ -297,21 +268,15 @@ const LandingPage = () => {
   }
 
 const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
-  const rect =
-    event.currentTarget.getBoundingClientRect();
+  const rect = event.currentTarget.getBoundingClientRect();
 
   const x = event.clientX - rect.left;
   const y = event.clientY - rect.top;
 
-  event.currentTarget.style.setProperty(
-    "--mouse-x",
-    `${x}px`
-  );
+  event.currentTarget.style.setProperty("--mouse-x", `${x}px`);
+  event.currentTarget.style.setProperty("--mouse-y", `${y}px`);
 
-  event.currentTarget.style.setProperty(
-    "--mouse-y",
-    `${y}px`
-  );
+  setMouseInitialized(true);
 
   // Trigger monster animation when cursor close
   const monsterX = rect.width * 0.21 + 100;
@@ -368,8 +333,9 @@ const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
           <StyledShipwreck src="/images/shipwreck.png" $size="8%" $highlighted={true} $active={shipActive}/>
         </StyledFloatingWrapper>
       </StyledRevealLayer>
+
       <StyledBackground/>
-      <StyledHighlightedBackground/>
+      <StyledHighlightedBackground $initialised={mouseInitialized}/>
     </StyledMainContainer>
   )
 }
