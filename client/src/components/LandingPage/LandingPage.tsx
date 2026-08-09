@@ -99,7 +99,7 @@ const StyledRevealLayer = styled.div`
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 2;
+  z-index: -1;
 
   mask-image: radial-gradient(
     circle 350px at var(--mouse-x, -500px) var(--mouse-y, -500px),
@@ -137,7 +137,7 @@ const StyledMonster = styled.img<{$size: string, $highlighted?: boolean, $active
   position: absolute;
 
   bottom: 21%;
-  left: 15%;
+  left: 14.6%;
 
   width: ${({ $size }) => $size};
   height: auto;
@@ -225,7 +225,7 @@ const StyledCompass = styled.img<{$size: string, $highlighted?: boolean, $active
   ${({ $highlighted }) =>
     $highlighted
       ? `
-        opacity: 0.6;
+        opacity: 0.5;
         filter:
           brightness(0.5)
           saturate(0)
@@ -279,15 +279,15 @@ const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
   setMouseInitialized(true);
 
   // Trigger monster animation when cursor close
-  const monsterX = rect.width * 0.21 + 100;
-  const monsterY = rect.height * 0.85;
+  const monsterX = rect.width * 0.21;
+  const monsterY = rect.height * 0.75;
 
   const monsterDistance = Math.sqrt(
     Math.pow(event.clientX - rect.left - monsterX, 2) +
     Math.pow(event.clientY - rect.top - monsterY, 2)
   );
 
-  setMonsterActive(monsterDistance < 200);
+  setMonsterActive(monsterDistance < 100);
 
   // Trigger ship animation when cursor close
   const shipX = rect.width * 0.22 + 100;
@@ -298,7 +298,7 @@ const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     Math.pow(event.clientY - rect.top - shipY, 2)
   );
 
-  setShipActive(shipDistance < 200);
+  setShipActive(shipDistance < 100);
 
   // Trigger compass animation when cursor close
   const compassX = rect.width * 0.15;

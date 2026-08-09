@@ -1,12 +1,14 @@
-import { createContext, useState, useContext } from 'react';
-import type { ReactNode } from 'react';
+import { createContext, useState, useEffect, useMemo, useContext } from "react";
+import type { ReactNode } from "react";
 
 type AuthContextType = {
-  token: string | null;
+  accessToken: string | null;
   isAuthenticated: boolean;
-  login: (token: string) => void;
-  logout: () => void;
-}
+  isLoading: boolean;
+  login: (accessToken: string) => void;
+  logout: () => Promise<void>;
+  refreshAccessToken: () => Promise<boolean>;
+};
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -18,33 +20,78 @@ export const useAuth = () => {
   const context = useContext(AuthContext);
 
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
-
   return context;
 };
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [token, setToken] = useState<string | null>(
-    localStorage.getItem('token')
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const login = (accessToken: string) => {setAccessToken(accessToken)};
+
+  const logout = async () => {
+    try {
+      await fetch("http://localhost:5000/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout failed:", error);}
+    finally {
+      setAccessToken(null);
+    }
+  };
+
+  const refreshAccessToken = async (): Promise<boolean> => {
+    try {
+      const response = await fetch(
+        "http://localhost:5000/refresh",
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        setAccessToken(null);
+        return false;
+      }
+
+      const data = await response.json();
+
+      setAccessToken(data.accessToken);
+
+      return true;
+    } catch (error) {
+      console.error("Token refresh failed:", error);
+      setAccessToken(null);
+      return false;
+    }
+  };
+
+  const value = useMemo(
+    () => ({
+      accessToken,
+      isAuthenticated: !!accessToken,
+      isLoading,
+      login,
+      logout,
+      refreshAccessToken,
+    }),
+    [accessToken, isLoading]
   );
 
-  const login = (token: string) => {
-    setToken(token);
-    localStorage.setItem('token', token);
-  };
+  // Refresh access token on page load
+  useEffect(() => {
+    const initialise = async () => {
+      await refreshAccessToken();
+      setIsLoading(false);
+    };
 
-  const logout = () => {
-    setToken(null);
-    localStorage.removeItem('token');
-  };
-
-  const value: AuthContextType = {
-    token,
-    isAuthenticated: !!token,
-    login,
-    logout,
-  };
+    initialise();
+  }, []);
 
   return (
     <AuthContext.Provider value={value}>

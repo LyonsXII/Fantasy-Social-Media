@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from "axios";
+import { useAuth } from "../../context/AuthContext";
 
 import { StyledContentWrapper, StyledMessageText, StyledLoginWrapper, StyledFieldsWrapper, StyledField, StyledInput, StyledLoginButtonWrapper, StyledLoginButton, StyledLoginButtonText, StyledNewUserWrapper, StyledNewUserButton, StyledLoginIcon, StyledPasswordIcon, StyledEyeIcon, StyledNewUserIcon, StyledExitBox } from './Login.styles';
 
@@ -22,6 +23,8 @@ const Login = ({ handleLogin } : LoginRouteProps) => {
   const [showSubmitModeTransition, setShowSubmitModeTransition] = useState<boolean>(false);
   const [messageText, setMessageText] = useState<string>("");
   const [showMessageText, setShowMessageText] = useState<boolean>(false);
+
+  const { login } = useAuth();
 
   const [details, setDetails] = useState<LoginProps>({ 
     "login": "", 
@@ -56,7 +59,7 @@ const Login = ({ handleLogin } : LoginRouteProps) => {
 
   async function handleMode() {
     if (submitMode === "login") {
-      await login();
+      await loginUser();
     } else {
       await register();
     }
@@ -85,25 +88,31 @@ const Login = ({ handleLogin } : LoginRouteProps) => {
     }
   };
 
-  async function login() {
+  async function loginUser() {
     try {
       const loginDetails = {
-        "login": details.login, 
-        "password": details.password
+        login: details.login,
+        password: details.password,
       };
-      const response = await axios.post(`${backendUrl}/login`, loginDetails);
-      handleLogin(response.data.token);
+
+      const response = await axios.post(
+        `${backendUrl}/login`,
+        loginDetails,
+        {
+          withCredentials: true,
+        }
+      );
+
+      login(response.data.accessToken);
 
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        if (error.response) {
-          if (error.response.status === 400) {
-            setMessageText(error.response.data.error);
-          }
+        if (error.response?.status === 400) {
+          setMessageText(error.response.data.error);
         }
       }
     }
-  };
+  }
 
   // Toggle fade out / in for login box when expanding
   useEffect(() => {
@@ -152,14 +161,6 @@ const Login = ({ handleLogin } : LoginRouteProps) => {
       return () => clearTimeout(timer);
     }
   }, [messageText]);
-
-useEffect(() => {
-  console.log({
-    showLogin,
-    showLoginOutro,
-    expanded: showLogin && showLoginOutro === ""
-  });
-}, [showLogin, showLoginOutro]);
 
   return (
     <StyledContentWrapper $expanded={showLogin && showLoginOutro == ""} $showLoginOutro={showLoginOutro}>

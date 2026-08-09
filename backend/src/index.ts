@@ -2,21 +2,25 @@ import express from "express";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import cors from "cors";
 import pg from "pg";
 import type { QueryResult } from "pg";
+import cookieParser from "cookie-parser";
 import multer from "multer";
 import path from "path";
 import * as dotenv from "dotenv";
+
+import { authenticateToken } from "./authenticateToken.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 const app = express();
-app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
+app.use(cookieParser());
 
 app.use((req, res, next) => {
   console.log(`Incoming request: ${req.method} ${req.url}`);
@@ -72,7 +76,10 @@ const upload = multer({
 
 const port = 5000;
 
-app.use(cors({ origin: "*" }));
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true,
+}));
 
 // Register a new account
 app.post("/register", async (req, res) => {
@@ -103,29 +110,117 @@ app.post("/login", async(req, res) => {
 
   try {
     const result = await db.query(
-      "SELECT user_id, login, password_hash FROM users WHERE login = $1",
+      "SELECT user_id, password_hash FROM users WHERE login = $1",
       [login]
     );
 
     // No match for username in database
     if (result.rows.length === 0) {
-      return res.status(400).json({ error: "No account found for this username"})
+      return res.status(401).json({ error: "Invalid username or password"})
     };
 
     const user = result.rows[0]
+
     const passwordValid = await bcrypt.compare(password, user.password_hash);
 
     // Password invalid, hashes don't match
     if (!passwordValid) {
-      return res.status(400).json({ error: "Invalid password"})
+      return res.status(400).json({ error: "Invalid username or password"})
     }
 
-    const token = jwt.sign({ id: user.user_id, login: user.login }, process.env.JWT_SECRET!, { expiresIn: "1h" });
-    res.status(200).json({ id: user.id, login: user.login, token: token })
+    // Create an accessToken and refreshTokenHash and enter refreshTokenHash into DB
+    const accessToken = jwt.sign({ id: user.user_id }, process.env.JWT_SECRET!, { expiresIn: "15m" });
+    const refreshToken = crypto.randomBytes(32).toString("hex");
+    const refreshTokenHash = crypto
+      .createHash("sha256")
+      .update(refreshToken)
+      .digest("hex");
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
+
+    await db.query(
+      `INSERT INTO refresh_tokens
+      (user_id, token_hash, expires_at)
+      VALUES ($1, $2, $3)`,
+      [user.user_id, refreshTokenHash, expiresAt]
+    );
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 1000 * 60 * 60 * 24 * 30
+    });
+
+    console.log("login successful");
+    res.status(200).json({ id: user.user_id, accessToken })
   } catch(err) {
     console.log(err);
     res.status(500).json({ error: "Internal server error" });
   }
+});
+
+// Send new access token if login still valid
+app.post("/refresh", async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    return res.status(401).json({
+      error: "No refresh token"
+    });
+  }
+
+  try {
+    const refreshTokenHash = crypto
+      .createHash("sha256")
+      .update(refreshToken)
+      .digest("hex");
+
+    const result = await db.query(
+      `SELECT
+          token_id,
+          user_id,
+          expires_at
+       FROM refresh_tokens
+       WHERE rt.token_hash = $1`,
+      [refreshTokenHash]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({
+        error: "Invalid refresh token"
+      });
+    }
+
+    const session = result.rows[0];
+
+    if (new Date(session.expires_at) < new Date()) {
+      await db.query(
+        `DELETE FROM refresh_tokens
+         WHERE token_id = $1`,
+        [session.token_id]
+      );
+
+      return res.status(401).json({
+        error: "Refresh token expired"
+      });
+    }
+
+    const accessToken = jwt.sign({id: session.user_id}, process.env.JWT_SECRET!, {expiresIn: "15m"});
+
+    res.status(200).json({accessToken});
+
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      error: "Internal server error"
+    });
+  }
+});
+
+// Logout of account
+app.post("/logout", async(req, res) => {
+
 });
 
 // Match closest x characters from database based on string
@@ -193,7 +288,7 @@ app.get("/properties/search", async (req, res) => {
 });
 
 // Match posts based on user supplied text
-app.get("/search", async (req, res) => {
+app.get("/search", authenticateToken, async (req, res) => {
   const text =
     typeof req.query.text === "string"
       ? req.query.text
@@ -454,7 +549,7 @@ app.get("/characters", async (req, res) => {
 });
 
 // Create a post
-app.post("/createPost", upload.single("attachment"), async (req, res) => {
+app.post("/createPost", authenticateToken, upload.single("attachment"), async (req, res) => {
   const { charId, content } = req.body;
   const attachmentName = req.file?.filename ?? null;
   const owner_id = 1;
@@ -521,7 +616,7 @@ app.post("/createPost", upload.single("attachment"), async (req, res) => {
 });
 
 // Edit a post
-app.post("/editPost", upload.single("attachment"), async (req, res) => {
+app.post("/editPost", authenticateToken, upload.single("attachment"), async (req, res) => {
   const { postId, content, updateAttachment } = req.body;
   const attachmentName = req.file?.filename ?? null;
   const owner_id = 1;
@@ -598,7 +693,7 @@ app.post("/editPost", upload.single("attachment"), async (req, res) => {
 });
 
 // Retrieve a post
-app.get("/post", async (req, res) => {
+app.get("/post", authenticateToken, async (req, res) => {
   const { postId } = req.query;
   const owner_id = 1;
 
@@ -674,7 +769,7 @@ app.get("/post", async (req, res) => {
 });
 
 // Retrieve multiple posts for feed (filtering based on character and property)
-app.get("/feed", async (req, res) => {
+app.get("/feed", authenticateToken, async (req, res) => {
   const { charId, propertyId, lastId } = req.query;
   const userId = 1;
 
@@ -815,7 +910,7 @@ app.get("/feed", async (req, res) => {
 
 // Retrieve all favourited posts and replies for user
   // Absolute nightmare, do not break this!
-app.get("/favourites", async (req, res) => {
+app.get("/favourites", authenticateToken, async (req, res) => {
   const userId = 1;
   const lastCreated =
     typeof req.query.lastCreated === "string"
@@ -1272,7 +1367,7 @@ app.get("/favourites", async (req, res) => {
 });
 
 // Create a reply
-app.post("/createReply", upload.single("attachment"), async (req, res) => {
+app.post("/createReply", authenticateToken, upload.single("attachment"), async (req, res) => {
   const { postId, parentReplyId, charId, content } = req.body;
   const convParentReplyId = parentReplyId != undefined ? parentReplyId : null;
   const attachmentName = req.file?.filename ?? null;
@@ -1359,8 +1454,8 @@ app.post("/createReply", upload.single("attachment"), async (req, res) => {
   }
 });
 
-// Edit a post
-app.post("/editReply", upload.single("attachment"), async (req, res) => {
+// Edit a reply
+app.post("/editReply", authenticateToken, upload.single("attachment"), async (req, res) => {
   const { replyId, content, updateAttachment } = req.body;
   const attachmentName = req.file?.filename ?? null;
   const owner_id = 1;
@@ -1437,7 +1532,7 @@ app.post("/editReply", upload.single("attachment"), async (req, res) => {
 });
 
 // Retrieve a reply
-app.get("/reply", async (req, res) => {
+app.get("/reply", authenticateToken, async (req, res) => {
   const { replyId } = req.query;
   const userId = 1;
 
@@ -1516,7 +1611,7 @@ app.get("/reply", async (req, res) => {
 });
 
 // Retrieve multiple replies for reply feed
-app.get("/replies", async (req, res) => {
+app.get("/replies", authenticateToken, async (req, res) => {
   const postId = Number(req.query.postId);
   const parentReplyId = req.query.parentReplyId ? Number(req.query.parentReplyId) : null;
   const lastId = req.query.lastId ? Number(req.query.lastId) : null;
@@ -1654,7 +1749,7 @@ app.get("/replies", async (req, res) => {
 
 // React to a post (or reply)
   // Either add reaction, update reaction from opposite, or undo previous reaction
-app.post("/react", async (req, res) => {
+app.post("/react", authenticateToken, async (req, res) => {
   const { postId, replyId, reactionType, reactionValue } = req.body;
   const userId = 1;
 
@@ -1864,7 +1959,7 @@ app.post("/react", async (req, res) => {
   }
 });
 
-app.get("/trending", async (req, res) => {
+app.get("/trending", authenticateToken, async (req, res) => {
   try {
     // Pulling 30 most recent data sources with different weighting for posts / replies / reaction types
     const { rows: result } = await db.query(
@@ -1964,7 +2059,7 @@ app.get("/trending", async (req, res) => {
   }
 });
 
-app.get("/recentActivity", async (req, res) => {
+app.get("/recentActivity", authenticateToken, async (req, res) => {
 
   
   const { rows: result } = await db.query(`

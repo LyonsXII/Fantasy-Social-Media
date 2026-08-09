@@ -1,7 +1,10 @@
 import styled from 'styled-components';
+import { useNavigate } from "react-router-dom";
 
 import Filter from './Filter';
 import TextSearch from './TextSearch';
+
+import { useAuth } from "../../context/AuthContext";
 
 const StyledMainContainer = styled.div`
   position: relative;
@@ -59,6 +62,15 @@ type MainMenuProps = {
 };
 
 const MainMenu = ({ showCreatePostMenu, setShowCreatePostMenu, setPlayCreatePostExit, showCharactersMenu, setShowCharactersMenu, setPlayCharactersMenuExit, toggleShowFavouritesMenu, setCharacterFilter, setPropertyFilter, setSearchText } : MainMenuProps) => {
+
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  function handleLogout() {
+    logout();
+    navigate("/", { replace: true });
+  };
+
   return (
     <StyledMainContainer>
       <StyledOption onClick={() => {
@@ -104,7 +116,7 @@ const MainMenu = ({ showCreatePostMenu, setShowCreatePostMenu, setPlayCreatePost
         </StyledOptionText>
       </StyledOption>
 
-      <StyledOption>
+      <StyledOption onClick={handleLogout}>
         <StyledOptionText>
           Log Out
         </StyledOptionText>
