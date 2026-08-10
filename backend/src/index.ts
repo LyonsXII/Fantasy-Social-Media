@@ -181,7 +181,7 @@ app.post("/refresh", async (req, res) => {
           user_id,
           expires_at
        FROM refresh_tokens
-       WHERE rt.token_hash = $1`,
+       WHERE token_hash = $1`,
       [refreshTokenHash]
     );
 
@@ -199,6 +199,8 @@ app.post("/refresh", async (req, res) => {
          WHERE token_id = $1`,
         [session.token_id]
       );
+
+      res.clearCookie("refreshToken");
 
       return res.status(401).json({
         error: "Refresh token expired"
@@ -220,7 +222,46 @@ app.post("/refresh", async (req, res) => {
 
 // Logout of account
 app.post("/logout", async(req, res) => {
+  const refreshToken = req.cookies.refreshToken;
 
+  if (!refreshToken) {
+    res.clearCookie("refreshToken");
+
+    return res.status(200).json({
+      message: "Not logged in"
+    });
+  }
+
+  try {
+    const refreshTokenHash = crypto
+      .createHash("sha256")
+      .update(refreshToken)
+      .digest("hex");
+
+    await db.query(
+      `DELETE FROM refresh_tokens
+       WHERE token_hash = $1`,
+      [refreshTokenHash]
+    );
+
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 1000 * 60 * 60 * 24 * 30
+    });
+
+    return res.status(200).json({
+      message: "Logged out successfully"
+    });
+
+  } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
+      error: "Internal server error"
+    });
+  }
 });
 
 // Match closest x characters from database based on string
@@ -552,7 +593,7 @@ app.get("/characters", async (req, res) => {
 app.post("/createPost", authenticateToken, upload.single("attachment"), async (req, res) => {
   const { charId, content } = req.body;
   const attachmentName = req.file?.filename ?? null;
-  const owner_id = 1;
+  const userId = req.user.id;
 
   type LexicalNode = {
     type: string;
@@ -606,7 +647,7 @@ app.post("/createPost", authenticateToken, upload.single("attachment"), async (r
     const result = await db.query(
       `INSERT INTO posts (owner_id, character_id, content, raw_text, attachment) 
       VALUES ($1, $2, $3, $4, $5) RETURNING post_id`, 
-      [owner_id, charId, content, rawText, attachmentName]);
+      [userId, charId, content, rawText, attachmentName]);
 
     res.status(201).json({ postId: result.rows[0].post_id });
   } catch(err: any) {
@@ -619,7 +660,7 @@ app.post("/createPost", authenticateToken, upload.single("attachment"), async (r
 app.post("/editPost", authenticateToken, upload.single("attachment"), async (req, res) => {
   const { postId, content, updateAttachment } = req.body;
   const attachmentName = req.file?.filename ?? null;
-  const owner_id = 1;
+  const userId = req.user.id;
 
   type LexicalNode = {
     type: string;
@@ -672,7 +713,7 @@ app.post("/editPost", authenticateToken, upload.single("attachment"), async (req
       SET content = $3,
       raw_text = $4`
 
-    const params = [owner_id, postId, content, rawText];
+    const params = [userId, postId, content, rawText];
 
     if (updateAttachment) {
       query += `, attachment = $5`
@@ -695,7 +736,7 @@ app.post("/editPost", authenticateToken, upload.single("attachment"), async (req
 // Retrieve a post
 app.get("/post", authenticateToken, async (req, res) => {
   const { postId } = req.query;
-  const owner_id = 1;
+  const userId = req.user.id;
 
   try {
     const search = await db.query(
@@ -736,7 +777,7 @@ app.get("/post", authenticateToken, async (req, res) => {
         AND pr.reply_id IS NULL
         AND pr.reaction = 'emoji'
       WHERE p.post_id = $2;`,
-      [owner_id, postId]
+      [userId, postId]
     );
 
     const row = search.rows[0];
@@ -771,7 +812,7 @@ app.get("/post", authenticateToken, async (req, res) => {
 // Retrieve multiple posts for feed (filtering based on character and property)
 app.get("/feed", authenticateToken, async (req, res) => {
   const { charId, propertyId, lastId } = req.query;
-  const userId = 1;
+  const userId = req.user.id;
 
   let search: QueryResult<any>;
   try {
@@ -911,7 +952,7 @@ app.get("/feed", authenticateToken, async (req, res) => {
 // Retrieve all favourited posts and replies for user
   // Absolute nightmare, do not break this!
 app.get("/favourites", authenticateToken, async (req, res) => {
-  const userId = 1;
+  const userId = req.user.id;
   const lastCreated =
     typeof req.query.lastCreated === "string"
       ? req.query.lastCreated
@@ -1371,7 +1412,7 @@ app.post("/createReply", authenticateToken, upload.single("attachment"), async (
   const { postId, parentReplyId, charId, content } = req.body;
   const convParentReplyId = parentReplyId != undefined ? parentReplyId : null;
   const attachmentName = req.file?.filename ?? null;
-  const owner_id = 1;
+  const userId = req.user.id;
 
   type LexicalNode = {
     type: string;
@@ -1427,7 +1468,7 @@ app.post("/createReply", authenticateToken, upload.single("attachment"), async (
     const result = await db.query(
       `INSERT INTO replies (owner_id, post_id, parent_reply_id, character_id, content, raw_text, attachment) 
       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING post_id`, 
-      [owner_id, postId, convParentReplyId, charId, content, rawText, attachmentName]);
+      [userId, postId, convParentReplyId, charId, content, rawText, attachmentName]);
 
     // Increment parent reply total number of replies, or the post total if replying to a post
     // ToDo: Chain totals up a reply stack? Might be a bit complicated
@@ -1458,7 +1499,7 @@ app.post("/createReply", authenticateToken, upload.single("attachment"), async (
 app.post("/editReply", authenticateToken, upload.single("attachment"), async (req, res) => {
   const { replyId, content, updateAttachment } = req.body;
   const attachmentName = req.file?.filename ?? null;
-  const owner_id = 1;
+  const userId = req.user.id;
 
   type LexicalNode = {
     type: string;
@@ -1511,7 +1552,7 @@ app.post("/editReply", authenticateToken, upload.single("attachment"), async (re
       SET content = $3,
       raw_text = $4`
 
-    const params = [owner_id, replyId, content, rawText];
+    const params = [userId, replyId, content, rawText];
 
     if (updateAttachment) {
       query += `, attachment = $5`
@@ -1534,7 +1575,7 @@ app.post("/editReply", authenticateToken, upload.single("attachment"), async (re
 // Retrieve a reply
 app.get("/reply", authenticateToken, async (req, res) => {
   const { replyId } = req.query;
-  const userId = 1;
+  const userId = req.user.id;
 
   try {
     const search = await db.query(
@@ -1615,7 +1656,7 @@ app.get("/replies", authenticateToken, async (req, res) => {
   const postId = Number(req.query.postId);
   const parentReplyId = req.query.parentReplyId ? Number(req.query.parentReplyId) : null;
   const lastId = req.query.lastId ? Number(req.query.lastId) : null;
-  const userId = 1;
+  const userId = req.user.id;
 
   let search: QueryResult<any>;
   try {
@@ -1751,7 +1792,7 @@ app.get("/replies", authenticateToken, async (req, res) => {
   // Either add reaction, update reaction from opposite, or undo previous reaction
 app.post("/react", authenticateToken, async (req, res) => {
   const { postId, replyId, reactionType, reactionValue } = req.body;
-  const userId = 1;
+  const userId = req.user.id;
 
   // Defining whether a post or reply reaction, for use in queries
   const isReply = replyId != null;
@@ -2060,8 +2101,6 @@ app.get("/trending", authenticateToken, async (req, res) => {
 });
 
 app.get("/recentActivity", authenticateToken, async (req, res) => {
-
-  
   const { rows: result } = await db.query(`
     SELECT
       -- posts

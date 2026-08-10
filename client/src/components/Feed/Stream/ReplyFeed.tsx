@@ -2,6 +2,8 @@ import styled, { css, keyframes } from 'styled-components';
 import {  useState, useEffect, useRef, useCallback } from 'react';
 import axios from "axios";
 
+import { useAuth } from '../../../context/AuthContext';
+
 import Reply from './Reply';
 import CreatePostMenu from './CreatePostMenu';
 
@@ -112,6 +114,8 @@ const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, reply
   const [loading, setLoading] = useState(false);
   const observerRef = useRef<HTMLDivElement | null>(null);
 
+  const { accessToken } = useAuth();
+
   // Animation parameters
   const [visible, setVisible] = useState(false);
 
@@ -122,7 +126,8 @@ const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, reply
     try {
       const { data } = await axios.get<ReplyType[]>(`${backendUrl}/replies`, 
         {
-          params: { postId: postId, parentReplyId: parentReplyId, lastId: lastId }
+          params: { postId: postId, parentReplyId: parentReplyId, lastId: lastId },
+          headers: { Authorization: `Bearer ${accessToken}`}
         }
       );
 

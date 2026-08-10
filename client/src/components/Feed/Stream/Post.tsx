@@ -2,6 +2,8 @@ import styled, { keyframes } from 'styled-components';
 import { useState, useEffect, useRef } from 'react';
 import axios from "axios";
 
+import { useAuth } from '../../../context/AuthContext.tsx';
+
 import CharacterImage from '../../General/CharacterImage.tsx';
 import TextEditor from '../Stream/TextEditor.tsx';
 import ReplyFeed from '../Stream/ReplyFeed.tsx';
@@ -132,6 +134,8 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
     postData.replyChain ?? null
   );
 
+  const { accessToken } = useAuth();
+
   // Props for handling post editing
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [attachment, setAttachment] = useState<File | null>(null);
@@ -161,7 +165,8 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
 
       await axios.post(`${backendUrl}/editPost`, formData, {
         headers: {
-          "Content-Type": "multipart/form-data"
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${accessToken}`
         }
       });
 

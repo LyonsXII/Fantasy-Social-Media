@@ -2,6 +2,8 @@ import styled, { css, keyframes } from 'styled-components';
 import { useState, useEffect, useRef } from 'react';
 import axios from "axios";
 
+import { useAuth } from '../../../context/AuthContext';
+
 import Search from '../../General/Search';
 import TextEditor from './TextEditor';
 
@@ -125,6 +127,8 @@ const CreatePostMenu = ({ mode, height, numSuggestions, depth, postId, parentRep
   const maxSize = 5 * 1024 * 1024;
   const allowedTypes = ["image/png", "image/jpg", "image/jpeg", "image/webp"];
 
+  const { accessToken } = useAuth();
+
   // Animation parameters
   const [visible, setVisible] = useState(false);
 
@@ -140,7 +144,8 @@ const CreatePostMenu = ({ mode, height, numSuggestions, depth, postId, parentRep
 
       await axios.post(`${backendUrl}/createPost`, formData, {
         headers: {
-          "Content-Type": "multipart/form-data"
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${accessToken}`
         }
       });
 
@@ -173,7 +178,8 @@ const CreatePostMenu = ({ mode, height, numSuggestions, depth, postId, parentRep
 
       await axios.post(`${backendUrl}/createReply`, formData, {
         headers: {
-          "Content-Type": "multipart/form-data"
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${accessToken}`
         }
       });
 

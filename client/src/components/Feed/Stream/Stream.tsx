@@ -2,6 +2,8 @@ import styled from 'styled-components';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import axios from "axios";
 
+import { useAuth } from '../../../context/AuthContext';
+
 import CreatePostMenu from './CreatePostMenu';
 import CharactersMenu from '../CharactersMenu';
 import Post from './Post';
@@ -88,10 +90,13 @@ const Stream = ({ streamRef, showCreatePostMenu, setShowCreatePostMenu, playCrea
   const [loading, setLoading] = useState(false);
   const observerRef = useRef<HTMLDivElement | null>(null);
 
+  const { accessToken } = useAuth();
+
   const fetchPosts = useCallback(async () => {
     if (loading || !furtherContentAvailable) return;
 
     setLoading(true);
+
     try {
       const params: any = {};
 
@@ -115,11 +120,14 @@ const Stream = ({ streamRef, showCreatePostMenu, setShowCreatePostMenu, playCrea
         params.propertyId = propertyFilter;
       }
 
-      console.log(endpoint, params);
-
       const { data } = await axios.get<PostType[]>(
         `${backendUrl}${endpoint}`,
-        { params }
+        { 
+          params,
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        }
       );
 
       const postsArray = data ?? [];
@@ -151,7 +159,17 @@ const Stream = ({ streamRef, showCreatePostMenu, setShowCreatePostMenu, playCrea
 
   async function updatePost(postId: number) {
     try {
-      const { data } = await axios.get(`${backendUrl}/post`, { params: {postId: postId} });
+      const { data } = await axios.get(
+        `${backendUrl}/post`,
+        {
+          params: {
+            postId: postId,
+          },
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          },
+        }
+      );
       setPosts(prev =>
         prev.map(item =>
           item.postId === postId ? { ...item, ...data } : item

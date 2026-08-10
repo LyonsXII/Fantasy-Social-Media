@@ -3,6 +3,8 @@ import { useState } from 'react';
 import type { ComponentType, SVGProps } from 'react';
 import axios from "axios";
 
+import { useAuth } from '../../../context/AuthContext';
+
 import EmojiBar from './EmojiBar';
 
 import RepliesIcon from "../../../assets/icons/replies.svg?react";
@@ -141,6 +143,8 @@ const PostActions = ({ postData, currentEmojiReaction, updatePost, repliesExpand
   const [emojied, setEmojied] = useState(postData.isEmojied);
   const [emojiExpanded, setEmojiExpanded] = useState(false);
 
+  const { accessToken } = useAuth();
+  
   function convertCounts(num: number): string {
     if (num < 1000) {
       return num.toString();
@@ -166,17 +170,26 @@ const PostActions = ({ postData, currentEmojiReaction, updatePost, repliesExpand
 
     try {
       // Update post details in database then refetch latest counts
-      await axios.post(`${backendUrl}/react`, {
-        "postId": convPostId,
-        "replyId": convReplyId,
-        "reactionType": reactionType,
-        "reactionValue": reactionValue
-      });
+      await axios.post(`${backendUrl}/react`, 
+        {
+          "postId": convPostId,
+          "replyId": convReplyId,
+          "reactionType": reactionType,
+          "reactionValue": reactionValue
+        },
+          { 
+            headers: {
+              Authorization: `Bearer ${accessToken}`
+            }
+          }
+        );
+
       if (convReplyId != null) {
         updatePost(convReplyId);
       } else if (convPostId != null) {
         updatePost(convPostId);
       }
+
     } catch (error) {
       switch(reactionType) {
         case 'like':
