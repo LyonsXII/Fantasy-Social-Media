@@ -1,5 +1,5 @@
-import styled from 'styled-components';
-import { useEffect } from 'react';
+import styled, { css } from 'styled-components';
+import { useState, useEffect } from 'react';
 
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import type { InitialConfigType } from '@lexical/react/LexicalComposer';
@@ -26,6 +26,7 @@ const StyledEditableContent = styled(ContentEditable)<{ $showMenu?: boolean, $mi
   height: 100%;
   width: 100%;
   padding: 0.6rem;
+  padding-bottom: 3rem;
   font-size: 1rem;
   border: ${({ $showMenu, $minimalist }) => {
     if ($showMenu) return "1px solid black";
@@ -34,6 +35,7 @@ const StyledEditableContent = styled(ContentEditable)<{ $showMenu?: boolean, $mi
   }};
   border-radius: ${({ $minimalist }) => ($minimalist ? "0" : "0 0 1.2rem 1.2rem")};
   overflow-y: auto;
+    padding-bottom: 3rem;
 
   &:focus {
     outline: none;
@@ -43,10 +45,10 @@ const StyledEditableContent = styled(ContentEditable)<{ $showMenu?: boolean, $mi
   -webkit-tap-highlight-color: transparent;
 `;
 
-const StyledPlaceholder = styled.div`
+const StyledPlaceholder = styled.div<{ $minimalist?: boolean }>`
   position: absolute;
   left: 0.6rem;
-  top: 60px;
+  top: ${({ $minimalist }) => $minimalist ? "10px" : "60px"};
   color: rgba(0,0,0,0.8);
 `;
 
@@ -58,13 +60,23 @@ const StyledEditorContainer = styled.div<{ $minimalist?: boolean }>`
   width: 100%;
 `;
 
-const CustomPlaceholder = () => {
-    return (
-      <StyledPlaceholder>
-          Enter some text...
-      </StyledPlaceholder>
-    )
-};
+const StyledMessageText = styled.div<{ $showMessageText : boolean, $minimalist?: boolean }>`
+  position: absolute;
+  bottom: ${({ $minimalist }) => $minimalist ? "2.8rem" : "0.6rem"};
+  ${({ $minimalist }) =>
+    $minimalist
+      ? css`
+          left: 0.6rem;
+        `
+      : css`
+          right: 2rem;
+          text-align: right;
+        `};
+  height: 1rem;
+  width: calc(100% - 6rem);
+  font-size: 1rem;
+  opacity: 0.8;
+`;
 
 const EditablePlugin = ({ editable }: { editable: boolean }) => {
   const [editor] = useLexicalComposerContext();
@@ -101,6 +113,8 @@ type TextEditorProps = {
 
 const TextEditor = (props : TextEditorProps) => {
   const { showMenu, content, minimalist, closeMenu } = props;
+  const [messageText, setMessageText] = useState<string>("");
+  const [showMessageText, setShowMessageText] = useState<boolean>(false);
 
   const lexicalConfig: InitialConfigType = {
       namespace: showMenu ? "Create post text editor" : "Post viewer",
@@ -123,9 +137,34 @@ const TextEditor = (props : TextEditorProps) => {
       }
   }
 
+  const CustomPlaceholder = () => {
+      return (
+        <StyledPlaceholder $minimalist={minimalist}>
+            Enter some text...
+        </StyledPlaceholder>
+      )
+  };
+
   const CustomContent = (
     <StyledEditableContent $showMenu={showMenu} $minimalist={minimalist}/>
   );
+
+  // Show message text popup temporarily
+  useEffect(() => {
+    if (messageText != "") {
+      setShowMessageText(true)
+      const timer = setTimeout(() => {
+        setMessageText("");
+        setShowMessageText(false);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [messageText]);
+
+  useEffect(() => {
+    console.log(content);
+  }, [content])
 
   return (
     <StyledMainContainer>
@@ -138,6 +177,7 @@ const TextEditor = (props : TextEditorProps) => {
               minimalist={minimalist}
               size={minimalist ? "small" : "large"}
               onSubmit={props.createPost}
+              setMessageText={setMessageText}
               openPicker={props.openPicker}
               handleAttachment={props.handleAttachment}
               removeAttachment={props.removeAttachment}
@@ -156,6 +196,10 @@ const TextEditor = (props : TextEditorProps) => {
           {showMenu && <HistoryPlugin/>}
         </StyledEditorContainer>
       </LexicalComposer>
+
+      <StyledMessageText $showMessageText={showMessageText} $minimalist={minimalist}>
+        {messageText}
+      </StyledMessageText>
     </StyledMainContainer>
   );
 }

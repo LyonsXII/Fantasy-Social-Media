@@ -154,7 +154,9 @@ const CreatePostMenu = ({ mode, height, numSuggestions, depth, postId, parentRep
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response) {
-          setMessageText(error.response.data.error);
+          throw new Error(
+            error.response?.data?.error ?? "Failed to update post"
+          );
         }
       }
     }
@@ -188,7 +190,9 @@ const CreatePostMenu = ({ mode, height, numSuggestions, depth, postId, parentRep
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response) {
-          setMessageText(error.response.data.error);
+          throw new Error(
+            error.response?.data?.error ?? "Failed to update post"
+          );
         }
       }
     }
@@ -266,6 +270,7 @@ const CreatePostMenu = ({ mode, height, numSuggestions, depth, postId, parentRep
             createPost={mode === "post" ? createPost : createReply} 
             showMenu={true}
             closeMenu={closeMenu}
+            minimalist={false} 
             openPicker={openPicker}
             handleAttachment={handleAttachment}
             removeAttachment={removeAttachment}

@@ -90,6 +90,7 @@ type TextEditorCustomTextActionsProps = {
   minimalist?: boolean;
   size?: string;
   onSubmit?: (postData: any) => Promise<void>;
+  setMessageText: (text: string) => void;
   openPicker: () => void | undefined;
   handleAttachment: (e: React.ChangeEvent<HTMLInputElement>) => void | undefined;
   removeAttachment?: () => void;
@@ -97,7 +98,7 @@ type TextEditorCustomTextActionsProps = {
   attachmentName?: string;
 };
 
-export const TextEditorCustomTextActions = ({closeMenu, minimalist, size, onSubmit, openPicker, handleAttachment, removeAttachment, fileInputRef, attachmentName} : TextEditorCustomTextActionsProps) => {
+export const TextEditorCustomTextActions = ({closeMenu, minimalist, size, onSubmit, setMessageText, openPicker, handleAttachment, removeAttachment, fileInputRef, attachmentName} : TextEditorCustomTextActionsProps) => {
   const [editor] = useLexicalComposerContext();
   const [active, setActive] = useState({
     bold: false,
@@ -188,8 +189,17 @@ export const TextEditorCustomTextActions = ({closeMenu, minimalist, size, onSubm
           $minimalist={minimalist}
           onClick={async () => {
             const json = editor.getEditorState().toJSON();
-            await onSubmit?.(json);
-            closeMenu(false);
+
+            try {
+              await onSubmit?.(json);
+              closeMenu(false);
+            } catch (error) {
+              if (error instanceof Error) {
+                setMessageText(error.message);
+              } else {
+                setMessageText("Failed to update post");
+              }
+            }
         }}>
           {minimalist ? "Update Post" : "Post"}
           <StyledConfirmIcon $size={size}/>

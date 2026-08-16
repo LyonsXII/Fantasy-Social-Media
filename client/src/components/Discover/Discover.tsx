@@ -26,8 +26,9 @@ const StyledOption = styled.div`
   padding: 1.6rem 1.6rem 1.6rem 1.6rem;
   gap: 0.6rem;
   background: white;
-  border: 1px solid rgba(0,0,0,0.06);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+  border-radius: 0.8rem 0rem 0rem 0.8rem;
   overflow: hidden;
   cursor: pointer;
 

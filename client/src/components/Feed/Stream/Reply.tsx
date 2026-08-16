@@ -57,8 +57,9 @@ const StyledMainPostContainer = styled.div<{ $depth: number }>`
 
     return `hsl(255, 0%, ${baseLightness - (cappedDepth * step)}%)`;
   }};
-  border: 1px solid rgba(0,0,0,0.06);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+  border-radius: 0.8rem;
   overflow: hidden;
   cursor: pointer;
 
@@ -177,7 +178,9 @@ const Reply = ({ replyData, updateReply, updatePost, override, depth } : ReplyPr
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response) {
-          console.log(error.response.data.error);
+          throw new Error(
+            error.response?.data?.error ?? "Failed to update post"
+          );
         }
       }
     }
@@ -238,7 +241,7 @@ const Reply = ({ replyData, updateReply, updatePost, override, depth } : ReplyPr
           />
           <StyledTextContainer $editExpanded={editExpanded}>
             <StyledCharacterName>
-              {replyData.name}_{replyData.replyId}
+              {replyData.name}
             </StyledCharacterName>
 
             {replyData.content != "" && 

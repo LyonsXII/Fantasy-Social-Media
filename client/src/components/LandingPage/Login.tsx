@@ -103,7 +103,7 @@ const Login = ({ handleLogin } : LoginRouteProps) => {
         }
       );
 
-      login(response.data.accessToken);
+      login(response.data.accessToken, response.data.id);
 
     } catch (error) {
       if (axios.isAxiosError(error)) {

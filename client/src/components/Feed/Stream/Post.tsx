@@ -49,8 +49,10 @@ const StyledMainPostContainer = styled.div`
   width: 100%;
   gap: 0.6rem;
   background: white;
-  border: 1px solid rgba(0,0,0,0.06);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+  border-radius: 0.8rem;
   overflow: hidden;
   cursor: pointer;
 
@@ -60,6 +62,22 @@ const StyledMainPostContainer = styled.div`
     box-shadow: 
     0 6px 20px rgba(0,0,0,0.06),
     0px 4px 4px rgba(0,0,0,0.1);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    width: 320px;
+    height: 100%;
+    max-height: 200px;
+    right: 240px;
+    bottom: 0;
+
+    background: url('/images/property/star wars.png');
+    background-repeat: no-repeat;
+    background-size: cover;
+    opacity: 0.10;
+    pointer-events: none;
   }
 `
 
@@ -134,7 +152,7 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
     postData.replyChain ?? null
   );
 
-  const { accessToken } = useAuth();
+  const { accessToken, userId } = useAuth();
 
   // Props for handling post editing
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -174,7 +192,9 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response) {
-          console.log(error.response.data.error);
+          throw new Error(
+            error.response?.data?.error ?? "Failed to update post"
+          );
         }
       }
     }
@@ -236,8 +256,7 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
 
           <StyledTextContainer $editExpanded={editExpanded}>
             <StyledCharacterName>
-              {postData.name}_
-              {postData.postId}
+              {postData.name}
             </StyledCharacterName>
 
             {postData.content != "" && 
@@ -277,9 +296,12 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
         />
 
         <StyledEditContainer>
-          <StyledButton onClick={() => setEditExpanded(prev => !prev)}>
-            Edit
-          </StyledButton>
+          {postData.ownerId == userId && 
+            <StyledButton onClick={() => setEditExpanded(prev => !prev)}>
+              Edit
+            </StyledButton>
+          }
+
           <StyledTimestampsContainer>
             {postData.createdAt &&
               <StyledDataText>

@@ -62,6 +62,7 @@ export type EmojiEntry = {
 
 export type PostType = {
   postId: number;
+  ownerId: number;
   name: string;
   image: string;
   content: string;

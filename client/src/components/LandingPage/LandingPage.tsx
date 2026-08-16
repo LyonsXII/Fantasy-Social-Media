@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useState } from 'react';
-import styled, { keyframes, css } from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 
 import Login from './Login.tsx';
 // import Marquee from './Marquee.tsx';
@@ -253,7 +253,7 @@ const StyledCompass = styled.img<{$size: string, $highlighted?: boolean, $active
 
 const LandingPage = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, userId } = useAuth();
 
   const [mouseInitialized, setMouseInitialized] = useState(false);
 
@@ -263,7 +263,9 @@ const LandingPage = () => {
   const [compassActive, setCompassActive] = useState(false);
 
   async function handleLogin(token: string) {
-    login(token);
+    if (userId) {
+      login(token, userId);
+    }
     navigate('/feed');
   }
 

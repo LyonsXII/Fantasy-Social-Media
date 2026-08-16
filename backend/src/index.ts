@@ -151,7 +151,6 @@ app.post("/login", async(req, res) => {
       maxAge: 1000 * 60 * 60 * 24 * 30
     });
 
-    console.log("login successful");
     res.status(200).json({ id: user.user_id, accessToken })
   } catch(err) {
     console.log(err);
@@ -209,7 +208,7 @@ app.post("/refresh", async (req, res) => {
 
     const accessToken = jwt.sign({id: session.user_id}, process.env.JWT_SECRET!, {expiresIn: "15m"});
 
-    res.status(200).json({accessToken});
+    res.status(200).json({ id: session.user_id, accessToken })
 
   } catch (err) {
     console.error(err);
@@ -640,7 +639,7 @@ app.post("/createPost", authenticateToken, upload.single("attachment"), async (r
 
   // Bad inputs
   if (!content) return res.status(400).json({ error: "Missing content"});
-  if (charId === null || rawText.length === 0) return res.status(400).json({ error: "Missing character or text"});
+  if (charId === "null" || rawText.length === 0) return res.status(400).json({ error: "Missing character or text"});
   if (rawText.length > 280) return res.status(400).json({ error: "Too many characters"});
 
   try {
@@ -819,6 +818,7 @@ app.get("/feed", authenticateToken, async (req, res) => {
     let query = 
     `SELECT 
       p.post_id,
+      p.owner_id,
       c.name, 
       c.image, 
       p.content, 
@@ -919,6 +919,7 @@ app.get("/feed", authenticateToken, async (req, res) => {
 
     const result = search.rows.map(row => ({
       postId: row.post_id,
+      ownerId: row.owner_id,
       name: row.name,
       image: row.image,
       content: row.content,
@@ -1460,6 +1461,7 @@ app.post("/createReply", authenticateToken, upload.single("attachment"), async (
   // Bad inputs
   if (!postId && !parentReplyId) return res.status(400).json({ error: "Missing parent to reply to"});
   if (!content) return res.status(400).json({ error: "Missing content"});
+  if (charId === "null" || rawText.length === 0) return res.status(400).json({ error: "Missing character or text"});
   if (rawText.length > 280) return res.status(400).json({ error: "Too many characters"});
 
   try {
@@ -2000,7 +2002,7 @@ app.post("/react", authenticateToken, async (req, res) => {
   }
 });
 
-app.get("/trending", authenticateToken, async (req, res) => {
+app.get("/trending", async (req, res) => {
   try {
     // Pulling 30 most recent data sources with different weighting for posts / replies / reaction types
     const { rows: result } = await db.query(
@@ -2100,7 +2102,7 @@ app.get("/trending", authenticateToken, async (req, res) => {
   }
 });
 
-app.get("/recentActivity", authenticateToken, async (req, res) => {
+app.get("/recentActivity", async (req, res) => {
   const { rows: result } = await db.query(`
     SELECT
       -- posts

@@ -3,9 +3,10 @@ import type { ReactNode } from "react";
 
 type AuthContextType = {
   accessToken: string | null;
+  userId: number | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (accessToken: string) => void;
+  login: (accessToken: string, userId: number) => void;
   logout: () => Promise<void>;
   refreshAccessToken: () => Promise<boolean>;
 };
@@ -27,9 +28,13 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const login = (accessToken: string) => {setAccessToken(accessToken)};
+  const login = (accessToken: string, userId: number) => {
+    setAccessToken(accessToken);
+    setUserId(userId);
+  };
 
   const logout = async () => {
     try {
@@ -41,6 +46,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.error("Logout failed:", error);}
     finally {
       setAccessToken(null);
+      setUserId(null);
     }
   };
 
@@ -56,17 +62,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       if (!response.ok) {
         setAccessToken(null);
+        setUserId(null);
         return false;
       }
 
       const data = await response.json();
 
       setAccessToken(data.accessToken);
+      setUserId(data.id);
 
       return true;
     } catch (error) {
       console.error("Token refresh failed:", error);
       setAccessToken(null);
+      setUserId(null);
       return false;
     }
   };
@@ -74,13 +83,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const value = useMemo(
     () => ({
       accessToken,
+      userId,
       isAuthenticated: !!accessToken,
       isLoading,
       login,
       logout,
       refreshAccessToken,
     }),
-    [accessToken, isLoading]
+    [accessToken, userId, isLoading]
   );
 
   // Refresh access token on page load
@@ -92,6 +102,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     initialise();
   }, []);
+
+  useEffect(() => {
+    console.log(userId);
+  }, [userId]);
 
   return (
     <AuthContext.Provider value={value}>
