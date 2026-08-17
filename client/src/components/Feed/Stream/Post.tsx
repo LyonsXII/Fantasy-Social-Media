@@ -138,7 +138,7 @@ const StyledTimestampsContainer = styled.div`
 `
 
 type PostProps = {
-  postData: PostType
+  postData: PostType;
   updatePost: (postId: number) => void;
   override?: boolean;
 }
