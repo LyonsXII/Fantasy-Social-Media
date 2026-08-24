@@ -36,8 +36,9 @@ const StyledMainContainer = styled.div<{$visible: boolean, $entering: boolean}>`
   max-height: ${({ $visible }) => $visible ? "calc(100dvh - 0.6rem)" : "0px"};
   width: 100%;
   background: white;
-  border: 1px solid rgba(0,0,0,0.06);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+  border-radius: 0.8rem;
   /* overflow: hidden; */
 
   transition: box-shadow 0.2s ease, max-height 1s ease;

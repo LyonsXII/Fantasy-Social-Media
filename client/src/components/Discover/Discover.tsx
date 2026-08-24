@@ -14,6 +14,13 @@ const StyledMainContainer = styled.div`
   width: 100%;
   padding: 0.6rem 0rem 0 0rem;
   gap: 0.6rem;
+
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `;
 
 const StyledOption = styled.div`

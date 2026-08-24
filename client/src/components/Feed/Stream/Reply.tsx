@@ -2,6 +2,8 @@ import styled, { keyframes } from 'styled-components';
 import { useState, useEffect, useRef } from 'react';
 import axios from "axios";
 
+import { useAuth } from '../../../context/AuthContext.tsx';
+
 import CharacterImage from '../../General/CharacterImage';
 import TextEditor from './TextEditor';
 import PostReactions from './PostReactions';
@@ -134,9 +136,10 @@ type ReplyProps = {
   updatePost: (postId: number) => void;
   override?: boolean;
   depth: number;
+  anonymous?: boolean;
 }
 
-const Reply = ({ replyData, updateReply, updatePost, override, depth } : ReplyProps) => {
+const Reply = ({ replyData, updateReply, updatePost, override, depth, anonymous } : ReplyProps) => {
   const [repliesExpanded, setRepliesExpanded] = useState(false);
   const [replyExpanded, setReplyExpanded] = useState(false);
   const [editExpanded, setEditExpanded] = useState(false);
@@ -153,6 +156,8 @@ const Reply = ({ replyData, updateReply, updatePost, override, depth } : ReplyPr
   const [playRepliesExit, setPlayRepliesExit] = useState(false);
   const replyFeedRef = useRef<HTMLDivElement | null>(null);
   const [replyFeedHeight, setReplyFeedHeight] = useState(0);
+
+  const { userId } = useAuth();
 
   async function editReply(content: any){
     try {
@@ -276,12 +281,15 @@ const Reply = ({ replyData, updateReply, updatePost, override, depth } : ReplyPr
           setReplyExpanded={setReplyExpanded}
           currentEmojiReaction={replyData.currentEmojiReaction}
           setPlayRepliesExit={setPlayRepliesExit}
+          anonymous={anonymous}
         />
 
         <StyledEditContainer>
-          <StyledButton onClick={() => setEditExpanded(prev => !prev)}>
-            Edit
-          </StyledButton>
+          {replyData.owner_id == userId && 
+            <StyledButton onClick={() => setEditExpanded(prev => !prev)}>
+              Edit
+            </StyledButton>
+          }
           <StyledTimestampsContainer>
             {replyData.createdAt &&
               <StyledDataText>
@@ -329,6 +337,7 @@ const Reply = ({ replyData, updateReply, updatePost, override, depth } : ReplyPr
           replyFeedRef={replyFeedRef}
           replyFeedHeight={replyFeedHeight}
           setReplyFeedHeight={setReplyFeedHeight}
+          anonymous={anonymous}
         />
       }
     </StyledMainContainer>

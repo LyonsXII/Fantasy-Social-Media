@@ -1,10 +1,11 @@
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { useState } from 'react';
 import type { ComponentType, SVGProps } from 'react';
 import axios from "axios";
 
 import { useAuth } from '../../../context/AuthContext';
 
+import PopUp from '../../General/PopUp';
 import EmojiBar from './EmojiBar';
 
 import RepliesIcon from "../../../assets/icons/replies.svg?react";
@@ -64,9 +65,15 @@ const createStyledIcon = (IconComponent: ComponentType<SVGProps<SVGSVGElement>>)
   }
 `
 
-const StyledClickableIcon = styled.div`
+const StyledClickableIcon = styled.div<{ $anonymous?: boolean }>`
   display: inline-flex;
   cursor: pointer;
+
+  ${({ $anonymous }) =>
+    $anonymous &&
+    css`
+      display: none;
+    `}
 
   & > svg {
     transition: transform 0.4s ease;
@@ -132,13 +139,15 @@ type PostProps = {
   replyExpanded: boolean;
   setReplyExpanded: React.Dispatch<React.SetStateAction<boolean>>;
   setPlayRepliesExit: (value: boolean) => void;
+  anonymous?: boolean;
 }
 
-const PostActions = ({ postData, currentEmojiReaction, updatePost, repliesExpanded, setRepliesExpanded, replyExpanded, setReplyExpanded, setPlayRepliesExit } : PostProps) => {
+const PostActions = ({ postData, currentEmojiReaction, updatePost, repliesExpanded, setRepliesExpanded, replyExpanded, setReplyExpanded, setPlayRepliesExit, anonymous } : PostProps) => {
   const convPostId = "postId" in postData ? postData.postId : null;
   const convReplyId = "replyId" in postData ? postData.replyId : null;
   const [liked, setLiked] = useState(postData.isLiked);
   const [disliked, setDisliked] = useState(postData.isDisliked);
+  const [shareExpanded, setShareExpanded] = useState(false);
   const [favourited, setFavourited] = useState(postData.isFavourited);
   const [emojied, setEmojied] = useState(postData.isEmojied);
   const [emojiExpanded, setEmojiExpanded] = useState(false);
@@ -214,16 +223,19 @@ const PostActions = ({ postData, currentEmojiReaction, updatePost, repliesExpand
     <StyledMainContainer>
         {!emojiExpanded && <StyledActionBar>
           <StyledActionBarIconContainer>
-            <StyledClickableIcon onClick={() => {
-                if (!replyExpanded) {
-                  setReplyExpanded(true);
-                  setRepliesExpanded(true);
-                }
-                else {
-                  setPlayRepliesExit(true);
+            <StyledClickableIcon 
+              onClick={() => {
+                  if (!replyExpanded) {
+                    setReplyExpanded(true);
+                    setRepliesExpanded(true);
+                  }
+                  else {
+                    setPlayRepliesExit(true);
+                  }
                 }
               }
-            }>
+              $anonymous={anonymous}
+            >
               <StyledReplyIcon/>
             </StyledClickableIcon>
 
@@ -233,6 +245,7 @@ const PostActions = ({ postData, currentEmojiReaction, updatePost, repliesExpand
                   setPlayRepliesExit(true);
                 }
               }
+              
             }>
               <StyledRepliesIcon/>
             </StyledClickableIcon>
@@ -242,19 +255,33 @@ const PostActions = ({ postData, currentEmojiReaction, updatePost, repliesExpand
           </StyledActionBarIconContainer>
 
           <StyledActionBarIconContainer>
-            <StyledClickableIcon>
-              <StyledShareIcon/>
-            </StyledClickableIcon>
+            {!shareExpanded &&
+              <StyledClickableIcon onClick={() => {setShareExpanded(true)}}>
+                <StyledShareIcon/>
+              </StyledClickableIcon>
+            }
+            {shareExpanded && 
+              <PopUp 
+                width="400px"
+                text={`http://localhost:5173/post/${postData.postId}`}
+                closeAction={setShareExpanded}
+              />
+            }
           </StyledActionBarIconContainer>
 
           <StyledActionBarIconContainer onClick={() => {reactToPost("favourite")}}>
-            <StyledClickableIcon>
+            <StyledClickableIcon $anonymous={anonymous}>
               <StyledFavouriteIcon $active={favourited} $activeColour="yellow"/>
             </StyledClickableIcon>
           </StyledActionBarIconContainer>
 
           <StyledActionBarIconContainer>
-            <StyledClickableIcon onClick={() => {setEmojiExpanded(prev => !prev)}}>
+            <StyledClickableIcon 
+              onClick={() => {
+                if (!anonymous) {
+                  setEmojiExpanded(prev => !prev);
+                }
+              }}>
               <StyledHeartIcon $active={emojied} $activeColour="red"/>
             </StyledClickableIcon>
             <StyledActionBarText>
@@ -268,9 +295,11 @@ const PostActions = ({ postData, currentEmojiReaction, updatePost, repliesExpand
                 $active={liked} 
                 $activeColour="green" 
                 onClick={() => {
-                  reactToPost("like");
-                  if (disliked) {
-                    setDisliked(false);
+                  if (!anonymous) {
+                    reactToPost("like");
+                    if (disliked) {
+                      setDisliked(false);
+                    }
                   }
               }}/>
             </StyledClickableIcon>
@@ -283,9 +312,11 @@ const PostActions = ({ postData, currentEmojiReaction, updatePost, repliesExpand
                 $active={disliked} 
                 $activeColour="red" 
                 onClick={() => {
-                  reactToPost("dislike");
-                  if (liked) {
-                    setLiked(false);
+                  if (!anonymous) {
+                    reactToPost("dislike");
+                    if (liked) {
+                      setLiked(false);
+                    }
                   }
                 }}/>
             </StyledClickableIcon>

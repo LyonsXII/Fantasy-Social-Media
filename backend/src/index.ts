@@ -740,6 +740,8 @@ app.get("/post", authenticateToken, async (req, res) => {
   try {
     const search = await db.query(
       `SELECT
+        p.post_id,
+        owner_id,
         name,
         image,
         content,
@@ -782,6 +784,86 @@ app.get("/post", authenticateToken, async (req, res) => {
     const row = search.rows[0];
 
     const result = {
+      postId: row.post_id,
+      ownerId: row.owner_id,
+      name: row.name,
+      image: row.image,
+      content: row.content,
+      replies: row.replies,
+      emojis: row.emojis,
+      likes: row.likes,
+      dislikes: row.dislikes,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      attachment: row.attachment ? "uploads/" + row.attachment : undefined,
+      isLiked: row.isLiked,
+      isDisliked: row.isDisliked,
+      isFavourited: row.isFavourited,
+      isEmojied: row.isEmojied,
+      emojiCounts: Object.entries(row.emoji_counts || {})
+        .map(([reaction, count]) => ({
+          reaction,
+          count: Number(count),
+        }))
+        .sort((a, b) => b.count - a.count),
+      currentEmojiReaction: row.current_emoji_reaction
+    };
+
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Retrieve a post
+app.get("/postAnonymous", async (req, res) => {
+  const postId = Number(req.query.postId);
+
+  try {
+    const search = await db.query(
+      `SELECT
+        p.post_id,
+        owner_id,
+        name,
+        image,
+        content,
+        replies,
+        emojis,
+        likes,
+        dislikes,
+        p.created_at,
+        updated_at,
+        p.attachment,
+        ec.emoji_counts
+      FROM posts p
+      INNER JOIN characters c ON p.character_id = c.char_id
+      LEFT JOIN (
+        SELECT
+          post_id,
+          json_object_agg(reaction_value, count) AS emoji_counts
+        FROM (
+          SELECT
+            post_id,
+            reaction_value,
+            COUNT(*) AS count
+          FROM post_reactions
+          WHERE reply_id IS NULL
+            AND reaction = 'emoji'
+            AND post_id = $1
+          GROUP BY post_id, reaction_value
+        ) t
+        GROUP BY post_id
+      ) ec ON ec.post_id = p.post_id
+      WHERE p.post_id = $1;`,
+      [postId]
+    );
+
+    const row = search.rows[0];
+
+    const result = {
+      postId: row.post_id,
+      ownerId: row.owner_id,
       name: row.name,
       image: row.image,
       content: row.content,
@@ -797,9 +879,10 @@ app.get("/post", authenticateToken, async (req, res) => {
           reaction,
           count: Number(count),
         }))
-        .sort((a, b) => b.count - a.count),
-      currentEmojiReaction: row.current_emoji_reaction
+        .sort((a, b) => b.count - a.count)
     };
+
+    console.log(result);
 
     res.json(result);
   } catch (err) {
@@ -1781,6 +1864,100 @@ app.get("/replies", authenticateToken, async (req, res) => {
         }))
         .sort((a, b) => b.count - a.count),
       currentEmojiReaction: row.current_emoji_reaction
+    }));
+
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Retrieve multiple replies for reply feed
+app.get("/repliesAnonymous", async (req, res) => {
+  const postId = Number(req.query.postId);
+  const parentReplyId = req.query.parentReplyId ? Number(req.query.parentReplyId) : null;
+  const lastId = req.query.lastId ? Number(req.query.lastId) : null;
+
+  let search: QueryResult<any>;
+  try {
+    let query = 
+      `SELECT 
+        r.reply_id,
+        r.post_id,
+        r.owner_id,
+        c.name,
+        c.image,
+        r.content,
+        r.replies,
+        r.emojis,
+        r.likes,
+        r.dislikes,
+        r.created_at,
+        r.updated_at,
+        r.attachment,
+        ec.emoji_counts
+
+      FROM replies r
+      INNER JOIN characters c ON r.character_id = c.char_id
+      LEFT JOIN (
+        SELECT
+          reply_id,
+          json_object_agg(reaction_value, count) AS emoji_counts
+        FROM (
+          SELECT
+            reply_id,
+            reaction_value,
+            COUNT(*) AS count
+          FROM post_reactions
+          WHERE reaction = 'emoji'
+          GROUP BY reply_id, reaction_value
+        ) t
+        GROUP BY reply_id
+      ) ec ON ec.reply_id = r.reply_id
+      WHERE r.post_id = $1`
+
+    const params: any[] = [postId];
+
+    if (parentReplyId != null) {
+      params.push(parentReplyId)
+      query += ` AND r.parent_reply_id = $${params.length}`;
+    } else {
+      query += ' AND r.parent_reply_id IS NULL'
+    }
+
+    if (lastId !== null) {
+      params.push(lastId);
+      query += ` AND r.reply_id < $${params.length}`;
+    }
+
+    query += `
+      ORDER BY r.created_at DESC, r.reply_id DESC
+      LIMIT 10;
+    `;
+
+    search = await db.query(query, params);
+
+    const result = search.rows.map(row => ({
+      replyId: row.reply_id,
+      postId: row.post_id,
+      owner_id: row.owner_id,
+      name: row.name,
+      image: row.image,
+      content: row.content,
+      replies: row.replies,
+      emojis: row.emojis,
+      likes: row.likes,
+      dislikes: row.dislikes,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      attachment: row.attachment ? "uploads/" + row.attachment : undefined,
+      emojiCounts: Object.entries(row.emoji_counts || {})
+        .map(([reaction, count]) => ({
+          reaction,
+          count: Number(count),
+        }))
+        .sort((a, b) => b.count - a.count)
     }));
 
     res.json(result);

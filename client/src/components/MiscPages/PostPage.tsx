@@ -1,11 +1,11 @@
 import styled from 'styled-components';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom'
 import axios from "axios";
 
-import { useAuth } from '../../context/AuthContext';
-
 import Post from '../Feed/Stream/Post';
+
+import type { PostType } from '../Feed/Stream/Stream';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -13,6 +13,29 @@ const StyledContainer = styled.div`
   display: flex;
   height: 100dvh;
   width: 100dvw;
+  justify-content: center;
+  margin-top: 10dvh;
+
+  overflow-y: auto;
+  scroll-behavior: smooth;
+
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url('/images/Patina.jpg') no-repeat center / cover;
+    opacity: 0.2;
+    z-index: -1;
+  }
+`
+
+const StyledPostContainer = styled.div`
+  width: 80dvw;
 `
 
 export interface CharacterImageProps {
@@ -29,45 +52,18 @@ export type EmojiEntry = {
   count: number;
 };
 
-export type PostType = {
-  postId: number;
-  ownerId: number;
-  name: string;
-  image: string;
-  content: string;
-  replies: number;
-  emojis: number;
-  likes: number;
-  dislikes: number;
-  createdAt: string;
-  updatedAt: string;
-  attachment: string;
-  isLiked: boolean;
-  isDisliked: boolean;
-  isFavourited: boolean;
-  isEmojied: boolean;
-  replyChain?: ReplyType[];
-  emojiCounts: EmojiEntry[];
-  currentEmojiReaction: string;
-}
-
 const PostPage = () => {
   const { postId } = useParams();
   const [post, setPost] = useState<PostType | null>(null);
 
-  const { accessToken } = useAuth();
-
   async function fetchPost(postId: number) {
     try {
       const { data } = await axios.get(
-        `${backendUrl}/post`,
+        `${backendUrl}/postAnonymous`,
         {
           params: {
             postId: postId,
-          },
-          headers: {
-            Authorization: `Bearer ${accessToken}`
-          },
+          }
         }
       );
 
@@ -88,7 +84,12 @@ const PostPage = () => {
   
   return (
     <StyledContainer>
-      {post && <Post key={Number(postId)} postData={post} updatePost={fetchPost} override={false}/>}
+      
+      {post && 
+        <StyledPostContainer>
+          <Post key={Number(postId)} postData={post} updatePost={fetchPost} override={false} anonymous={true}/>
+        </StyledPostContainer>
+      }
     </StyledContainer>
   );
 }

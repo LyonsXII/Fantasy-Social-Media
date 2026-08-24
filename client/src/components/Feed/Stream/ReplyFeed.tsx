@@ -48,12 +48,18 @@ const StyledMainContainer = styled.div<{ $replyExpanded: boolean, $numReplies: n
     `}
 `;
 
-const StyledContentContainer = styled.div`
+const StyledContentContainer = styled.div<{ $anonymous?: boolean }>`
   position: relative;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   gap: 0.2rem;
+
+  ${({ $anonymous }) =>
+    $anonymous &&
+    css`
+      align-items: center;
+    `}
 `
 
 const StyledObserver = styled.div`
@@ -105,9 +111,10 @@ type ReplyFeedProps = {
   replyFeedRef: React.RefObject<HTMLDivElement | null>;
   replyFeedHeight: number;
   setReplyFeedHeight: (value: number) => void;
+  anonymous?: boolean;
 }
 
-const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, replyExpanded, repliesExpanded, setReplyExpanded, updatePost, updateParentReply, playRepliesExit, replyFeedRef, replyFeedHeight, setReplyFeedHeight } : ReplyFeedProps) => {
+const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, replyExpanded, repliesExpanded, setReplyExpanded, updatePost, updateParentReply, playRepliesExit, replyFeedRef, anonymous } : ReplyFeedProps) => {
   const [replies, setReplies] = useState<ReplyType[]>(overrideData ?? []);
   const [lastId, setLastId] = useState<number | null>(null);
   const [furtherContentAvailable, setFurtherContentAvailable] = useState(true);
@@ -121,13 +128,24 @@ const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, reply
 
   const fetchReplies = useCallback(async () => {
     if (loading || !furtherContentAvailable) return;
+    console.log(postId, parentReplyId, lastId);
 
     setLoading(true);
     try {
-      const { data } = await axios.get<ReplyType[]>(`${backendUrl}/replies`, 
+      const route = anonymous ? "repliesAnonymous" : "replies";
+      const { data } = await axios.get<ReplyType[]>(
+        `${backendUrl}/${route}`,
         {
-          params: { postId: postId, parentReplyId: parentReplyId, lastId: lastId },
-          headers: { Authorization: `Bearer ${accessToken}`}
+          params: {
+            postId,
+            parentReplyId,
+            lastId,
+          },
+          ...(!anonymous && {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }),
         }
       );
 
@@ -207,7 +225,7 @@ const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, reply
 
   return (
     <StyledMainContainer $replyExpanded={replyExpanded} $numReplies={replies.length} $entering={!playRepliesExit}  $visible={visible}>
-      <StyledContentContainer ref={replyFeedRef}>
+      <StyledContentContainer ref={replyFeedRef} $anonymous={anonymous}>
         {replyExpanded && !override && 
           <CreatePostMenu 
             mode="reply" 
@@ -230,6 +248,7 @@ const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, reply
                 updatePost={updatePost}
                 override={override ? true : false}
                 depth={depth}
+                anonymous={anonymous}
               />
             ))}
             <StyledObserver ref={observerRef}/>

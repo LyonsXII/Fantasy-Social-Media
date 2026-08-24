@@ -141,12 +141,12 @@ type PostProps = {
   postData: PostType;
   updatePost: (postId: number) => void;
   override?: boolean;
+  anonymous?: boolean;
 }
 
-const Post = ({ postData, updatePost, override } : PostProps) => {
+const Post = ({ postData, updatePost, override, anonymous } : PostProps) => {
   const [repliesExpanded, setRepliesExpanded] = useState(false);
   const [replyExpanded, setReplyExpanded] = useState(false);
-  // const [shareExpanded, setShareExpanded] = useState(false);
   const [editExpanded, setEditExpanded] = useState(false);
   const [overrideData] = useState<ReplyType[] | null>(
     postData.replyChain ?? null
@@ -293,6 +293,7 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
           setReplyExpanded={setReplyExpanded}
           currentEmojiReaction={postData.currentEmojiReaction}
           setPlayRepliesExit={setPlayRepliesExit}
+          anonymous={anonymous}
         />
 
         <StyledEditContainer>
@@ -347,6 +348,7 @@ const Post = ({ postData, updatePost, override } : PostProps) => {
           replyFeedRef={postReplyFeedRef}
           replyFeedHeight={replyFeedHeight}
           setReplyFeedHeight={setReplyFeedHeight}
+          anonymous={anonymous}
         />}
     </StyledMainContainer>
   )
