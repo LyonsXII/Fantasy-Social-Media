@@ -2,8 +2,9 @@ import styled from 'styled-components';
 import type { ComponentType, SVGProps } from 'react';
 
 import CancelIcon from "../../assets/icons/cancel.svg?react";
+import CopyIcon from "../../assets/icons/copy.svg?react";
 
-const StyledMainContainer = styled.div<FlexboxContainerProps>`
+const StyledMainContainer = styled.div<{height?: string, width?: string}>`
   display: flex;
   justify-content: center;
   align-items: center;
@@ -13,44 +14,37 @@ const StyledMainContainer = styled.div<FlexboxContainerProps>`
 
 const StyledTextContainer = styled.div`
   display: flex;
-  justify-content: left;
+  justify-content: center;
   align-items: center;
   height: auto;
   width: 80%;
   background-color: #f1f1f1;
   padding: 0.8rem 1rem 0.6rem 1rem;
   border-radius: 0.4rem;
-  gap: 0.6rem;
+  gap: 1rem;
+  flex: 1;
 
-  overflow-x: auto;
+  /* overflow-x: auto; */
 `
 
-const StyledCopyIcon = styled.div`
-  height: 20px;
-  width: 20px;
-  background-color: blue;
-
-  transition: transform 0.4s ease;
-
-  &:hover {
-    transform: scale(1.05);
-  }
-`
 const createStyledIcon = (IconComponent: ComponentType<SVGProps<SVGSVGElement>>) => styled(IconComponent)<{ $size?: string, $marginLeft?: string }>`
   height: ${({ $size }) => $size ? $size : "2.4rem"};
   width: ${({ $size }) => $size ? $size : "2.4rem"};
   margin-left: ${({ $marginLeft }) => $marginLeft ? $marginLeft : "0"};
   cursor: pointer;
   vertical-align: bottom;
+  flex-shrink: 0;
+  /* border: 1px solid red; */
 
   transition: transform 0.4s ease;
 
   &:hover {
-    transform: scale(1.05);
+    transform: scale(1.1);
   }
 `
 
 const StyledCancelIcon = createStyledIcon(CancelIcon);
+const StyledCopyIcon = createStyledIcon(CopyIcon);
 
 type FlexboxContainerProps = {
   height?: string
@@ -61,11 +55,11 @@ type FlexboxContainerProps = {
 
 const PopUp = ({ height, width, text, closeAction } : FlexboxContainerProps) => {
   return (
-    <StyledMainContainer height={height} width={width} text={text}>
+    <StyledMainContainer height={height} width={width}>
       <StyledTextContainer>
         <StyledCancelIcon $size="20px" onClick={() => closeAction(false)}/>
         {text}
-        <StyledCopyIcon onClick={() => navigator.clipboard.writeText(text)}/>
+        <StyledCopyIcon $size="23px" onClick={() => navigator.clipboard.writeText(text)}/>
       </StyledTextContainer>
     </StyledMainContainer>
   )

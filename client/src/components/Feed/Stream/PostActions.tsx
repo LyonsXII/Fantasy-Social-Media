@@ -262,7 +262,7 @@ const PostActions = ({ postData, currentEmojiReaction, updatePost, repliesExpand
             }
             {shareExpanded && 
               <PopUp 
-                width="400px"
+                width="auto"
                 text={`http://localhost:5173/post/${postData.postId}`}
                 closeAction={setShareExpanded}
               />
