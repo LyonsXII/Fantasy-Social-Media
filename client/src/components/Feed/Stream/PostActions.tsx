@@ -10,7 +10,6 @@ import EmojiBar from './EmojiBar';
 
 import RepliesIcon from "../../../assets/icons/replies.svg?react";
 import ReplyIcon from "../../../assets/icons/reply.svg?react";
-import ShareIcon from "../../../assets/icons/share.svg?react";
 import FavouriteIcon from "../../../assets/icons/favourite.svg?react";
 import HeartIcon from "../../../assets/icons/heart.svg?react";
 import LikeIcon from "../../../assets/icons/like.svg?react";
@@ -122,7 +121,6 @@ const createStyledVoteIcon = (IconComponent: ComponentType<SVGProps<SVGSVGElemen
 
 const StyledRepliesIcon = createStyledIcon(RepliesIcon);
 const StyledReplyIcon = createStyledIcon(ReplyIcon);
-const StyledShareIcon = createStyledIcon(ShareIcon);
 const StyledFavouriteIcon = createStyledIcon(FavouriteIcon);
 const StyledHeartIcon = createStyledIcon(HeartIcon);
 const StyledLikeIcon = createStyledVoteIcon(LikeIcon);
@@ -254,20 +252,12 @@ const PostActions = ({ postData, currentEmojiReaction, updatePost, repliesExpand
             </StyledActionBarText>
           </StyledActionBarIconContainer>
 
-          <StyledActionBarIconContainer>
-            {!shareExpanded &&
-              <StyledClickableIcon onClick={() => {setShareExpanded(true)}}>
-                <StyledShareIcon/>
-              </StyledClickableIcon>
-            }
-            {shareExpanded && 
-              <PopUp 
-                width="auto"
-                text={`http://localhost:5173/post/${postData.postId}`}
-                closeAction={setShareExpanded}
-              />
-            }
-          </StyledActionBarIconContainer>
+          <PopUp
+            width="auto"
+            text={`http://localhost:5173/post/${postData.postId}`}
+            shareExpanded={shareExpanded}
+            setShareExpanded={setShareExpanded}
+          />
 
           <StyledActionBarIconContainer onClick={() => {reactToPost("favourite")}}>
             <StyledClickableIcon $anonymous={anonymous}>
