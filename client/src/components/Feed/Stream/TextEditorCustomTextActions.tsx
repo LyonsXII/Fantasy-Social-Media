@@ -22,14 +22,14 @@ const StyledButtonContainer = styled.div<{$minimalist?: boolean}>`
   display: flex;
   height: fit-content;
   width: 100%;
-  border: 1px solid black;
+  border: ${({ $minimalist }) => $minimalist ? "1px solid grey" : "1px solid black"};
   border-bottom: ${({$minimalist }) => {
     if (!$minimalist) return "none";
   }};
   border-top: ${({$minimalist }) => {
     if ($minimalist) return "none";
   }};
-  border-radius: ${({ $minimalist }) => $minimalist ? "0" : "1.2rem 1.2rem 0 0"};
+  border-radius: ${({ $minimalist }) => $minimalist ? "0 0 0.8rem 0.8rem" : "1.2rem 1.2rem 0 0"};
 `;
 
 const StyledButton = styled.button<{$size?: string, $position?: string, $padding?: string, $active?: boolean, $minimalist?: boolean}>`
@@ -42,9 +42,13 @@ const StyledButton = styled.button<{$size?: string, $position?: string, $padding
   border: none;
   border-radius: ${({ $position, $minimalist }) => {
     if ($position == "first" && !$minimalist) {
-      return "20px 0 0 0";
+      return "1.2rem 0 0 0";
+    } else if ($position == "first" && $minimalist) {
+      return "0 0 0 0.8rem";
     } else if ($position == "last" && !$minimalist) {
-      return "0 20px 0 0";
+      return "0 1.2rem 0 0";
+    } else if ($position == "last" && $minimalist) {
+      return "0 0 0.8rem 0";
     } else {
       return "0";
     }

@@ -20,7 +20,7 @@ const StyledMainContainer = styled.div`
   height: 100dvh;
   width: 100%;
   padding: 0.6rem 0.6rem 0 0.6rem;
-  gap: 0.6rem;
+  /* gap: 0.6rem; Removed as was causing reply feed spacing bug, no idea why */
   overflow-y: auto;
   scroll-behavior: smooth;
 

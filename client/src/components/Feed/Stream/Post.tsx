@@ -34,6 +34,7 @@ const StyledMainContainer = styled.div`
   flex-shrink: 0;
   width: 100%;
   gap: 0.2rem;
+  margin-top: 0.6rem;
 
   animation: ${enterAnimation} 300ms ease-out forwards;
 `;
@@ -92,7 +93,7 @@ const StyledTextContainer = styled.div<{ $editExpanded: boolean }>`
   display: flex;
   flex-direction: column;
   width: 100%;
-  gap: ${({ $editExpanded }) => $editExpanded ? "1rem" : "0rem"};
+  gap: ${({ $editExpanded }) => $editExpanded ? "1rem" : `calc(1rem + 1px)`};
 `;
 
 const StyledCharacterName = styled.h3`
@@ -128,6 +129,7 @@ const StyledButton = styled.button`
   font-size: 1rem;
   border: 1px solid rgba(0,0,0,0.4);
   box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  border-radius: 8px;
   cursor: pointer;
 `;
 

@@ -33,7 +33,7 @@ const exitAnimation = keyframes`
 
 const StyledMainContainer = styled.div<{ $replyExpanded: boolean, $numReplies: number, $entering: boolean, $visible: boolean }>`
   width: 100%;
-  margin-top: ${({ $replyExpanded, $numReplies }) => $replyExpanded || ($numReplies > 0) ? "0" : "calc(-4px)"};
+  margin-top: ${({ $replyExpanded, $numReplies }) => $replyExpanded || ($numReplies > 0) ? "0" : "calc(-3px)"};
 
   ${({ $entering }) =>
     $entering &&

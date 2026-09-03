@@ -23,19 +23,23 @@ const StyledMainContainer = styled.div`
 
 const StyledEditableContent = styled(ContentEditable)<{ $showMenu?: boolean, $minimalist?: boolean }>`
   position: relative;
-  height: 100%;
+  height: ${({ $minimalist }) => $minimalist ? "200px" : "100%"};
+  max-height: ${({ $showMenu }) => $showMenu ? "300px" : "0px"};
   width: 100%;
   padding: 0.6rem;
   padding-bottom: 3rem;
   font-size: 1rem;
   border: ${({ $showMenu, $minimalist }) => {
-    if ($showMenu) return "1px solid black";
-    else if ($minimalist && $showMenu) return "1px solid grey";
+    if ($minimalist && $showMenu) return "1px solid grey";
+    else if ($showMenu) return "1px solid black";
     else return "none";
   }};
-  border-radius: ${({ $minimalist }) => ($minimalist ? "0" : "0 0 1.2rem 1.2rem")};
-  overflow-y: auto;
-    padding-bottom: 3rem;
+  border-radius: ${({ $minimalist }) => ($minimalist ? "1.2rem 1.2rem 0 0" : "0 0 1.2rem 1.2rem")};
+  overflow-y: hidden;
+  resize: none;
+  padding-bottom: 3rem;
+
+  transition: max-height 1s ease;
 
   &:focus {
     outline: none;
@@ -161,10 +165,6 @@ const TextEditor = (props : TextEditorProps) => {
       return () => clearTimeout(timer);
     }
   }, [messageText]);
-
-  useEffect(() => {
-    console.log(content);
-  }, [content])
 
   return (
     <StyledMainContainer>
