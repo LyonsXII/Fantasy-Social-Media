@@ -29,11 +29,13 @@ const exitAnimation = keyframes`
   }
 `;
 
-const StyledMainContainer = styled.div<{$height?: string, $depth?: number, $visible: boolean, $entering: boolean}>`
+const StyledMainContainer = styled.div<{$mode: string, $height?: string, $depth?: number, $visible: boolean, $entering: boolean}>`
   height: ${({ $height }) => $height ? $height : "calc((60px * 5) + (0.6rem * 4) + 3.2rem + 2px)"};
   max-height: ${({ $visible }) => $visible ? "100%" : "0px"};
   flex-shrink: 0;
   width: 100%;
+  margin-top: ${({ $mode }) => $mode == "post" ? "0.6rem" : "0"};
+  /* margin-bottom: 0.6rem; */
   gap: 0.6rem;
   background-color: ${({ $depth }) => {
     if ($depth === undefined || $depth === null) {
@@ -255,7 +257,8 @@ const CreatePostMenu = ({ mode, height, numSuggestions, depth, postId, parentRep
   }, [])
 
   return (
-    <StyledMainContainer 
+    <StyledMainContainer
+      $mode={mode}
       $height={height} 
       $depth={depth} 
       $visible={!playCreatePostExit ? visible : !playCreatePostExit} 

@@ -12,7 +12,7 @@ const StyledMainContainer = styled.div`
   align-items: center;
   height: 100dvh;
   width: 100%;
-  padding: 0.6rem 0rem 0 0rem;
+  padding: 0.6rem 0rem 0.6rem 0rem;
   gap: 0.6rem;
 
   overflow-y: auto;
@@ -28,9 +28,11 @@ const StyledOption = styled.div`
   isolation: isolate;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   height: fit-content;
   width: 100%;
-  padding: 1.6rem 1.6rem 1.6rem 1.6rem;
+  flex-shrink: 0;
+  padding: clamp(0.8rem, 2vw, 1.6rem);
   gap: 0.6rem;
   background: white;
   border: 1px solid rgba(0, 0, 0, 0.07);
@@ -61,13 +63,13 @@ const StyledRecentActivitySecondaryContainer = styled.div`
 `
 
 const StyledHeaderText = styled.h1`
-  font-size: 1.6rem;
+  font-size: clamp(1.1rem, 1.6vw, 1.4rem);
   font-weight: 600;
   user-select: none;
 `
 
 const StyledGeneralText = styled.h1`
-  font-size: 1.2rem;
+  font-size: clamp(0.9rem, 1.2vw, 1.1rem);
   line-height: 0.8rem;
   user-select: none;
 `

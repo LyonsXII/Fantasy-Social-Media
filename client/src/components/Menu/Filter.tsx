@@ -6,16 +6,17 @@ import Search from '../General/Search';
 const StyledMainContainer = styled.div<{$expanded: boolean}>`
   display: flex;
   flex-direction: column;
-  height: auto;
-  max-height: ${({ $expanded }) => $expanded ? "400px" : "80px"};
+  align-items: flex-start;
+  justify-content: flex-start;
+  height: 300px;
+  max-height: ${({ $expanded }) => $expanded ? "300px" : "clamp(30px, 10dvh, 80px)"};
   width: 100%;
-  padding: 1.6rem 1.6rem 1.6rem 1.6rem;
-  gap: 0.6rem;
   background: white;
   border: 1px solid rgba(0, 0, 0, 0.07);
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
   border-radius: 0rem 0.8rem 0.8rem 0rem;
   overflow: hidden;
+  cursor: pointer;
 
   transition: box-shadow 0.2s ease, max-height 1s ease;
 
@@ -26,12 +27,24 @@ const StyledMainContainer = styled.div<{$expanded: boolean}>`
   }
 `;
 
+const StyledTextContainer = styled.div`
+  display: flex;
+  align-items: center;
+  min-height: clamp(30px, 10dvh, 80px);
+  width: 100%;
+`
+
 const StyledOptionText = styled.p`
-  font-size: 1.6rem;
+  margin-left: 1rem;
+  font-size: clamp(16px, 2rem, 28px);
   font-weight: 600;
   user-select: none;
-  cursor: pointer;
 `;
+
+const StyledSearchContainer = styled.div`
+  height: 100%;
+  width: 100%;
+`
 
 type FilterProps = {
   setCharacterFilter: (charId: number | null) => void;
@@ -43,16 +56,24 @@ const Filter = ({ setCharacterFilter, setPropertyFilter } : FilterProps) => {
 
   return (
     <StyledMainContainer $expanded={expanded}>
-      <StyledOptionText onClick={() => setExpanded(prev => !prev)}>
-        Filter
-      </StyledOptionText>
-      <Search 
-        direction="column" 
-        numSuggestions={1} 
-        showPropFilter={true} 
-        selectChar={setCharacterFilter} 
-        selectProperty={setPropertyFilter}
-      />
+      <StyledTextContainer onClick={() => setExpanded(prev => !prev)}>
+        <StyledOptionText>
+          Filter
+        </StyledOptionText>
+      </StyledTextContainer>
+      {expanded && 
+        <StyledSearchContainer>
+          <Search
+            direction="column"
+            padding="0 0 0 1rem"
+            numSuggestions={1}
+            showPropFilter={true}
+            selectChar={setCharacterFilter}
+            selectProperty={setPropertyFilter}
+          />
+        </StyledSearchContainer>
+      }
+
     </StyledMainContainer>
   )
 }

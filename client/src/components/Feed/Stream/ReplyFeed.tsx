@@ -176,7 +176,17 @@ const ReplyFeed = ({ postId, parentReplyId, override, overrideData, depth, reply
 
   async function updateReply(replyId: number) {
     try {
-      const { data } = await axios.get(`${backendUrl}/reply`, { params: {replyId: replyId} });
+      const { data } = await axios.get(
+        `${backendUrl}/reply`, 
+        { 
+          params: {
+            replyId: replyId
+          },
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        }
+      );
       setReplies(prev =>
         prev.map(item =>
           item.replyId === replyId ? { ...item, ...data } : item

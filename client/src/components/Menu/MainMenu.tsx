@@ -29,10 +29,12 @@ const StyledOption = styled.div`
   position: relative;
   isolation: isolate;
   display: flex;
+  align-items: start;
+  justify-content: center;
   flex-direction: column;
-  height: fit-content;
+  height: clamp(30px, 10dvh, 80px);
   width: 100%;
-  padding: 1.6rem 1.6rem 1.6rem 1.6rem;
+  padding-left: 1rem;
   gap: 0.6rem;
   background: white;
   border: 1px solid rgba(0, 0, 0, 0.07);
@@ -51,7 +53,7 @@ const StyledOption = styled.div`
 `;
 
 const StyledOptionText = styled.p`
-  font-size: 1.6rem;
+  font-size: clamp(16px, 2rem, 28px);
   font-weight: 600;
   user-select: none;
 `;

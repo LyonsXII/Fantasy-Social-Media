@@ -261,7 +261,7 @@ const PostActions = ({ postData, currentEmojiReaction, updatePost, repliesExpand
 
           <StyledActionBarIconContainer onClick={() => {reactToPost("favourite")}}>
             <StyledClickableIcon $anonymous={anonymous}>
-              <StyledFavouriteIcon $active={favourited} $activeColour="yellow"/>
+              <StyledFavouriteIcon $active={favourited} $activeColour="#fbda48"/>
             </StyledClickableIcon>
           </StyledActionBarIconContainer>
 
@@ -283,7 +283,7 @@ const PostActions = ({ postData, currentEmojiReaction, updatePost, repliesExpand
             <StyledClickableIcon>
               <StyledLikeIcon 
                 $active={liked} 
-                $activeColour="green" 
+                $activeColour="#27b64b"
                 onClick={() => {
                   if (!anonymous) {
                     reactToPost("like");
@@ -300,7 +300,7 @@ const PostActions = ({ postData, currentEmojiReaction, updatePost, repliesExpand
             <StyledClickableIcon>
               <StyledDislikeIcon 
                 $active={disliked} 
-                $activeColour="red" 
+                $activeColour="#d72f2f" 
                 onClick={() => {
                   if (!anonymous) {
                     reactToPost("dislike");

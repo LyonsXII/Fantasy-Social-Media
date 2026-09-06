@@ -4,15 +4,17 @@ import { useState, useEffect } from 'react';
 const StyledMainContainer = styled.div<{$expanded: boolean}>`
   display: flex;
   flex-direction: column;
-  max-height: ${({ $expanded }) => $expanded ? "160px" : "80px"};
+  align-items: flex-start;
+  justify-content: flex-start;
+  height: 150px;
+  max-height: ${({ $expanded }) => $expanded ? "150px" : "clamp(30px, 10dvh, 80px)"};
   width: 100%;
-  padding: 1.6rem 1.6rem 1.6rem 1.6rem;
-  gap: 0.6rem;
   background: white;
   border: 1px solid rgba(0, 0, 0, 0.07);
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
   border-radius: 0rem 0.8rem 0.8rem 0rem;
   overflow: hidden;
+  cursor: pointer;
 
   transition: box-shadow 0.2s ease, max-height 1s ease;
 
@@ -23,17 +25,28 @@ const StyledMainContainer = styled.div<{$expanded: boolean}>`
   }
 `;
 
+const StyledTextContainer = styled.div`
+  display: flex;
+  align-items: center;
+  min-height: clamp(30px, 10dvh, 80px);
+  width: 100%;
+`
+
 const StyledOptionText = styled.p`
-  font-size: 1.6rem;
+  margin-left: 1rem;
+  font-size: clamp(16px, 2rem, 28px);
   font-weight: 600;
   user-select: none;
-  cursor: pointer;
 `;
 
 const StyledInputContainer = styled.div`
   display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
   height: 100%;
+  width: 100%;
   min-width: 20%;
+  padding: 0rem 1rem 2rem 1rem;
   gap: 0.6rem;
 `;
 
@@ -42,7 +55,6 @@ const StyledInput = styled.input`
   flex-grow: 1;
   padding: 0.4rem;
   font-size: 1rem;
-  margin-top: 15px;
 `;
 
 const StyledButton = styled.button`
@@ -50,7 +62,6 @@ const StyledButton = styled.button`
   width: 30%;
   padding: 0.4rem;
   font-size: 1rem;
-  margin-top: 15px;
 `;
 
 type TextSearchProps = {
@@ -73,28 +84,33 @@ const TextSearch = ({ setSearchText } : TextSearchProps) => {
 
   return (
     <StyledMainContainer $expanded={expanded}>
-      <StyledOptionText onClick={() => setExpanded(prev => !prev)}>
-        Search
-      </StyledOptionText>
-
-      <StyledInputContainer
-        as="form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          setSearchText(userInput);
-        }}
-      >
-        <StyledInput 
-          type="text" 
-          name="char" 
-          value={userInput} 
-          placeholder="Enter text to search..." 
-          onChange={(e) => updateUserInput(e.target.value)}
-        />
-        <StyledButton type="submit">
+      <StyledTextContainer onClick={() => setExpanded(prev => !prev)}>
+        <StyledOptionText>
           Search
-        </StyledButton>
-      </StyledInputContainer>
+        </StyledOptionText>
+      </StyledTextContainer>
+
+      {expanded && 
+        <StyledInputContainer
+          as="form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            setSearchText(userInput);
+          }}
+        >
+          <StyledInput 
+            type="search"
+            autoComplete="off" 
+            name="char" 
+            value={userInput} 
+            placeholder="Enter text to search..." 
+            onChange={(e) => updateUserInput(e.target.value)}
+          />
+          <StyledButton type="submit">
+            Search
+          </StyledButton>
+        </StyledInputContainer>
+      }
     </StyledMainContainer>
   )
 }

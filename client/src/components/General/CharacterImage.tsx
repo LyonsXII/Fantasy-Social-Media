@@ -29,6 +29,7 @@ const CharacterImage = ({ alt, size, imagePath, updateChar } : CharacterImagePro
         alt={alt}
         $size={size}
         onClick={updateChar}
+        title={imagePath}
       />
     );
   }

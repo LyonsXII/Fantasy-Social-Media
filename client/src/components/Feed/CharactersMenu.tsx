@@ -32,13 +32,14 @@ const exitAnimation = keyframes`
 `;
 
 const StyledMainContainer = styled.div<{$visible: boolean, $entering: boolean}>`
-  height: calc(100dvh - 0.6rem);
-  max-height: ${({ $visible }) => $visible ? "calc(100dvh - 0.6rem)" : "0px"};
+  height: calc(100dvh - 1.2rem);
+  max-height: ${({ $visible }) => $visible ? "calc(100dvh - 1.8rem)" : "0px"};
   width: 100%;
   background: white;
   border: 1px solid rgba(0, 0, 0, 0.07);
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
   border-radius: 0.8rem;
+  margin-top: 0.6rem;
   /* overflow: hidden; */
 
   transition: box-shadow 0.2s ease, max-height 1s ease;
@@ -67,7 +68,7 @@ const StyledPaddingWrapper = styled.div`
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
-  height: 100%;
+  height: calc(100dvh - 1.2rem);
   padding: 1.6rem 1.6rem 2rem 1.6rem;
   gap: 1rem;
 `
@@ -84,7 +85,8 @@ const StyledCharactersContainer = styled.div`
   justify-content: center;
   flex-wrap: wrap;
   flex-grow: 1;
-  max-height: 510px;
+  /* max-height: 40dvh; */
+  min-height: 40dvh;
   width: 100%;
   gap: 0.6rem;
   padding-bottom: 2rem;
@@ -106,9 +108,16 @@ const StyledGenreButtonsContainer = styled.div`
   justify-content: center;
   flex-wrap: wrap;
   height: fit-content;
-  margin-top: 34px;
+  flex-shrink: 0;
+  /* margin-top: 34px; */
   gap: 0.6rem;
   width: 100%;
+
+  overflow-y: auto;
+
+  @media (max-height: 900px) {
+    max-height: 90px;
+  }
 `;
 
 const StyledButton = styled.button<{$active : boolean}>`
@@ -271,9 +280,9 @@ const CharactersMenu = ({ playCharactersMenuExit, streamRef } : CharactersMenuPr
         <StyledCharactersContainer>
           {chars && chars.map((char, i) => {
             if (i < chars.length - 1) {
-              return <CharacterImage key={char.charId} alt="Character image" size="160px" imagePath={char.image}/>
+              return <CharacterImage key={char.charId} alt="Character image" size="8dvw" imagePath={char.image}/>
             } else {
-              return <CharacterImage key={char.charId} alt="Character image" size="160px" imagePath={char.image}/>
+              return <CharacterImage key={char.charId} alt="Character image" size="8dvw" imagePath={char.image}/>
             }
           })}
           <div ref={observerRef} style={{"height": "1px", "width": "1px", "border": "1px solid black", "opacity": "0.01"}}/>

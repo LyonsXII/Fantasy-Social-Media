@@ -6,14 +6,14 @@ import CharacterImage from './CharacterImage';
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-const StyledMainContainer = styled.div<{ $direction?: string, $width?: string, $height?: string}>`
+const StyledMainContainer = styled.div<{ $direction?: string, $width?: string, $height?: string, $padding?: string}>`
   display: flex;
   flex-direction: ${({ $direction }) => $direction ? $direction : "row"};
   flex: 0 0 auto;
   align-items: ${({ $direction }) => $direction ? "flex-start" : "center"};
   height: ${({ $direction, $height }) => $direction == "row" ? $height : "100%"};
   width: ${({ $width }) => $width ? $width : "100%"};
-  gap: 0rem;
+  padding: ${({ $padding }) => $padding ? $padding : "0"};
 `;
 
 const StyledFilterSectionContainer = styled.div<{ $direction?: string}>`
@@ -40,6 +40,13 @@ const StyledInput = styled.input`
   padding: 0.4rem;
   font-size: 1rem;
   margin-top: 15px;
+  border-radius: 8px;
+  border: 1px solid black;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+
+  &:focus {
+    border-color: rgba(0, 0, 0, 0.2);
+  }
 `;
 
 const StyledSuggestionsContainer = styled.div`
@@ -113,6 +120,7 @@ export interface SearchProps {
   direction?: string,
   height?: string,
   width?: string,
+  padding?: string,
   numSuggestions: number,
   showPropFilter?: boolean,
   showCharDescription?: boolean,
@@ -120,7 +128,7 @@ export interface SearchProps {
   selectProperty?: (propertyId: number | null) => void
 }
 
-const Search = ({ direction, height, width, numSuggestions, showPropFilter, showCharDescription, selectChar, selectProperty } : SearchProps) => {
+const Search = ({ direction, height, width, padding, numSuggestions, showPropFilter, showCharDescription, selectChar, selectProperty } : SearchProps) => {
   const [charNameInput, setCharNameInput] = useState("");
   const [propertyNameInput, setPropertyNameInput] = useState("");
   const [charSuggestions, setCharSuggestions] = useState<Character[]>([]);
@@ -247,7 +255,7 @@ const Search = ({ direction, height, width, numSuggestions, showPropFilter, show
   }, [denyPropertySuggestionsUpdate]);
 
   return (
-    <StyledMainContainer $direction={direction} $width={width} $height={height}>
+    <StyledMainContainer $direction={direction} $width={width} $height={height} $padding={padding}>
       <StyledFilterSectionContainer $direction={direction}>
         <StyledInputContainer>
           <StyledInput 
@@ -310,7 +318,8 @@ const Search = ({ direction, height, width, numSuggestions, showPropFilter, show
         <StyledFilterSectionContainer $direction={direction}>
           <StyledInputContainer>
             <StyledInput 
-              type="text" 
+              type="search"
+              autoComplete="off"
               name="property" 
               value={propertyNameInput} 
               placeholder="Property" 

@@ -157,7 +157,7 @@ const Reply = ({ replyData, updateReply, updatePost, override, depth, anonymous 
   const replyFeedRef = useRef<HTMLDivElement | null>(null);
   const [replyFeedHeight, setReplyFeedHeight] = useState(0);
 
-  const { userId } = useAuth();
+  const { accessToken, userId } = useAuth();
 
   async function editReply(content: any){
     try {
@@ -175,7 +175,8 @@ const Reply = ({ replyData, updateReply, updatePost, override, depth, anonymous 
 
       await axios.post(`${backendUrl}/editReply`, formData, {
         headers: {
-          "Content-Type": "multipart/form-data"
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${accessToken}`
         }
       });
 
