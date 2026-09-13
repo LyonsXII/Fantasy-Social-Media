@@ -42,11 +42,9 @@ type StreamProps = {
   showCreatePostMenu: boolean;
   setShowCreatePostMenu: (value: boolean) => void;
   playCreatePostExit: boolean;
-  setPlayCreatePostExit: (value: boolean) => void;
   showCharactersMenu: boolean;
   setShowCharactersMenu: (value: boolean) => void;
   playCharactersMenuExit: boolean;
-  setPlayCharactersMenuExit: (value: boolean) => void;
   showFavourites: boolean;
   characterFilter: number | null;
   propertyFilter: number | null;
@@ -82,7 +80,7 @@ export type PostType = {
   currentEmojiReaction: string;
 }
 
-const Stream = ({ streamRef, showCreatePostMenu, setShowCreatePostMenu, playCreatePostExit, setPlayCreatePostExit, showCharactersMenu, playCharactersMenuExit, setPlayCharactersMenuExit, showFavourites, characterFilter, propertyFilter, searchText } : StreamProps) => {
+const Stream = ({ streamRef, showCreatePostMenu, setShowCreatePostMenu, playCreatePostExit, showCharactersMenu, playCharactersMenuExit, showFavourites, characterFilter, propertyFilter, searchText } : StreamProps) => {
   const [posts, setPosts] = useState<PostType[]>([]);
   const [lastId, setLastId] = useState<number | null>(null);
   const [lastCreated, setLastCreated] = useState<string | null>(null);

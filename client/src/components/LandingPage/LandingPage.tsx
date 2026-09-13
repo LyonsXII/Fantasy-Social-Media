@@ -1,5 +1,3 @@
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 import { useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 
@@ -252,22 +250,12 @@ const StyledCompass = styled.img<{$size: string, $highlighted?: boolean, $active
 `
 
 const LandingPage = () => {
-  const navigate = useNavigate();
-  const { login, userId } = useAuth();
-
   const [mouseInitialized, setMouseInitialized] = useState(false);
 
   // Map element active flags
   const [monsterActive, setMonsterActive] = useState(false);
   const [shipActive, setShipActive] = useState(false);
   const [compassActive, setCompassActive] = useState(false);
-
-  async function handleLogin(token: string) {
-    if (userId) {
-      login(token, userId);
-    }
-    navigate('/feed');
-  }
 
 const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
   const rect = event.currentTarget.getBoundingClientRect();
@@ -316,7 +304,7 @@ const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
 
   return (
     <StyledMainContainer $height="100dvh" $width="100dvw" $direction="column" onMouseMove={handleMouseMove}>
-      <Login handleLogin={handleLogin}/>
+      <Login/>
       {/* <Marquee $direction="horizontal" $length={20} $offset="6dvh" $size="20dvh"/>
       <Marquee $direction="horizontal" $length={20} $offset="74dvh" $size="20dvh"/> */}
       {/* <Marquee $direction="vertical" $length={5} $offset="5.5dvw" $size="28dvw"/> */}

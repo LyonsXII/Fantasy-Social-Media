@@ -242,6 +242,8 @@ const Search = ({ direction, height, width, padding, numSuggestions, showPropFil
     const timeout = setTimeout(() => {
       setDenyCharSuggestionsUpdate(false);
     }, 100);
+
+    return () => clearTimeout(timeout);
   }, [denyCharSuggestionsUpdate]);
 
   // Deny update of suggestions when property chosen
@@ -251,6 +253,8 @@ const Search = ({ direction, height, width, padding, numSuggestions, showPropFil
     const timeout = setTimeout(() => {
       setDenyPropertySuggestionsUpdate(false);
     }, 100);
+
+    return () => clearTimeout(timeout);
   }, [denyPropertySuggestionsUpdate]);
 
   return (

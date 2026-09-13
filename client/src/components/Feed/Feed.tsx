@@ -90,11 +90,9 @@ const Feed = () => {
         showCreatePostMenu={showCreatePostMenu} 
         setShowCreatePostMenu={setShowCreatePostMenu} 
         playCreatePostExit={playCreatePostExit} 
-        setPlayCreatePostExit={setPlayCreatePostExit}
         showCharactersMenu={showCharactersMenu}
         setShowCharactersMenu={setShowCharactersMenu}
         playCharactersMenuExit={playCharactersMenuExit}
-        setPlayCharactersMenuExit={setPlayCharactersMenuExit}
         showFavourites={showFavourites} 
         characterFilter={characterFilter} 
         propertyFilter={propertyFilter} 

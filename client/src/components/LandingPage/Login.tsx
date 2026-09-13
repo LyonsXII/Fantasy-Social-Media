@@ -11,11 +11,7 @@ type LoginProps = {
   password: string;
 };
 
-export interface LoginRouteProps {
-  handleLogin: (token: string) => void;
-}
-
-const Login = ({ handleLogin } : LoginRouteProps) => {
+const Login = () => {
   const [showLogin, setShowLogin] = useState<boolean>(false);
   const [showLoginOutro, setShowLoginOutro] = useState<string>("");
   const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
