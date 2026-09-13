@@ -48,16 +48,30 @@ const StyledMainPostContainer = styled.div<{ $depth: number }>`
   flex-shrink: 0;
   width: 100%;
   gap: 0.6rem;
-  background-color: ${({ $depth }) => {
+  background: ${({ $depth }) => {
     if ($depth === undefined || $depth === null) {
-      return "#ffffff";
+      return `
+        linear-gradient(
+          to bottom,
+          rgb(255, 255, 255),
+          rgb(240, 240, 240)
+        )
+      `;
     }
 
     const cappedDepth = Math.min($depth, 4);
-    const baseLightness = 100;
-    const step = 3;
+    const step = 5;
 
-    return `hsl(255, 0%, ${baseLightness - (cappedDepth * step)}%)`;
+    const top = 255 - (cappedDepth * step);
+    const bottom = 240 - (cappedDepth * step);
+
+    return `
+      linear-gradient(
+        to bottom,
+        rgb(${top}, ${top}, ${top}),
+        rgb(${bottom}, ${bottom}, ${bottom})
+      )
+    `;
   }};
   border: 1px solid rgba(0, 0, 0, 0.07);
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);

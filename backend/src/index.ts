@@ -349,8 +349,6 @@ app.get("/search", authenticateToken, async (req, res) => {
       : 0;
   const userId = 1;
 
-  console.log(req.query.offset, offset);
-
   // Text provided too short (preventing e.g. 1000+ matches at scale if searching for posts containing the letter "a")
   if (text.trim().length < 2) {
     return res.json([]);
@@ -882,8 +880,6 @@ app.get("/postAnonymous", async (req, res) => {
         .sort((a, b) => b.count - a.count)
     };
 
-    console.log(result);
-
     res.json(result);
   } catch (err) {
     console.error(err);
@@ -1339,7 +1335,6 @@ app.get("/favourites", authenticateToken, async (req, res) => {
           const parent = repliesMap[reply.parent_reply_id];
 
           if (!parent) {
-            console.log("hey");
             continue; // parent not found
           }
 
@@ -2036,7 +2031,6 @@ app.post("/react", authenticateToken, async (req, res) => {
       const prevReactionValue = check.rows
         .map(r => r.reaction_value)
         .find(v => v != null) ?? null;
-      console.log("prevReactionValue", prevReactionValue);
 
       if (prevReactionValue == reactionValue) {
         // Delete emoji

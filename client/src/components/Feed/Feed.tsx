@@ -28,7 +28,6 @@ const Feed = () => {
   const [characterFilter, setCharacterFilter] = useState<number | null>(null);
   const [propertyFilter, setPropertyFilter] = useState<number | null>(null);
   const [showFavourites, setShowFavourites] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
   const [searchText, setSearchText] = useState("");
 
   // Animation parameters
@@ -36,14 +35,6 @@ const Feed = () => {
   const [playCharactersMenuExit, setPlayCharactersMenuExit] = useState(false);
 
   const streamRef = useRef<HTMLDivElement | null>(null);
-
-  const toggleShowCreatePostMenu = () => {
-    setShowCreatePostMenu(prev => !prev);
-  };
-
-  const toggleShowCharactersMenu = () => {
-    setShowCharactersMenu(prev => !prev);
-  };
 
   const toggleShowFavouritesMenu = () => {
     setShowFavourites(prev => !prev);

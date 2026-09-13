@@ -37,7 +37,15 @@ const StyledButton = styled.button<{$size?: string, $position?: string, $padding
   justify-content: center;
   align-items: center;
   height: ${({ $size }) => $size == "large" ? "3rem" : "18px"};
-  padding: ${({ $padding }) => $padding ? `1rem ${$padding}` : "1rem"};
+  padding: ${({ $padding }) => {
+    if ($padding === "large") {
+      return `1rem clamp(0.2rem, 0.6dvw, 0.6rem)`;
+    } else if ($padding === "small") {
+      return `1rem clamp(0.1rem, 0.1dvw, 0.2rem)`;
+    } else {
+      return `1rem clamp(0.25rem, 0.5vw, 1rem)`;
+    }
+  }};
   gap: 0.6rem;
   border: none;
   border-radius: ${({ $position, $minimalist }) => {
@@ -178,11 +186,11 @@ export const TextEditorCustomTextActions = ({closeMenu, minimalist, size, onSubm
         <div style={{"flexGrow":"1"}}/>
 
         {attachmentName && 
-          <StyledButton $size={size} $padding="0.2rem">
+          <StyledButton $size={size} $padding="small">
             <StyledCancelIcon onClick={removeAttachment}/>
           </StyledButton>
         }
-        <StyledButton $size={size} $padding="0.6rem" onClick={openPicker}>
+        <StyledButton $size={size} $padding="large" onClick={openPicker}>
           {attachmentName || "Attach Image"}
           <StyledAttachIcon $size={size}/>
         </StyledButton>

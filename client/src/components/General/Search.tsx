@@ -30,7 +30,6 @@ const StyledInputContainer = styled.div`
   flex-direction: column;
   justify-content: start;
   height: 100%;
-  min-width: 20%;
   gap: 0.6rem;
 `;
 
@@ -259,7 +258,7 @@ const Search = ({ direction, height, width, padding, numSuggestions, showPropFil
       <StyledFilterSectionContainer $direction={direction}>
         <StyledInputContainer>
           <StyledInput 
-            type="text" 
+            type="search" 
             name="char" 
             value={charNameInput} 
             placeholder="Character Name" 
@@ -290,7 +289,8 @@ const Search = ({ direction, height, width, padding, numSuggestions, showPropFil
             ? charSuggestions.map((char) => (
                 <CharacterImage 
                   key={char.name}
-                  alt="Character image"
+                  name={char.name}
+                  alt={char.name}
                   size="60px"
                   imagePath={char.image}
                   updateChar={() => {

@@ -34,12 +34,15 @@ const StyledOption = styled.div`
   flex-shrink: 0;
   padding: clamp(0.8rem, 2vw, 1.6rem);
   gap: 0.6rem;
-  background: white;
-  border: 1px solid rgba(0, 0, 0, 0.07);
+  background: linear-gradient(
+    to bottom,
+    rgb(255, 255, 255),
+    rgb(240, 240, 240)
+  );
+  border: 1px solid rgba(0, 0, 0, 0.15);
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
   border-radius: 0.8rem 0rem 0rem 0.8rem;
   overflow: hidden;
-  cursor: pointer;
 
   transition: box-shadow 0.2s ease;
 

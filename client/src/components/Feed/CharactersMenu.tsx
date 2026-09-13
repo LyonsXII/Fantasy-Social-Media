@@ -35,8 +35,12 @@ const StyledMainContainer = styled.div<{$visible: boolean, $entering: boolean}>`
   height: calc(100dvh - 1.2rem);
   max-height: ${({ $visible }) => $visible ? "calc(100dvh - 1.8rem)" : "0px"};
   width: 100%;
-  background: white;
-  border: 1px solid rgba(0, 0, 0, 0.07);
+  background: linear-gradient(
+    to bottom,
+    rgb(255, 255, 255),
+    rgb(245, 245, 245)
+  );
+  border: 1px solid rgba(0, 0, 0, 0.15);
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
   border-radius: 0.8rem;
   margin-top: 0.6rem;
@@ -159,7 +163,6 @@ const CharactersMenu = ({ playCharactersMenuExit, streamRef } : CharactersMenuPr
 
   const fetchChars = useCallback(async () => {
     if (loading || !furtherContentAvailable) return;
-    console.log("past loading / further content available");
 
     setLoading(true);
     try {
@@ -280,9 +283,9 @@ const CharactersMenu = ({ playCharactersMenuExit, streamRef } : CharactersMenuPr
         <StyledCharactersContainer>
           {chars && chars.map((char, i) => {
             if (i < chars.length - 1) {
-              return <CharacterImage key={char.charId} alt="Character image" size="8dvw" imagePath={char.image}/>
+              return <CharacterImage key={char.charId} name={char.name} alt="Character image" size="8dvw" imagePath={char.image}/>
             } else {
-              return <CharacterImage key={char.charId} alt="Character image" size="8dvw" imagePath={char.image}/>
+              return <CharacterImage key={char.charId} name={char.name} alt="Character image" size="8dvw" imagePath={char.image}/>
             }
           })}
           <div ref={observerRef} style={{"height": "1px", "width": "1px", "border": "1px solid black", "opacity": "0.01"}}/>

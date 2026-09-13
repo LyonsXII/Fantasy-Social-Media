@@ -1,27 +1,53 @@
 import styled from 'styled-components';
 import { useState, useEffect } from 'react';
 
-const StyledMainContainer = styled.div<{$expanded: boolean}>`
+const StyledMainContainer = styled.button<{$expanded: boolean}>`
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
-  height: 150px;
-  max-height: ${({ $expanded }) => $expanded ? "150px" : "clamp(30px, 10dvh, 80px)"};
+  height: auto;
+  max-height: ${({ $expanded }) => $expanded ? "300px" : "clamp(30px, 10dvh, 80px)"};
   width: 100%;
-  background: white;
-  border: 1px solid rgba(0, 0, 0, 0.07);
+  padding: 0rem 0rem 1rem 0rem;
+  flex-shrink: 0;
+  background: linear-gradient(
+    to bottom,
+    rgb(255, 255, 255),
+    rgb(240, 240, 240)
+  );
+  border: 1px solid rgba(0, 0, 0, 0.15);
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
   border-radius: 0rem 0.8rem 0.8rem 0rem;
   overflow: hidden;
+  font: inherit;
+  color: inherit;
   cursor: pointer;
 
-  transition: box-shadow 0.2s ease, max-height 1s ease;
+  transition:
+    max-height 1s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 
   &:hover {
+  background: linear-gradient(
+    to bottom,
+    rgb(240, 240, 240),
+    rgb(240, 240, 240)
+  );
     box-shadow: 
     0 6px 20px rgba(0,0,0,0.06),
     0px 4px 4px rgba(0,0,0,0.1);
+  }
+
+  &:active {
+    transform: translateY(2px);
+    background: rgb(225, 225, 225);
+
+    box-shadow:
+      0 2px 6px rgba(0,0,0,0.08),
+      0 1px 2px rgba(0,0,0,0.1);
   }
 `;
 
@@ -53,15 +79,27 @@ const StyledInputContainer = styled.div`
 const StyledInput = styled.input`
   height: fit-content;
   flex-grow: 1;
+  min-width: 0;
   padding: 0.4rem;
   font-size: 1rem;
+  border-radius: 8px;
+  border: 1px solid black;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+
+  &:focus {
+    border-color: rgba(0, 0, 0, 0.2);
+  }
 `;
 
 const StyledButton = styled.button`
   height: fit-content;
-  width: 30%;
+  flex: 0 0 auto;
   padding: 0.4rem;
   font-size: 1rem;
+  border-radius: 8px;
+  border: 1px solid black;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+  white-space: nowrap;
 `;
 
 type TextSearchProps = {
@@ -90,27 +128,25 @@ const TextSearch = ({ setSearchText } : TextSearchProps) => {
         </StyledOptionText>
       </StyledTextContainer>
 
-      {expanded && 
-        <StyledInputContainer
-          as="form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            setSearchText(userInput);
-          }}
-        >
-          <StyledInput 
-            type="search"
-            autoComplete="off" 
-            name="char" 
-            value={userInput} 
-            placeholder="Enter text to search..." 
-            onChange={(e) => updateUserInput(e.target.value)}
-          />
-          <StyledButton type="submit">
-            Search
-          </StyledButton>
-        </StyledInputContainer>
-      }
+      <StyledInputContainer
+        as="form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          setSearchText(userInput);
+        }}
+      >
+        <StyledInput 
+          type="search"
+          autoComplete="off" 
+          name="char" 
+          value={userInput} 
+          placeholder="Enter text to search..." 
+          onChange={(e) => updateUserInput(e.target.value)}
+        />
+        <StyledButton type="submit">
+          Search
+        </StyledButton>
+      </StyledInputContainer>
     </StyledMainContainer>
   )
 }

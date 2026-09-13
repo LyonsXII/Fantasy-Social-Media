@@ -155,6 +155,14 @@ export const StyledLoginButtonWrapper = styled.div<StyledLoginButton>`
   width: fit-content;
 
   transition: transform 0.8s ease;
+
+  transition: width 0.8s ease, transform 0.2s ease;
+
+  ${({ $expanded }) =>
+    $expanded &&
+    css`
+      animation: ${fadeIn} 1s ease-out forwards;
+    `}
 `
 
 export const StyledLoginButton = styled.button<StyledLoginButton>`
@@ -170,14 +178,16 @@ export const StyledLoginButton = styled.button<StyledLoginButton>`
 
   transition: width 0.8s ease, transform 0.2s ease;
 
-  ${({ $expanded }) =>
-    $expanded &&
-    css`
-      animation: ${fadeIn} 1s ease-out forwards;
-    `}
-
   &:hover {
     transform: scale(1.02);
+  }
+
+  &:active {
+    transform: translateY(2px);
+
+    box-shadow:
+      0 2px 6px rgba(0,0,0,0.08),
+      0 1px 2px rgba(0,0,0,0.1);
   }
 `
 
@@ -229,6 +239,14 @@ export const StyledNewUserButton = styled.button<{ $expanded : boolean }>`
 
   &:hover {
     transform: scale(1.02);
+  }
+
+  &:active {
+    transform: translateY(2px);
+
+    box-shadow:
+      0 2px 6px rgba(0,0,0,0.08),
+      0 1px 2px rgba(0,0,0,0.1);
   }
 `;
 

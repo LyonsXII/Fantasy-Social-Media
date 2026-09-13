@@ -15,12 +15,13 @@ const StyledSuggestionImage = styled.img<{$size: string}>`
 
 export interface CharacterImageProps {
   alt: string
+  name?: string
   size: string
   imagePath?: string
   updateChar?: () => void;
 }
 
-const CharacterImage = ({ alt, size, imagePath, updateChar } : CharacterImageProps) => {
+const CharacterImage = ({ alt, name, size, imagePath, updateChar } : CharacterImageProps) => {
     const src = imagePath ? backendUrl + imagePath : "/images/unknown.jpg";
 
     return (
@@ -29,7 +30,7 @@ const CharacterImage = ({ alt, size, imagePath, updateChar } : CharacterImagePro
         alt={alt}
         $size={size}
         onClick={updateChar}
-        title={imagePath}
+        title={name ? name : imagePath}
       />
     );
   }
